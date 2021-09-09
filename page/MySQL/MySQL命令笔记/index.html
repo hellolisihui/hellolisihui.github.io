@@ -1,0 +1,454 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>MySQL 命令笔记 | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">MySQL 命令笔记</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2021-09-08 18:17:44 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/MySQL/">MySQL</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/MySQL/">MySQL</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><h1 id="一、数据库的基本操作"><a href="#一、数据库的基本操作" class="headerlink" title="一、数据库的基本操作"></a>一、数据库的基本操作</h1><h2 id="1-查看数据库"><a href="#1-查看数据库" class="headerlink" title="1. 查看数据库"></a>1. 查看数据库</h2><h3 id="1）查看数据库引擎"><a href="#1）查看数据库引擎" class="headerlink" title="1）查看数据库引擎"></a>1）查看数据库引擎</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SHOW [STORAGE] ENGINES
+SHOW ENGINE engine_name &#123;STATUS | MUTEX&#125;</code></pre><p><strong>命令示例：</strong></p><p>查看所有数据库引擎：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; SHOW ENGINES;
++--------------------+---------+----------------------------------------------------------------+--------------+------+------------+
+| Engine             | Support | Comment                                                        | Transactions | XA   | Savepoints |
++--------------------+---------+----------------------------------------------------------------+--------------+------+------------+
+| InnoDB             | DEFAULT | Supports transactions, row-level locking, and foreign keys     | YES          | YES  | YES        |
+| MRG_MYISAM         | YES     | Collection of identical MyISAM tables                          | NO           | NO   | NO         |
+| MEMORY             | YES     | Hash based, stored in memory, useful for temporary tables      | NO           | NO   | NO         |
+| BLACKHOLE          | YES     | &#x2F;dev&#x2F;null storage engine (anything you write to it disappears) | NO           | NO   | NO         |
+| MyISAM             | YES     | MyISAM storage engine                                          | NO           | NO   | NO         |
+| CSV                | YES     | CSV storage engine                                             | NO           | NO   | NO         |
+| ARCHIVE            | YES     | Archive storage engine                                         | NO           | NO   | NO         |
+| PERFORMANCE_SCHEMA | YES     | Performance Schema                                             | NO           | NO   | NO         |
+| FEDERATED          | NO      | Federated MySQL storage engine                                 | NULL         | NULL | NULL       |
++--------------------+---------+----------------------------------------------------------------+--------------+------+------------+</code></pre><h3 id="2）查看数据库字符集"><a href="#2）查看数据库字符集" class="headerlink" title="2）查看数据库字符集"></a>2）查看数据库字符集</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SHOW CHARACTER SET [LIKE &#39;pattern&#39; | WHERE expr]</code></pre><p><strong>命令示例：</strong></p><p>查看数据库所有字符集：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; SHOW CHARACTER SET;
++----------+---------------------------------+---------------------+--------+
+| Charset  | Description                     | Default collation   | Maxlen |
++----------+---------------------------------+---------------------+--------+
+| big5     | Big5 Traditional Chinese        | big5_chinese_ci     |      2 |
+| dec8     | DEC West European               | dec8_swedish_ci     |      1 |
+| cp850    | DOS West European               | cp850_general_ci    |      1 |
+| hp8      | HP West European                | hp8_english_ci      |      1 |
+| koi8r    | KOI8-R Relcom Russian           | koi8r_general_ci    |      1 |
+| latin1   | cp1252 West European            | latin1_swedish_ci   |      1 |
+| latin2   | ISO 8859-2 Central European     | latin2_general_ci   |      1 |
+| swe7     | 7bit Swedish                    | swe7_swedish_ci     |      1 |
+| ascii    | US ASCII                        | ascii_general_ci    |      1 |
+| ujis     | EUC-JP Japanese                 | ujis_japanese_ci    |      3 |
+| sjis     | Shift-JIS Japanese              | sjis_japanese_ci    |      2 |
+| hebrew   | ISO 8859-8 Hebrew               | hebrew_general_ci   |      1 |
+| tis620   | TIS620 Thai                     | tis620_thai_ci      |      1 |
+| euckr    | EUC-KR Korean                   | euckr_korean_ci     |      2 |
+| koi8u    | KOI8-U Ukrainian                | koi8u_general_ci    |      1 |
+| gb2312   | GB2312 Simplified Chinese       | gb2312_chinese_ci   |      2 |
+| greek    | ISO 8859-7 Greek                | greek_general_ci    |      1 |
+| cp1250   | Windows Central European        | cp1250_general_ci   |      1 |
+| gbk      | GBK Simplified Chinese          | gbk_chinese_ci      |      2 |
+| latin5   | ISO 8859-9 Turkish              | latin5_turkish_ci   |      1 |
+| armscii8 | ARMSCII-8 Armenian              | armscii8_general_ci |      1 |
+| utf8     | UTF-8 Unicode                   | utf8_general_ci     |      3 |
+| ucs2     | UCS-2 Unicode                   | ucs2_general_ci     |      2 |
+| cp866    | DOS Russian                     | cp866_general_ci    |      1 |
+| keybcs2  | DOS Kamenicky Czech-Slovak      | keybcs2_general_ci  |      1 |
+| macce    | Mac Central European            | macce_general_ci    |      1 |
+| macroman | Mac West European               | macroman_general_ci |      1 |
+| cp852    | DOS Central European            | cp852_general_ci    |      1 |
+| latin7   | ISO 8859-13 Baltic              | latin7_general_ci   |      1 |
+| utf8mb4  | UTF-8 Unicode                   | utf8mb4_general_ci  |      4 |
+| cp1251   | Windows Cyrillic                | cp1251_general_ci   |      1 |
+| utf16    | UTF-16 Unicode                  | utf16_general_ci    |      4 |
+| utf16le  | UTF-16LE Unicode                | utf16le_general_ci  |      4 |
+| cp1256   | Windows Arabic                  | cp1256_general_ci   |      1 |
+| cp1257   | Windows Baltic                  | cp1257_general_ci   |      1 |
+| utf32    | UTF-32 Unicode                  | utf32_general_ci    |      4 |
+| binary   | Binary pseudo charset           | binary              |      1 |
+| geostd8  | GEOSTD8 Georgian                | geostd8_general_ci  |      1 |
+| cp932    | SJIS for Windows Japanese       | cp932_japanese_ci   |      2 |
+| eucjpms  | UJIS for Windows Japanese       | eucjpms_japanese_ci |      3 |
+| gb18030  | China National Standard GB18030 | gb18030_chinese_ci  |      4 |
++----------+---------------------------------+---------------------+--------+</code></pre><p>查看以 “UTF8” 开头的字符集</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; SHOW CHARACTER SET LIKE &#39;utf8%&#39;;
++---------+---------------+--------------------+--------+
+| Charset | Description   | Default collation  | Maxlen |
++---------+---------------+--------------------+--------+
+| utf8    | UTF-8 Unicode | utf8_general_ci    |      3 |
+| utf8mb4 | UTF-8 Unicode | utf8mb4_general_ci |      4 |
++---------+---------------+--------------------+--------+</code></pre><p>查看MYSQL数据库服务器和数据库字符集</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">show variables like &#39;%character%&#39;;
+show variables like &#39;collation%&#39;;</code></pre><h3 id="3）查看数据库"><a href="#3）查看数据库" class="headerlink" title="3）查看数据库"></a>3）查看数据库</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SHOW &#123;DATABASES | SCHEMAS&#125; [LIKE &#39;pattern&#39; | WHERE expr]
+SHOW CREATE DATABASE db_name</code></pre><p><strong>命令示例：</strong></p><p>显示所有数据库：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+</code></pre><p>显示数据库详细信息：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; show create database mysql;
++----------+------------------------------------------------------------------+
+| Database | Create Database                                                  |
++----------+------------------------------------------------------------------+
+| mysql    | CREATE DATABASE &#96;mysql&#96; &#x2F;*!40100 DEFAULT CHARACTER SET latin1 *&#x2F; |
++----------+------------------------------------------------------------------+
+1 row in set (0.00 sec)</code></pre><h2 id="2-创建数据库"><a href="#2-创建数据库" class="headerlink" title="2. 创建数据库"></a>2. 创建数据库</h2><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE &#123;DATABASE | SCHEMA&#125; [IF NOT EXISTS] db_name
+    [create_option] ...
+
+create_option: [DEFAULT] &#123;
+    CHARACTER SET [&#x3D;] charset_name
+  | COLLATE [&#x3D;] collation_name
+&#125;
+# DATABASE与SCHEMA为同义词
+# [IF NOT EXISTS] 当 db_neme 不存在时才会执行
+# CHARACTER SET 设置数据库字符集</code></pre><p><strong>命令示例：</strong></p><p>创建名称为<code>Test_db</code>的数据库：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE DATABASE Test_db;
+Query OK, 1 row affected (0.00 sec)
+
+# 继续创建相同名称数据库
+mysql&gt; CREATE DATABASE Test_db;
+ERROR 1007 (HY000): Can&#39;t create database &#39;test_db&#39;; database exists
+# 继续创建相同名称数据库，使用 IF NOT EXISTS 参数
+mysql&gt; CREATE DATABASE IF NOT EXISTS Test_db;
+Query OK, 1 row affected, 1 warning (0.00 sec)</code></pre><p>创建<code>Test_db</code>数据库，设置字符集为<code>UTF8</code></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE DATABASE Test_db CHARACTER SET &#x3D; utf8;
+Query OK, 1 row affected (0.00 sec)</code></pre><h2 id="3-使用数据库"><a href="#3-使用数据库" class="headerlink" title="3. 使用数据库"></a>3. 使用数据库</h2><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">USE db_name</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">USE db1;
+SELECT COUNT(*) FROM mytable;   # selects from db1.mytable
+USE db2;
+SELECT COUNT(*) FROM mytable;   # selects from db2.mytable</code></pre><h2 id="4-删除数据库"><a href="#4-删除数据库" class="headerlink" title="4. 删除数据库"></a>4. 删除数据库</h2><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">DROP &#123;DATABASE | SCHEMA&#125; [IF EXISTS] db_name</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">DROP DATABASE db1;</code></pre><h1 id="二、数据表的基本操作"><a href="#二、数据表的基本操作" class="headerlink" title="二、数据表的基本操作"></a>二、数据表的基本操作</h1><h2 id="1-查看数据表"><a href="#1-查看数据表" class="headerlink" title="1. 查看数据表"></a>1. 查看数据表</h2><h3 id="1）显示数据表"><a href="#1）显示数据表" class="headerlink" title="1）显示数据表"></a>1）显示数据表</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SHOW [FULL] TABLES [&#123;FROM | IN&#125; db_name] [LIKE &#39;pattern&#39; | WHERE expr]</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 显示mysql数据库所有表
+SHOW TABLES FROM mysql;</code></pre><h3 id="2）查看数据表信息"><a href="#2）查看数据表信息" class="headerlink" title="2）查看数据表信息"></a>2）查看数据表信息</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SHOW CREATE TABLE tbl_name</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; SHOW CREATE TABLE t\G
+*************************** 1. row ***************************
+       Table: t
+Create Table: CREATE TABLE &#96;t&#96; (
+  &#96;id&#96; int(11) NOT NULL AUTO_INCREMENT,
+  &#96;s&#96; char(60) DEFAULT NULL,
+  PRIMARY KEY (&#96;id&#96;)
+) ENGINE&#x3D;InnoDB DEFAULT CHARSET&#x3D;latin1
+
+mysql&gt; CREATE TABLE t1 (c1 INT PRIMARY KEY) ROW_FORMAT&#x3D;COMPACT ENGINE&#x3D;InnoDB;
+mysql&gt; ALTER TABLE t1 ENGINE&#x3D;MyISAM;
+mysql&gt; SHOW CREATE TABLE t1\G
+*************************** 1. row ***************************
+       Table: t1
+Create Table: CREATE TABLE &#96;t1&#96; (
+  &#96;c1&#96; int(11) NOT NULL,
+  PRIMARY KEY (&#96;c1&#96;)
+) ENGINE&#x3D;MyISAM DEFAULT CHARSET&#x3D;latin1 ROW_FORMAT&#x3D;COMPACT</code></pre><h3 id="3）查看数据表结构"><a href="#3）查看数据表结构" class="headerlink" title="3）查看数据表结构"></a>3）查看数据表结构</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">&#123;EXPLAIN | DESCRIBE | DESC&#125;
+    tbl_name [col_name | wild]
+
+&#123;EXPLAIN | DESCRIBE | DESC&#125;
+    [explain_type]
+    &#123;explainable_stmt | FOR CONNECTION connection_id&#125;
+
+explain_type: &#123;
+    EXTENDED
+  | PARTITIONS
+  | FORMAT &#x3D; format_name
+&#125;
+
+format_name: &#123;
+    TRADITIONAL
+  | JSON
+&#125;
+
+explainable_stmt: &#123;
+    SELECT statement
+  | DELETE statement
+  | INSERT statement
+  | REPLACE statement
+  | UPDATE statement
+&#125;</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 查看 user 数据表结构
+DESC user;
+# 查看 Test_tbl 表结构
+DESC Test_tbl;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| ID     | int(11)     | YES  |     | NULL    |       |
+| NAME   | varchar(25) | YES  |     | NULL    |       |
+| DeptId | int(11)     | YES  |     | NULL    |       |
++--------+-------------+------+-----+---------+-------+</code></pre><h2 id="2-创建数据表"><a href="#2-创建数据表" class="headerlink" title="2. 创建数据表"></a>2. 创建数据表</h2><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name
+    (create_definition,...)
+    [table_options]
+    [partition_options]
+
+CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name
+    [(create_definition,...)]
+    [table_options]
+    [partition_options]
+    [IGNORE | REPLACE]
+    [AS] query_expression
+
+CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name
+    &#123; LIKE old_tbl_name | (LIKE old_tbl_name) &#125;
+
+create_definition: &#123;
+    col_name column_definition
+  | &#123;INDEX | KEY&#125; [index_name] [index_type] (key_part,...)
+      [index_option] ...
+  | &#123;FULLTEXT | SPATIAL&#125; [INDEX | KEY] [index_name] (key_part,...)
+      [index_option] ...
+  | [CONSTRAINT [symbol]] PRIMARY KEY
+      [index_type] (key_part,...)
+      [index_option] ...
+  | [CONSTRAINT [symbol]] UNIQUE [INDEX | KEY]
+      [index_name] [index_type] (key_part,...)
+      [index_option] ...
+  | [CONSTRAINT [symbol]] FOREIGN KEY
+      [index_name] (col_name,...)
+      reference_definition
+  | CHECK (expr)
+&#125;
+
+column_definition: &#123;
+    data_type [NOT NULL | NULL] [DEFAULT default_value]
+      [AUTO_INCREMENT] [UNIQUE [KEY]] [[PRIMARY] KEY]
+      [COMMENT &#39;string&#39;]
+      [COLLATE collation_name]
+      [COLUMN_FORMAT &#123;FIXED | DYNAMIC | DEFAULT&#125;]
+      [STORAGE &#123;DISK | MEMORY&#125;]
+      [reference_definition]
+  | data_type
+      [COLLATE collation_name]
+      [GENERATED ALWAYS] AS (expr)
+      [VIRTUAL | STORED] [NOT NULL | NULL]
+      [UNIQUE [KEY]] [[PRIMARY] KEY]
+      [COMMENT &#39;string&#39;]
+      [reference_definition]
+&#125;
+
+data_type:
+    (see https:&#x2F;&#x2F;dev.mysql.com&#x2F;doc&#x2F;refman&#x2F;5.7&#x2F;en&#x2F;data-types.html)
+
+key_part:
+    col_name [(length)] [ASC | DESC]
+
+index_type:
+    USING &#123;BTREE | HASH&#125;
+
+index_option: &#123;
+    KEY_BLOCK_SIZE [&#x3D;] value
+  | index_type
+  | WITH PARSER parser_name
+  | COMMENT &#39;string&#39;
+&#125;
+
+reference_definition:
+    REFERENCES tbl_name (key_part,...)
+      [MATCH FULL | MATCH PARTIAL | MATCH SIMPLE]
+      [ON DELETE reference_option]
+      [ON UPDATE reference_option]
+
+reference_option:
+    RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT
+
+table_options:
+    table_option [[,] table_option] ...
+
+table_option: &#123;
+    AUTO_INCREMENT [&#x3D;] value
+  | AVG_ROW_LENGTH [&#x3D;] value
+  | [DEFAULT] CHARACTER SET [&#x3D;] charset_name
+  | CHECKSUM [&#x3D;] &#123;0 | 1&#125;
+  | [DEFAULT] COLLATE [&#x3D;] collation_name
+  | COMMENT [&#x3D;] &#39;string&#39;
+  | COMPRESSION [&#x3D;] &#123;&#39;ZLIB&#39; | &#39;LZ4&#39; | &#39;NONE&#39;&#125;
+  | CONNECTION [&#x3D;] &#39;connect_string&#39;
+  | &#123;DATA | INDEX&#125; DIRECTORY [&#x3D;] &#39;absolute path to directory&#39;
+  | DELAY_KEY_WRITE [&#x3D;] &#123;0 | 1&#125;
+  | ENCRYPTION [&#x3D;] &#123;&#39;Y&#39; | &#39;N&#39;&#125;
+  | ENGINE [&#x3D;] engine_name
+  | INSERT_METHOD [&#x3D;] &#123; NO | FIRST | LAST &#125;
+  | KEY_BLOCK_SIZE [&#x3D;] value
+  | MAX_ROWS [&#x3D;] value
+  | MIN_ROWS [&#x3D;] value
+  | PACK_KEYS [&#x3D;] &#123;0 | 1 | DEFAULT&#125;
+  | PASSWORD [&#x3D;] &#39;string&#39;
+  | ROW_FORMAT [&#x3D;] &#123;DEFAULT | DYNAMIC | FIXED | COMPRESSED | REDUNDANT | COMPACT&#125;
+  | STATS_AUTO_RECALC [&#x3D;] &#123;DEFAULT | 0 | 1&#125;
+  | STATS_PERSISTENT [&#x3D;] &#123;DEFAULT | 0 | 1&#125;
+  | STATS_SAMPLE_PAGES [&#x3D;] value
+  | TABLESPACE tablespace_name [STORAGE &#123;DISK | MEMORY&#125;]
+  | UNION [&#x3D;] (tbl_name[,tbl_name]...)
+&#125;
+
+partition_options:
+    PARTITION BY
+        &#123; [LINEAR] HASH(expr)
+        | [LINEAR] KEY [ALGORITHM&#x3D;&#123;1 | 2&#125;] (column_list)
+        | RANGE&#123;(expr) | COLUMNS(column_list)&#125;
+        | LIST&#123;(expr) | COLUMNS(column_list)&#125; &#125;
+    [PARTITIONS num]
+    [SUBPARTITION BY
+        &#123; [LINEAR] HASH(expr)
+        | [LINEAR] KEY [ALGORITHM&#x3D;&#123;1 | 2&#125;] (column_list) &#125;
+      [SUBPARTITIONS num]
+    ]
+    [(partition_definition [, partition_definition] ...)]
+
+partition_definition:
+    PARTITION partition_name
+        [VALUES
+            &#123;LESS THAN &#123;(expr | value_list) | MAXVALUE&#125;
+            |
+            IN (value_list)&#125;]
+        [[STORAGE] ENGINE [&#x3D;] engine_name]
+        [COMMENT [&#x3D;] &#39;string&#39; ]
+        [DATA DIRECTORY [&#x3D;] &#39;data_dir&#39;]
+        [INDEX DIRECTORY [&#x3D;] &#39;index_dir&#39;]
+        [MAX_ROWS [&#x3D;] max_number_of_rows]
+        [MIN_ROWS [&#x3D;] min_number_of_rows]
+        [TABLESPACE [&#x3D;] tablespace_name]
+        [(subpartition_definition [, subpartition_definition] ...)]
+
+subpartition_definition:
+    SUBPARTITION logical_name
+        [[STORAGE] ENGINE [&#x3D;] engine_name]
+        [COMMENT [&#x3D;] &#39;string&#39; ]
+        [DATA DIRECTORY [&#x3D;] &#39;data_dir&#39;]
+        [INDEX DIRECTORY [&#x3D;] &#39;index_dir&#39;]
+        [MAX_ROWS [&#x3D;] max_number_of_rows]
+        [MIN_ROWS [&#x3D;] min_number_of_rows]
+        [TABLESPACE [&#x3D;] tablespace_name]
+
+query_expression:
+    SELECT ...   (Some valid select or union statement)</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 创建名称为Test_tbl，且没有任何约束的数据表
+mysql&gt; create table Test_tbl ( ID INT(11), NAME VARCHAR(25), DeptId INT(11) );</code></pre><h3 id="1）主键约束"><a href="#1）主键约束" class="headerlink" title="1）主键约束"></a>1）主键约束</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type [PRIMARY KEY],...)</code></pre><p><strong>命令示例：</strong></p><p>创建数据表，名称为<code>Test_tbl1</code>，<code>ID</code>字段为主键索引：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE TABLE Test_tbl1 (ID INT (11) PRIMARY KEY,NAME VARCHAR (25));</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl1;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| ID    | int(11)     | NO   | PRI | NULL    |       |
+| NAME  | varchar(25) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+</code></pre><h3 id="2）唯一约束"><a href="#2）唯一约束" class="headerlink" title="2）唯一约束"></a>2）唯一约束</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type [UNIQUE],...)</code></pre><p><strong>命令示例：</strong></p><p>创建数据表，名称为<code>Test_tbl2</code>，<code>ID</code>字段为唯一索引：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE TABLE Test_tbl2 (ID INT (11) UNIQUE,NAME VARCHAR (25));</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl2;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| ID    | int(11)     | YES  | UNI | NULL    |       |
+| NAME  | varchar(25) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+</code></pre><h3 id="3）默认约束"><a href="#3）默认约束" class="headerlink" title="3）默认约束"></a>3）默认约束</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type [DEFAULT default_value],...)</code></pre><p><strong>命令示例：</strong></p><p>创建数据表，名称为<code>Test_tbl3</code>，<code>Nation</code>字段为默认值为<code>China</code></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE TABLE Test_tbl3 (ID INT (11),NAME VARCHAR (25),Nation VARCHAR (25) DEFAULT &quot;China&quot;);</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl3;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| ID     | int(11)     | YES  |     | NULL    |       |
+| NAME   | varchar(25) | YES  |     | NULL    |       |
+| Nation | varchar(25) | YES  |     | China   |       |
++--------+-------------+------+-----+---------+-------+</code></pre><h3 id="4）检查约束"><a href="#4）检查约束" class="headerlink" title="4）检查约束#"></a>4）检查约束#</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">#</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">#</code></pre><h3 id="5）外键约束"><a href="#5）外键约束" class="headerlink" title="5）外键约束"></a>5）外键约束</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type,...[CONSTRAINT [symbol]] FOREIGN KEY (col_name,...) REFERENCES tbl_name (key_part,...))</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 创建数据表，名称为&#96;Test_tbl4&#96;，字段ID为主键
+mysql&gt; CREATE TABLE Test_tbl4 (ID INT (11) PRIMARY KEY,NAME VARCHAR (25));
+
+# 创建数据表，名称为&#96;Test_tbl5&#96;，字段&#96;DeptID&#96;使用外键约束
+mysql&gt; CREATE TABLE Test_tbl5 (ID INT (11),NAME VARCHAR (25),DeptID INT (11),CONSTRAINT test_tbl5_ibfk_1 FOREIGN KEY (DeptID) REFERENCES Test_tbl4 (ID));</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl5;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| ID     | int(11)     | YES  |     | NULL    |       |
+| NAME   | varchar(25) | YES  |     | NULL    |       |
+| DeptID | int(11)     | YES  | MUL | NULL    |       |
++--------+-------------+------+-----+---------+-------+
+3 rows in set (0.00 sec)</code></pre><h3 id="6）非空约束"><a href="#6）非空约束" class="headerlink" title="6）非空约束"></a>6）非空约束</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type [NOT NULL | NULL],...)</code></pre><p><strong>命令示例：</strong></p><p>创建数据表，名称为<code>Test_tbl6</code>，<code>NAME</code>字段不允许为空：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE TABLE Test_tbl6 (ID INT (11) PRIMARY KEY,NAME VARCHAR (25) NOT NULL );</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl6;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| ID    | int(11)     | NO   | PRI | NULL    |       |
+| NAME  | varchar(25) | NO   |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+</code></pre><h3 id="7）自动增长"><a href="#7）自动增长" class="headerlink" title="7）自动增长"></a>7）自动增长</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">CREATE TABLE [IF NOT EXISTS] tbl_name (col_name data_type [PRIMARY KEY | UNIQUE] [AUTO_INCREMENT],...)
+# 设置自动增长，应当确保字段的唯一性，与主键约束或唯一约束配合使用</code></pre><p><strong>命令示例：</strong></p><p>创建数据表，名称为<code>Test_tbl7</code>，设置主键自增：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; CREATE TABLE Test_tbl7 (ID INT (11) PRIMARY KEY auto_increment,NAME VARCHAR (25));</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl7;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| ID    | int(11)     | NO   | PRI | NULL    | auto_increment |
+| NAME  | varchar(25) | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+</code></pre><h2 id="3-修改数据表"><a href="#3-修改数据表" class="headerlink" title="3. 修改数据表"></a>3. 修改数据表</h2><h3 id="1）添加字段"><a href="#1）添加字段" class="headerlink" title="1）添加字段"></a>1）添加字段</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">ALTER TABLE tbl_name ADD col_name column_definition [FIRST | AFTER col_name]
+# FIRST: 在第一列插入字段
+# AFTER: 在 col_name 后插入字段</code></pre><p><strong>命令示例：</strong></p><p>表<code>Test_tbl</code>的表结构：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl;
++--------+-------------+------+-----+---------+-------+
+| Field  | Type        | Null | Key | Default | Extra |
++--------+-------------+------+-----+---------+-------+
+| ID     | int(11)     | YES  |     | NULL    |       |
+| NAME   | varchar(25) | YES  |     | NULL    |       |
+| DeptId | int(11)     | YES  |     | NULL    |       |
++--------+-------------+------+-----+---------+-------+</code></pre><p>添加<code>Test_tbl</code>字段：</p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 在表最前列添加&#96;SN&#96;字段
+mysql&gt; ALTER TABLE Test_tbl ADD SN INT (11) UNIQUE auto_increment FIRST;
+# 在&#96;NAME&#96;字段后添加&#96;Nation&#96;字段
+mysql&gt; ALTER TABLE Test_tbl ADD Nation VARCHAR (25) DEFAULT &quot;China&quot; AFTER NAME;</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl;
++--------+-------------+------+-----+---------+----------------+
+| Field  | Type        | Null | Key | Default | Extra          |
++--------+-------------+------+-----+---------+----------------+
+| SN     | int(11)     | NO   | PRI | NULL    | auto_increment |
+| ID     | int(11)     | YES  |     | NULL    |                |
+| NAME   | varchar(25) | YES  |     | NULL    |                |
+| Nation | varchar(25) | YES  |     | China   |                |
+| DeptId | int(11)     | YES  |     | NULL    |                |
++--------+-------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)</code></pre><h3 id="2）修改字段"><a href="#2）修改字段" class="headerlink" title="2）修改字段"></a>2）修改字段</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">ALTER TABLE tbl_name CHANGE old_col_name new_col_name column_definition [FIRST | AFTER col_name]
+ALTER TABLE tbl_name MODIFY col_name column_definition [FIRST | AFTER col_name]</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 将&#96;test_tbl&#96;表&#96;ID&#96;字段重命名为&#96;IDs&#96;
+mysql&gt; ALTER TABLE Test_tbl CHANGE ID IDs INT (11);
+
+# 修改&#96;NAME&#96;字段数据类型为&#96;char&#96;
+mysql&gt; ALTER TABLE Test_tbl MODIFY NAME CHAR (25);</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">mysql&gt; DESC Test_tbl;
++--------+-------------+------+-----+---------+----------------+
+| Field  | Type        | Null | Key | Default | Extra          |
++--------+-------------+------+-----+---------+----------------+
+| SN     | int(11)     | NO   | PRI | NULL    | auto_increment |
+| IDs    | int(11)     | YES  |     | NULL    |                |
+| NAME   | char(25)    | YES  |     | NULL    |                |
+| Nation | varchar(25) | YES  |     | China   |                |
+| DeptId | int(11)     | YES  |     | NULL    |                |
++--------+-------------+------+-----+---------+----------------+</code></pre><h3 id="3）添加记录"><a href="#3）添加记录" class="headerlink" title="3）添加记录"></a>3）添加记录</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    &#123;VALUES | VALUE&#125; (value_list) [, (value_list)] ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    SET assignment_list
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+INSERT [LOW_PRIORITY | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    SELECT ...
+    [ON DUPLICATE KEY UPDATE assignment_list]
+
+value:
+    &#123;expr | DEFAULT&#125;
+
+value_list:
+    value [, value] ...
+
+assignment:
+    col_name &#x3D; value
+
+assignment_list:
+    assignment [, assignment] ...</code></pre><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">INSERT [INTO] tbl_name (col_name,...) VALUES (value,...),...</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">INSERT INTO Test_tbl (ID,NAME) VALUES (1,&quot;lisi&quot;);</code></pre><h3 id="4）修改记录"><a href="#4）修改记录" class="headerlink" title="4）修改记录"></a>4）修改记录</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">UPDATE tbl_name SET col_name &#x3D; value [WHERE where_condition] [ORDER BY ...] [LIMIT row_count]</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">UPDATE Test_tbl SET ID&#x3D;1 WHERE NAME&#x3D;&quot;lisi&quot;;</code></pre><h3 id="5）删除记录"><a href="#5）删除记录" class="headerlink" title="5）删除记录"></a>5）删除记录</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">DELETE FROM tbl_name[.*] [WHERE where_condition ]</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">DELETE FROM Test_tbl WHERE ID &#x3D; 1;</code></pre><h2 id="4-删除数据表"><a href="#4-删除数据表" class="headerlink" title="4. 删除数据表"></a>4. 删除数据表</h2><h3 id="1）删除外键"><a href="#1）删除外键" class="headerlink" title="1）删除外键"></a>1）删除外键</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">ALTER TABLE tbl_name DROP FOREIGN KEY fk_symbol</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 查看数据表&#96;Test_tbl5&#96;的外键名
+mysql&gt; SHOW CREATE TABLE Test_tbl5 \G
+*************************** 1. row ***************************
+       Table: Test_tbl5
+Create Table: CREATE TABLE &#96;test_tbl5&#96; (
+  &#96;ID&#96; int(11) DEFAULT NULL,
+  &#96;NAME&#96; varchar(25) DEFAULT NULL,
+  &#96;DeptID&#96; int(11) DEFAULT NULL,
+  KEY &#96;test_tbl5_ibfk_1&#96; (&#96;DeptID&#96;),
+  CONSTRAINT &#96;test_tbl5_ibfk_1&#96; FOREIGN KEY (&#96;DeptID&#96;) REFERENCES &#96;test_tbl4&#96; (&#96;ID&#96;)
+) ENGINE&#x3D;InnoDB DEFAULT CHARSET&#x3D;utf8
+1 row in set (0.00 sec)
+
+# 删除表&#96;Test_tbl5&#96;的外键
+mysql&gt; ALTER TABLE Test_tbl5 DROP FOREIGN KEY test_tbl5_ibfk_1;</code></pre><h3 id="2）删除数据表"><a href="#2）删除数据表" class="headerlink" title="2）删除数据表"></a>2）删除数据表</h3><p><strong>命令语法：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">DROP [TEMPORARY] TABLE [IF EXISTS] tbl_name [, tbl_name] ... [RESTRICT | CASCADE]</code></pre><p><strong>命令示例：</strong></p><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql"># 删除&#96;Test_tbl&#96;表
+mysql&gt; DROP TABLE IF EXISTS Test_tbl;</code></pre><h1 id="三、数据类型与运算符"><a href="#三、数据类型与运算符" class="headerlink" title="三、数据类型与运算符"></a>三、数据类型与运算符</h1><h1 id="四、数据库函数"><a href="#四、数据库函数" class="headerlink" title="四、数据库函数"></a>四、数据库函数</h1><h1 id="五、数据库查询"><a href="#五、数据库查询" class="headerlink" title="五、数据库查询"></a>五、数据库查询</h1><pre class="line-numbers language-sql" data-language="sql"><code class="language-sql">SELECT
+    [ALL | DISTINCT | DISTINCTROW ]
+    [HIGH_PRIORITY]
+    [STRAIGHT_JOIN]
+    [SQL_SMALL_RESULT] [SQL_BIG_RESULT] [SQL_BUFFER_RESULT]
+    [SQL_CACHE | SQL_NO_CACHE] [SQL_CALC_FOUND_ROWS]
+    select_expr [, select_expr] ...
+    [into_option]
+    [FROM table_references
+      [PARTITION partition_list]]
+    [WHERE where_condition]
+    [GROUP BY &#123;col_name | expr | position&#125;
+      [ASC | DESC], ... [WITH ROLLUP]]
+    [HAVING where_condition]
+    [ORDER BY &#123;col_name | expr | position&#125;
+      [ASC | DESC], ...]
+    [LIMIT &#123;[offset,] row_count | row_count OFFSET offset&#125;]
+    [PROCEDURE procedure_name(argument_list)]
+    [into_option]
+    [FOR UPDATE | LOCK IN SHARE MODE]
+
+into_option: &#123;
+    INTO OUTFILE &#39;file_name&#39;
+        [CHARACTER SET charset_name]
+        export_options
+  | INTO DUMPFILE &#39;file_name&#39;
+  | INTO var_name [, var_name] ...
+&#125;</code></pre></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：MySQL 命令笔记</li><li>本文作者：白羊</li><li>创建时间：2021-09-08 18:17:44</li><li>本文链接：https://hellolisihui.com/page/MySQL/MySQL命令笔记/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-next"><a class="next" rel="next" href="/page/Other/Git%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/"><span class="title flex-center"><span class="post-nav-title-item">Git 命令总结</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C"><span class="nav-text">一、数据库的基本操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-text">1. 查看数据库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E5%BC%95%E6%93%8E"><span class="nav-text">1）查看数据库引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%97%E7%AC%A6%E9%9B%86"><span class="nav-text">2）查看数据库字符集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-text">3）查看数据库</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-text">2. 创建数据库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BD%BF%E7%94%A8%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-text">3. 使用数据库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-text">4. 删除数据库</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%95%B0%E6%8D%AE%E8%A1%A8%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C"><span class="nav-text">二、数据表的基本操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">1. 查看数据表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E6%98%BE%E7%A4%BA%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">1）显示数据表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E8%A1%A8%E4%BF%A1%E6%81%AF"><span class="nav-text">2）查看数据表信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89%E6%9F%A5%E7%9C%8B%E6%95%B0%E6%8D%AE%E8%A1%A8%E7%BB%93%E6%9E%84"><span class="nav-text">3）查看数据表结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">2. 创建数据表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E4%B8%BB%E9%94%AE%E7%BA%A6%E6%9D%9F"><span class="nav-text">1）主键约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E5%94%AF%E4%B8%80%E7%BA%A6%E6%9D%9F"><span class="nav-text">2）唯一约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89%E9%BB%98%E8%AE%A4%E7%BA%A6%E6%9D%9F"><span class="nav-text">3）默认约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%EF%BC%89%E6%A3%80%E6%9F%A5%E7%BA%A6%E6%9D%9F"><span class="nav-text">4）检查约束#</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%EF%BC%89%E5%A4%96%E9%94%AE%E7%BA%A6%E6%9D%9F"><span class="nav-text">5）外键约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6%EF%BC%89%E9%9D%9E%E7%A9%BA%E7%BA%A6%E6%9D%9F"><span class="nav-text">6）非空约束</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7%EF%BC%89%E8%87%AA%E5%8A%A8%E5%A2%9E%E9%95%BF"><span class="nav-text">7）自动增长</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BF%AE%E6%94%B9%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">3. 修改数据表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E6%B7%BB%E5%8A%A0%E5%AD%97%E6%AE%B5"><span class="nav-text">1）添加字段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E4%BF%AE%E6%94%B9%E5%AD%97%E6%AE%B5"><span class="nav-text">2）修改字段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89%E6%B7%BB%E5%8A%A0%E8%AE%B0%E5%BD%95"><span class="nav-text">3）添加记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%EF%BC%89%E4%BF%AE%E6%94%B9%E8%AE%B0%E5%BD%95"><span class="nav-text">4）修改记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%EF%BC%89%E5%88%A0%E9%99%A4%E8%AE%B0%E5%BD%95"><span class="nav-text">5）删除记录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">4. 删除数据表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89%E5%88%A0%E9%99%A4%E5%A4%96%E9%94%AE"><span class="nav-text">1）删除外键</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89%E5%88%A0%E9%99%A4%E6%95%B0%E6%8D%AE%E8%A1%A8"><span class="nav-text">2）删除数据表</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E4%B8%8E%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="nav-text">三、数据类型与运算符</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93%E5%87%BD%E6%95%B0"><span class="nav-text">四、数据库函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9F%A5%E8%AF%A2"><span class="nav-text">五、数据库查询</span></a></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>

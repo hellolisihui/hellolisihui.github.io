@@ -1,0 +1,514 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>Git基础 | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">Git基础</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2020-07-20 21:37:46 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/Other/">Other</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/Git/">Git</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><blockquote><p>文章转载：<a class="link" target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/896043488029600">https://www.liaoxuefeng.com/wiki/896043488029600<i class="fas fa-external-link-alt"></i></a></p></blockquote><h1 id="一、Git概述"><a href="#一、Git概述" class="headerlink" title="一、Git概述"></a>一、Git概述</h1><h2 id="1-什么是Git？"><a href="#1-什么是Git？" class="headerlink" title="1. 什么是Git？"></a>1. 什么是Git？</h2><p>Git是目前世界上最先进的分布式版本控制系统（没有之一）。</p><h2 id="2-什么是版本控制系统？"><a href="#2-什么是版本控制系统？" class="headerlink" title="2. 什么是版本控制系统？"></a>2. 什么是版本控制系统？</h2><p>版本控制系统 (Version Control System)，是一种记录一个或若干文件内容变化，以便将来查阅特定版本修订情况的系统。版本控制系统不仅可以应用于软件源代码的文本文件，而且可以对任何类型的文件进行版本控制。</p><h2 id="3-Git的诞生"><a href="#3-Git的诞生" class="headerlink" title="3. Git的诞生"></a>3. Git的诞生</h2><p>很多人都知道，Linus在1991年创建了开源的Linux，从此，Linux系统不断发展，已经成为最大的服务器系统软件了。</p><p>Linus虽然创建了Linux，但Linux的壮大是靠全世界热心的志愿者参与的，这么多人在世界各地为Linux编写代码，那Linux的代码是如何管理的呢？</p><p>事实是，在2002年以前，世界各地的志愿者把源代码文件通过diff的方式发给Linus，然后由Linus本人通过手工方式合并代码！</p><p>你也许会想，为什么Linus不把Linux代码放到版本控制系统里呢？不是有CVS、SVN这些免费的版本控制系统吗？因为Linus坚定地反对CVS和SVN，这些集中式的版本控制系统不但速度慢，而且必须联网才能使用。有一些商用的版本控制系统，虽然比CVS、SVN好用，但那是付费的，和Linux的开源精神不符。</p><p>不过，到了2002年，Linux系统已经发展了十年了，代码库之大让Linus很难继续通过手工方式管理了，社区的弟兄们也对这种方式表达了强烈不满，于是Linus选择了一个商业的版本控制系统BitKeeper，BitKeeper的东家BitMover公司出于人道主义精神，授权Linux社区免费使用这个版本控制系统。</p><p>安定团结的大好局面在2005年就被打破了，原因是Linux社区牛人聚集，不免沾染了一些梁山好汉的江湖习气。开发Samba的Andrew试图破解BitKeeper的协议（这么干的其实也不只他一个），被BitMover公司发现了（监控工作做得不错！），于是BitMover公司怒了，要收回Linux社区的免费使用权。</p><p>Linus可以向BitMover公司道个歉，保证以后严格管教弟兄们，嗯，这是不可能的。实际情况是这样的：</p><p>Linus花了两周时间自己用C写了一个分布式版本控制系统，这就是Git！一个月之内，Linux系统的源码已经由Git管理了！牛是怎么定义的呢？大家可以体会一下。</p><p>Git迅速成为最流行的分布式版本控制系统，尤其是2008年，GitHub网站上线了，它为开源项目免费提供Git存储，无数开源项目开始迁移至GitHub，包括jQuery，PHP，Ruby等等。</p><p>历史就是这么偶然，如果不是当年BitMover公司威胁Linux社区，可能现在我们就没有免费而超级好用的Git了。</p><h2 id="4-集中式VS分布式"><a href="#4-集中式VS分布式" class="headerlink" title="4. 集中式VS分布式"></a>4. 集中式VS分布式</h2><p>有待总结！</p><h1 id="二、Git的安装"><a href="#二、Git的安装" class="headerlink" title="二、Git的安装"></a>二、Git的安装</h1><p>官方文档：<a class="link" target="_blank" rel="noopener" href="https://git-scm.com/book/zh/v2/%E8%B5%B7%E6%AD%A5-%E5%AE%89%E8%A3%85-Git">https://git-scm.com/book/zh/v2/%E8%B5%B7%E6%AD%A5-%E5%AE%89%E8%A3%85-Git<i class="fas fa-external-link-alt"></i></a></p><p>最早Git是在Linux上开发的，很长一段时间内，Git也只能在Linux和Unix系统上跑。不过，现在也慢慢把它移植到了Windows上。现在，Git可以在Linux、Unix、Mac和Windows这几大平台上正常运行。</p><h2 id="1-Linux上安装Git"><a href="#1-Linux上安装Git" class="headerlink" title="1. Linux上安装Git"></a>1. Linux上安装Git</h2><p><strong>CentOS 7上安装Git</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install git</code></pre><p>如果是其他Linux版本，可以直接通过源码安装。先从Git官网下载源码，然后解压，依次输入：<code>./config</code>，<code>make</code>，<code>make install</code>这几个命令安装即可。</p><p>安装完成后，还需要最后一步设置，在命令行输入：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git config --global user.name &quot;Your Name&quot;
+$ git config --global user.email &quot;email@example.com&quot;</code></pre><h2 id="2-Windows上安装Git"><a href="#2-Windows上安装Git" class="headerlink" title="2. Windows上安装Git"></a>2. Windows上安装Git</h2><p>Git官方网站：<a class="link" target="_blank" rel="noopener" href="https://git-scm.com/">https://git-scm.com<i class="fas fa-external-link-alt"></i></a></p><p>官方网站点击Downloads下载安装包，双击运行，默认选项安装即可。</p><p>安装完成后，还需要最后一步设置，在命令行输入：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git config --global user.name &quot;Your Name&quot;
+$ git config --global user.email &quot;email@example.com&quot;</code></pre><h1 id="三、创建版本库"><a href="#三、创建版本库" class="headerlink" title="三、创建版本库"></a>三、创建版本库</h1><p>什么是版本库呢？版本库又名仓库，英文名<strong>Repository</strong>，可以简单理解成一个目录，这个目录里面的所有文件都可以被Git管理起来，每个文件的修改、删除，Git都能跟踪，以便任何时刻都可以追踪历史，或者在将来某个时刻可以“还原”。</p><h2 id="1-创建一个版本仓库"><a href="#1-创建一个版本仓库" class="headerlink" title="1. 创建一个版本仓库"></a>1. 创建一个版本仓库</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ mkdir &#x2F;gitrepo
+$ cd &#x2F;gitrepo</code></pre><blockquote><p>如果使用Windows系统，为了避免遇到各种莫名其妙的问题，请确保目录名（包括父目录）不包含中文。</p></blockquote><p>通过<code>git init</code>命令把这个目录变成Git可以管理的仓库</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git init
+Initialized empty Git repository in &#x2F;gitrepo&#x2F;.git&#x2F;</code></pre><p>创建完成后，会自动生成一个隐藏文件夹<code>.git</code>。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ls -ah
+.  ..  .git
+$ ls .git
+branches  config  description  HEAD  hooks  info  objects  refs</code></pre><ul><li><code>branches</code> 分支目录</li><li><code>config</code> 定义目录特有的配置选项</li><li><code>description</code> 仅供git web使用</li><li><code>HEAD</code>指定当前的分支</li><li><code>hooks</code> git钩子文件</li><li><code>info</code>包含一个全局排除文件（exclude）</li><li><code>objects</code> 存放所有的数据内容</li><li><code>refs</code> 指针文件</li><li><code>index</code> 暂存区文件(初始化时并不存在)</li></ul><h2 id="2-上传文件到暂存区"><a href="#2-上传文件到暂存区" class="headerlink" title="2. 上传文件到暂存区"></a>2. 上传文件到暂存区</h2><p>编写一个<code>README.md</code>文件，内容如下：</p><pre class="line-numbers language-none"><code class="language-none">Git is a version control system.</code></pre><blockquote><p>PS：注意一定要放到<code>gitrepo</code>目录下（子目录也行）</p></blockquote><p><strong>使用命令<code>git add</code>，把文件添加到仓库</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git add README.md		# 单个文件上传
+$ git add .			# 当前目录所有文件上传</code></pre><p>执行上面的命令，没有任何显示，这就对了，Unix的哲学是“没有消息就是好消息”，说明添加成功。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status			# 查看暂存区
+$ git rm --cached README.md	# 把文件从暂存区撤销
+$ git checkout -- README.md	# 已经提交到暂存区，之后再修改内容出错，想回到上次暂存区版本</code></pre><h2 id="3-把文件添加到仓库"><a href="#3-把文件添加到仓库" class="headerlink" title="3. 把文件添加到仓库"></a>3. 把文件添加到仓库</h2><p><strong>使用命令<code>git commit</code>告诉Git，把文件提交到仓库</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git commit -m &quot;add a Readme File&quot;
+[master (root-commit) 222ee32] add a Readme File
+ 1 file changed, 1 insertions(+)
+ create mode 100644 README.md</code></pre><blockquote><p><code>git commit</code>命令：<code>-m</code>后面输入的是本次提交的说明，可以输入任意内容，当然最好是有意义的，这样可以从历史记录里方便地找到改动记录。</p><p><code>git commit</code>命令执行成功后会显示，<code>1 file changed</code>：1个文件被改动（新添加的README.md文件）；<code>1 insertions</code>：插入了1行内容 (README.md有1行内容) 。</p></blockquote><p><strong>后续操作：</strong></p><p><strong>修改README.md内容，使用diff命令查看异同</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &#39;Git is free software.&#39; &gt;&gt; README.md</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git diff README.md
+diff --git a&#x2F;README.md b&#x2F;README.md
+index 7f63a40..46d49bf 100644
+--- a&#x2F;README.md
++++ b&#x2F;README.md
+@@ -1 +1,2 @@
+ Git is a version control system.
++Git is free software.
+
+如果想要提交：git add ... ; git commit ...</code></pre><p>查看版本状态，比对工作区和版本库的异同，并提示</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+# On branch master
+nothing to commit, working directory clean</code></pre><h1 id="四、时光机穿梭"><a href="#四、时光机穿梭" class="headerlink" title="四、时光机穿梭"></a>四、时光机穿梭</h1><h2 id="1-历史版本回退"><a href="#1-历史版本回退" class="headerlink" title="1. 历史版本回退"></a>1. 历史版本回退</h2><h3 id="前提准备工作"><a href="#前提准备工作" class="headerlink" title="前提准备工作"></a>前提准备工作</h3><p>提交文件创建不同版本。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git init
+Initialized empty Git repository in &#x2F;gitrepo&#x2F;.git&#x2F;
+$ vim README.md
+$ git add README.md
+$ git commit -m &quot;add a Readme File&quot;
+[master (root-commit) 8094abc] add a Readme File
+ 1 file changed, 2 insertions(+)
+ create mode 100644 README.md
+$ vim README.md
+$ git add README.md
+$ git commit -m &quot;add Distributed&quot;
+[master b07710e] add Distributed
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+$ vim README.md
+$ git add README.md
+$ git commit -m &quot;append GPL&quot;
+[master 6c0b76e] append GPL
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre><p>版本1：<code>add a Readme File</code></p><pre class="line-numbers language-none"><code class="language-none">Git is a version control system.
+Git is free software.</code></pre><p>版本2：<code>add Distributed</code></p><pre class="line-numbers language-none"><code class="language-none">Git is a distributed version control system.
+Git is free software.</code></pre><p>版本3：<code>append GPL</code></p><pre class="line-numbers language-none"><code class="language-none">Git is a distributed version control system.
+Git is free software distributed under the GPL.</code></pre><h3 id="查看历史版本"><a href="#查看历史版本" class="headerlink" title="查看历史版本"></a>查看历史版本</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git log		# 显示详细信息
+$ git log --oneline		# 显示摘要信息</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git log
+commit 6c0b76e7460b3a97344715d79f85255b13f6ae99
+Author: SSUGMDXTDH &lt;SSUGMDXTDH@163.com&gt;
+Date:   Wed Jul 22 11:39:39 2020 +0800
+    append GPL
+commit b07710eb1c2e055974aa99dcdf524f104a6fa2ef
+Author: SSUGMDXTDH &lt;SSUGMDXTDH@163.com&gt;
+Date:   Wed Jul 22 11:38:49 2020 +0800
+    add Distributed
+commit 8094abc7a9fa2908631f3b925922b92ec5015e59
+Author: SSUGMDXTDH &lt;SSUGMDXTDH@163.com&gt;
+Date:   Wed Jul 22 11:37:40 2020 +0800
+    add a Readme File</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git log --oneline
+6c0b76e append GPL
+b07710e add Distributed
+8094abc add a Readme File</code></pre><h3 id="开始版本回退"><a href="#开始版本回退" class="headerlink" title="开始版本回退"></a>开始版本回退</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ cat README.md
+Git is a distributed version control system.
+Git is free software distributed under the GPL.
+
+$ git reset --hard HEAD^
+HEAD is now at b07710e add Distributed
+
+$ cat README.md
+Git is a distributed version control system.
+Git is free software.</code></pre><pre class="line-numbers language-none"><code class="language-none">git reset --hard HEAD^  #回滚到上个版本，HEAD^^上上版本，HEAD~10回滚到上10个版本
+git reset --hard b07710e  #通告git log 的版本号码回滚，仅写前7位就可</code></pre><h3 id="重返最新版本"><a href="#重返最新版本" class="headerlink" title="重返最新版本"></a>重返最新版本</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git reflog
+b07710e HEAD@&#123;0&#125;: reset: moving to HEAD^
+6c0b76e HEAD@&#123;1&#125;: commit: append GPL
+b07710e HEAD@&#123;2&#125;: commit: add Distributed
+8094abc HEAD@&#123;3&#125;: commit (initial): add a Readme File
+$ git reset --hard 6c0b76e
+HEAD is now at 6c0b76e append GPL
+$ cat README.md
+Git is a distributed version control system.
+Git is free software distributed under the GPL.</code></pre><h2 id="2-工作区-amp-暂存区"><a href="#2-工作区-amp-暂存区" class="headerlink" title="2. 工作区&amp;暂存区"></a>2. 工作区&amp;暂存区</h2><h3 id="工作区（Working-Directory）"><a href="#工作区（Working-Directory）" class="headerlink" title="工作区（Working Directory）"></a>工作区（Working Directory）</h3><p>就是在电脑里能看到的目录，比如上面的<code>gitrepo</code>文件夹就是一个工作区。</p><h3 id="版本库（Repository）"><a href="#版本库（Repository）" class="headerlink" title="版本库（Repository）"></a>版本库（Repository）</h3><p>工作区有一个隐藏目录<code>.git</code>，这个不算工作区，而是Git的版本库。</p><h3 id="暂存区（Stage-Index）"><a href="#暂存区（Stage-Index）" class="headerlink" title="暂存区（Stage/Index）"></a>暂存区（Stage/Index）</h3><p>Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git自动创建的第一个分支<code>master</code>，以及指向<code>master</code>的一个指针叫<code>HEAD</code>。</p><h3 id="俗话说，实践出真知"><a href="#俗话说，实践出真知" class="headerlink" title="俗话说，实践出真知"></a>俗话说，实践出真知</h3><p>对<code>README.md</code>做个修改，比如加上一行内容：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ echo &quot;Git has a mutable index called stage.&quot; &gt;&gt; README.md</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ cat README.md
+Git is a distributed version control system.
+Git is free software distributed under the GPL.
+Git has a mutable index called stage.</code></pre><p>然后，在工作区新增一个<code>LICENSE</code>文本文件（内容随便写）</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ echo &quot;This is a LICENSE Faile.&quot; &gt;&gt; LICENSE.txt</code></pre><p>用<code>git status</code>查看一下状态：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+# On branch master
+# Changes not staged for commit:
+#   (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+#   (use &quot;git checkout -- &lt;file&gt;...&quot; to discard changes in working directory)
+#
+#	modified:   README.md
+#
+# Untracked files:
+#   (use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)
+#
+#	LICENSE.txt
+no changes added to commit (use &quot;git add&quot; and&#x2F;or &quot;git commit -a&quot;)</code></pre><p>Git非常清楚地显示出来，<code>README.md</code>被修改了，而<code>LICENSE.txt</code>还从来没有被添加过，所以它的状态是<code>Untracked</code>。</p><p>现在，使用命令<code>git add .</code>，把<code>README.md</code>和<code>LICENSE.txt</code>都添加后，用<code>git status</code>再查看一下：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+# On branch master
+# Changes to be committed:
+#   (use &quot;git reset HEAD &lt;file&gt;...&quot; to unstage)
+#
+#	new file:   LICENSE.txt
+#	modified:   README.md</code></pre><p>所以，<code>git add</code>命令实际上就是把要提交的所有修改放到暂存区（Stage），然后，执行<code>git commit</code>就可以一次性把暂存区的所有修改提交到分支。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git commit -m &quot;Understand How Stage Works&quot;
+[master 16d19b5] Understand How Stage Works
+ 2 files changed, 2 insertions(+)
+ create mode 100644 LICENSE.txt</code></pre><p>一旦提交后，如果你又没有对工作区做任何修改，那么工作区就是“干净”的：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+# On branch master
+nothing to commit, working directory clean</code></pre><h1 id="五、远程仓库"><a href="#五、远程仓库" class="headerlink" title="五、远程仓库"></a>五、远程仓库</h1><h2 id="添加远程库"><a href="#添加远程库" class="headerlink" title="添加远程库"></a>添加远程库</h2><p>本地创建一个Git仓库，绑定远程仓库</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git remote add origin 仓库地址
+git push -u origin master</code></pre><p>🌰举个栗子</p><p>在GitHub中新建一个仓库，名字叫<code>SSUGMDXTDH</code>。得到仓库地址</p><pre class="line-numbers language-none"><code class="language-none">git@github.com:ssugmdxtdh&#x2F;SSUGMDXTDH.git</code></pre><p>注意：<code>ssugmdxtdh</code>应该为账户名。</p><p>在命令行上创建新的存储库</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;# SSUGMDXTDH&quot; &gt;&gt; README.md
+git init
+git add README.md
+git commit -m &quot;first commit&quot;
+git remote add origin git@github.com:ssugmdxtdh&#x2F;SSUGMDXTDH.git
+git push -u origin master</code></pre><p>把本地库的内容推送到远程，用<code>git push</code>命令，实际上是把当前分支<code>master</code>推送到远程。</p><p>由于远程库是空的，我们第一次推送<code>master</code>分支时，加上了<code>-u</code>参数，Git不但会把本地的<code>master</code>分支内容推送的远程新的<code>master</code>分支，还会把本地的<code>master</code>分支和远程的<code>master</code>分支关联起来，在以后的推送或者拉取时就可以简化命令。</p><h2 id="远程库克隆"><a href="#远程库克隆" class="headerlink" title="远程库克隆"></a>远程库克隆</h2><p>创建一个远程仓库，克隆到本地</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git clone 仓库地址</code></pre><p>🌰栗子同上，直接克隆上面的仓库</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git clone git@github.com:ssugmdxtdh&#x2F;SSUGMDXTDH.git
+$ ls
+SSUGMDXTDH
+$ cd SSUGMDXTDH&#x2F;
+$ ls -a
+.  ..  .git  README.md</code></pre><p>可以看到远程仓库已经被下载到本地。并且已经Git初始化。</p><h2 id="SSH的警告"><a href="#SSH的警告" class="headerlink" title="SSH的警告"></a>SSH的警告</h2><p>当你第一次使用Git的<code>clone</code>或者<code>push</code>命令连接GitHub时，会得到一个警告：</p><pre class="line-numbers language-none"><code class="language-none">The authenticity of host &#39;github.com (xx.xx.xx.xx)&#39; can&#39;t be established.
+RSA key fingerprint is xx.xx.xx.xx.xx.
+Are you sure you want to continue connecting (yes&#x2F;no)?</code></pre><p>这是因为Git使用SSH连接，而SSH连接在第一次验证GitHub服务器的Key时，需要你确认GitHub的Key的指纹信息是否真的来自GitHub的服务器，输入<code>yes</code>回车即可。</p><p>Git会输出一个警告，告诉你已经把GitHub的Key添加到本机的一个信任列表里了：</p><pre class="line-numbers language-none"><code class="language-none">Warning: Permanently added &#39;github.com&#39; (RSA) to the list of known hosts.</code></pre><p>这个警告只会出现一次，后面的操作就不会有任何警告了。</p><p>如果你实在担心有人冒充GitHub服务器，输入<code>yes</code>前可以对照<a class="link" target="_blank" rel="noopener" href="https://help.github.com/articles/what-are-github-s-ssh-key-fingerprints/">GitHub的RSA Key的指纹信息<i class="fas fa-external-link-alt"></i></a>是否与SSH连接给出的一致。</p><h1 id="六、分支管理"><a href="#六、分支管理" class="headerlink" title="六、分支管理"></a>六、分支管理</h1><h2 id="关于分支"><a href="#关于分支" class="headerlink" title="关于分支"></a>关于分支</h2><h3 id="查看分支"><a href="#查看分支" class="headerlink" title="查看分支"></a>查看分支</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git branch</code></pre><h3 id="创建分支"><a href="#创建分支" class="headerlink" title="创建分支"></a>创建分支</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git branch &lt;name&gt;</code></pre><h3 id="切换分支"><a href="#切换分支" class="headerlink" title="切换分支"></a>切换分支</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git checkout &lt;name&gt;或者git switch &lt;name&gt;	#切换分支
+git checkout -b &lt;name&gt;或者git switch -c &lt;name&gt;	#创建并切换分支</code></pre><h3 id="合并分支"><a href="#合并分支" class="headerlink" title="合并分支"></a>合并分支</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git merge &lt;name&gt;	#合并某分支到当前分支</code></pre><h3 id="删除分支"><a href="#删除分支" class="headerlink" title="删除分支"></a>删除分支</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git branch -d &lt;name&gt;	#删除分支</code></pre><h2 id="分支冲突"><a href="#分支冲突" class="headerlink" title="分支冲突"></a>分支冲突</h2><p>实践出真知</p><p>初始化Git，上传一个<code>README.md</code>，当前处于<code>master</code>分支中</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git init
+$ echo SSUGMDXTDH &gt;&gt; README.md
+$ git add README.md
+$ git commit -m &quot;Add README File.&quot;
+$ git branch
+* master</code></pre><p>创建一个新的<code>init</code>分支，并提交代码</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git checkout -b init
+Switched to a new branch &#39;init&#39;
+$ echo SSUGMDXTDH.init &gt;&gt; README.md
+$ git add README.md
+$ git commit -m &quot;Init branch commit.&quot;
+[init 6b44b73] Init branch commit.
+1 file changed, 1 insertion(+)</code></pre><p>切换到<code>master</code>分支</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git checkout master
+Switched to branch &#39;master&#39;</code></pre><p>在<code>master</code>分支上把<code>readme.md</code>文件的添加一行，并提交</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ echo SSUGMDXTDH.master &gt;&gt; README.md
+$ git add README.md
+$ git commit -m &quot;Master branch commit.&quot;
+[master 7d61d4d] Master branch commit.
+1 file changed, 1 insertion(+)</code></pre><p>现在，<code>master</code>分支和<code>init</code>分支各自都分别有新的提交，这种情况下，Git无法执行“快速合并”，只能试图把各自的修改合并起来，但这种合并就可能会有冲突，现在合并分支：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git merge init
+Auto-merging README.md
+CONFLICT (content): Merge conflict in README.md
+Automatic merge failed; fix conflicts and then commit the result.</code></pre><p>果然冲突了！Git告诉我们，<code>readme.md</code>文件存在冲突，必须手动解决冲突后再提交。<code>git status</code>也可以告诉我们冲突的文件：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+# On branch master
+# You have unmerged paths.
+#   (fix conflicts and run &quot;git commit&quot;)
+# Unmerged paths:
+#   (use &quot;git add &lt;file&gt;...&quot; to mark resolution)
+#	both modified:      README.md
+no changes added to commit (use &quot;git add&quot; and&#x2F;or &quot;git commit -a&quot;)</code></pre><p>查看<code>README.md</code>文件，Git用<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>，<code>=======</code>，<code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>标记出不同分支的内容，修改冲突文件内容</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ cat README.md 
+SSUGMDXTDH
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+SSUGMDXTDH.master
+&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+SSUGMDXTDH.init
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; init
+修改文件内容如下：
+SSUGMDXTDH
+SSUGMDXTDH.master</code></pre><p>修改完成后，提交代码</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git add README.md
+$ git commit -m &quot;branch commit.&quot;
+[master 8837f83] branch commit.</code></pre><p>用带参数的<code>git log</code>也可以看到分支的合并情况</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+*   8837f83 branch commit.
+|\  
+| * 6b44b73 Init branch commit.
+* | 7d61d4d Master branch commit.
+|&#x2F;  
+* 4b5a025 Add README File.</code></pre><p>最后删除<code>Init</code>分支</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git branch -d init
+Deleted branch init (was 6b44b73).</code></pre><h2 id="管理策略"><a href="#管理策略" class="headerlink" title="管理策略"></a>管理策略</h2><p>通常，合并分支时，如果可能，Git会用<code>Fast forward</code>模式，但这种模式下，删除分支后，会丢掉分支信息。</p><p>如果要强制禁用<code>Fast forward</code>模式，Git就会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。</p><p>合并分支时，加上<code>--no-ff</code>参数就可以用普通模式合并，合并后的历史有分支，能看出来曾经做过合并，而<code>fast forward</code>合并就看不出来曾经做过合并。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">合并dev分支，请注意--no-ff参数，表示禁用Fast forward：
+$ git merge --no-ff -m &quot;merge with no-ff&quot; dev
+Merge made by the &#39;recursive&#39; strategy.
+readme.txt | 1 +
+1 file changed, 1 insertion(+)
+合并后，我们用git log看看分支历史：
+$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+*   e1e9c68 (HEAD -&gt; master) merge with no-ff
+|\  
+| * f52c633 (dev) add merge
+|&#x2F;  
+*   cf810e4 conflict fixed
+...</code></pre><h2 id="BUG分支"><a href="#BUG分支" class="headerlink" title="BUG分支"></a>BUG分支</h2><p>软件开发中，bug就像家常便饭一样。有了bug就需要修复，在Git中，由于分支是如此的强大，所以，每个bug都可以通过一个新的临时分支来修复，修复后，合并分支，然后将临时分支删除。</p><p>当你接到一个修复一个代号101的bug的任务时，很自然地，你想创建一个分支<code>issue-101</code>来修复它，但是，等等，当前正在<code>dev</code>上进行的工作还没有提交：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ git status
+On branch dev
+Changes to be committed:
+  (use &quot;git reset HEAD &lt;file&gt;...&quot; to unstage)
+
+	new file:   hello.py
+
+Changes not staged for commit:
+  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+  (use &quot;git checkout -- &lt;file&gt;...&quot; to discard changes in working directory)
+
+	modified:   readme.txt</code></pre><p>并不是你不想提交，而是工作只进行到一半，还没法提交，预计完成还需1天时间。但是，必须在两个小时内修复该bug，怎么办？</p><p>幸好，Git还提供了一个<code>stash</code>功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作：</p><pre class="line-numbers language-none"><code class="language-none">$ git stash
+Saved working directory and index state WIP on dev: f52c633 add merge</code></pre><p>现在，用<code>git status</code>查看工作区，就是干净的（除非有没有被Git管理的文件），因此可以放心地创建分支来修复bug。</p><p>首先确定要在哪个分支上修复bug，假定需要在<code>master</code>分支上修复，就从<code>master</code>创建临时分支：</p><pre class="line-numbers language-none"><code class="language-none">$ git checkout master
+Switched to branch &#39;master&#39;
+Your branch is ahead of &#39;origin&#x2F;master&#39; by 6 commits.
+  (use &quot;git push&quot; to publish your local commits)
+
+$ git checkout -b issue-101
+Switched to a new branch &#39;issue-101&#39;</code></pre><p>现在修复bug，需要把“Git is free software …”改为“Git is a free software …”，然后提交：</p><pre class="line-numbers language-none"><code class="language-none">$ git add readme.txt 
+$ git commit -m &quot;fix bug 101&quot;
+[issue-101 4c805e2] fix bug 101
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre><p>修复完成后，切换到<code>master</code>分支，并完成合并，最后删除<code>issue-101</code>分支：</p><pre class="line-numbers language-none"><code class="language-none">$ git switch master
+Switched to branch &#39;master&#39;
+Your branch is ahead of &#39;origin&#x2F;master&#39; by 6 commits.
+  (use &quot;git push&quot; to publish your local commits)
+
+$ git merge --no-ff -m &quot;merged bug fix 101&quot; issue-101
+Merge made by the &#39;recursive&#39; strategy.
+ readme.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre><p>太棒了，原计划两个小时的bug修复只花了5分钟！现在，是时候接着回到<code>dev</code>分支干活了！</p><pre class="line-numbers language-none"><code class="language-none">$ git switch dev
+Switched to branch &#39;dev&#39;
+
+$ git status
+On branch dev
+nothing to commit, working tree clean</code></pre><p>工作区是干净的，刚才的工作现场存到哪去了？用<code>git stash list</code>命令看看：</p><pre class="line-numbers language-none"><code class="language-none">$ git stash list
+stash@&#123;0&#125;: WIP on dev: f52c633 add merge</code></pre><p>工作现场还在，Git把stash内容存在某个地方了，但是需要恢复一下，有两个办法：</p><p>一是用<code>git stash apply</code>恢复，但是恢复后，stash内容并不删除，你需要用<code>git stash drop</code>来删除；</p><p>另一种方式是用<code>git stash pop</code>，恢复的同时把stash内容也删了：</p><pre class="line-numbers language-none"><code class="language-none">$ git stash pop
+On branch dev
+Changes to be committed:
+  (use &quot;git reset HEAD &lt;file&gt;...&quot; to unstage)
+
+	new file:   hello.py
+
+Changes not staged for commit:
+  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)
+  (use &quot;git checkout -- &lt;file&gt;...&quot; to discard changes in working directory)
+
+	modified:   readme.txt
+
+Dropped refs&#x2F;stash@&#123;0&#125; (5d677e2ee266f39ea296182fb2354265b91b3b2a)</code></pre><p>再用<code>git stash list</code>查看，就看不到任何stash内容了：</p><pre class="line-numbers language-none"><code class="language-none">$ git stash list</code></pre><p>你可以多次stash，恢复的时候，先用<code>git stash list</code>查看，然后恢复指定的stash，用命令：</p><pre class="line-numbers language-none"><code class="language-none">$ git stash apply stash@&#123;0&#125;</code></pre><p>在master分支上修复了bug后，我们要想一想，dev分支是早期从master分支分出来的，所以，这个bug其实在当前dev分支上也存在。</p><p>那怎么在dev分支上修复同样的bug？重复操作一次，提交不就行了？</p><p>有木有更简单的方法？</p><p>有！</p><p>同样的bug，要在dev上修复，我们只需要把<code>4c805e2 fix bug 101</code>这个提交所做的修改“复制”到dev分支。注意：我们只想复制<code>4c805e2 fix bug 101</code>这个提交所做的修改，并不是把整个master分支merge过来。</p><p>为了方便操作，Git专门提供了一个<code>cherry-pick</code>命令，让我们能复制一个特定的提交到当前分支：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch
+* dev
+  master
+$ git cherry-pick 4c805e2
+[master 1d4b803] fix bug 101
+ 1 file changed, 1 insertion(+), 1 deletion(-)</code></pre><p>Git自动给dev分支做了一次提交，注意这次提交的commit是<code>1d4b803</code>，它并不同于master的<code>4c805e2</code>，因为这两个commit只是改动相同，但确实是两个不同的commit。用<code>git cherry-pick</code>，我们就不需要在dev分支上手动再把修bug的过程重复一遍。</p><p>有些聪明的童鞋会想了，既然可以在master分支上修复bug后，在dev分支上可以“重放”这个修复过程，那么直接在dev分支上修复bug，然后在master分支上“重放”行不行？当然可以，不过你仍然需要<code>git stash</code>命令保存现场，才能从dev分支切换到master分支。</p><p>小结</p><p>修复bug时，我们会通过创建新的bug分支进行修复，然后合并，最后删除；</p><p>当手头工作没有完成时，先把工作现场<code>git stash</code>一下，然后去修复bug，修复后，再<code>git stash pop</code>，回到工作现场；</p><p>在master分支上修复的bug，想要合并到当前dev分支，可以用<code>git cherry-pick &lt;commit&gt;</code>命令，把bug提交的修改“复制”到当前分支，避免重复劳动。</p><h2 id="Feature分支"><a href="#Feature分支" class="headerlink" title="Feature分支"></a>Feature分支</h2><p>软件开发中，总有无穷无尽的新的功能要不断添加进来。</p><p>添加一个新功能时，你肯定不希望因为一些实验性质的代码，把主分支搞乱了，所以，每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支。</p><p>现在，你终于接到了一个新任务：开发代号为Vulcan的新功能，该功能计划用于下一代星际飞船。</p><p>于是准备开发：</p><pre class="line-numbers language-none"><code class="language-none">$ git switch -c feature-vulcan
+Switched to a new branch &#39;feature-vulcan&#39;</code></pre><p>5分钟后，开发完毕：</p><pre class="line-numbers language-none"><code class="language-none">$ git add vulcan.py
+
+$ git status
+On branch feature-vulcan
+Changes to be committed:
+  (use &quot;git reset HEAD &lt;file&gt;...&quot; to unstage)
+
+	new file:   vulcan.py
+
+$ git commit -m &quot;add feature vulcan&quot;
+[feature-vulcan 287773e] add feature vulcan
+ 1 file changed, 2 insertions(+)
+ create mode 100644 vulcan.py</code></pre><p>切回<code>dev</code>，准备合并：</p><pre class="line-numbers language-none"><code class="language-none">$ git switch dev</code></pre><p>一切顺利的话，feature分支和bug分支是类似的，合并，然后删除。</p><p>但是！</p><p>就在此时，接到上级命令，因经费不足，新功能必须取消！</p><p>虽然白干了，但是这个包含机密资料的分支还是必须就地销毁：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch -d feature-vulcan
+error: The branch &#39;feature-vulcan&#39; is not fully merged.
+If you are sure you want to delete it, run &#39;git branch -D feature-vulcan&#39;.</code></pre><p>销毁失败。Git友情提醒，<code>feature-vulcan</code>分支还没有被合并，如果删除，将丢失掉修改，如果要强行删除，需要使用大写的<code>-D</code>参数。。</p><p>现在我们强行删除：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch -D feature-vulcan
+Deleted branch feature-vulcan (was 287773e).</code></pre><p>终于删除成功！</p><p>小结</p><p>开发一个新feature，最好新建一个分支；</p><p>如果要丢弃一个没有被合并过的分支，可以通过<code>git branch -D &lt;name&gt;</code>强行删除。</p><h2 id="多人协作"><a href="#多人协作" class="headerlink" title="多人协作"></a>多人协作</h2><p>当你从远程仓库克隆时，实际上Git自动把本地的<code>master</code>分支和远程的<code>master</code>分支对应起来了，并且，远程仓库的默认名称是<code>origin</code>。</p><p>要查看远程库的信息，用<code>git remote</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ git remote
+origin</code></pre><p>或者，用<code>git remote -v</code>显示更详细的信息：</p><pre class="line-numbers language-none"><code class="language-none">$ git remote -v
+origin  git@github.com:michaelliao&#x2F;learngit.git (fetch)
+origin  git@github.com:michaelliao&#x2F;learngit.git (push)</code></pre><p>上面显示了可以抓取和推送的<code>origin</code>的地址。如果没有推送权限，就看不到push的地址。</p><h3 id="推送分支"><a href="#推送分支" class="headerlink" title="推送分支"></a>推送分支</h3><p>推送分支，就是把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin master</code></pre><p>如果要推送其他分支，比如<code>dev</code>，就改成：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin dev</code></pre><p>但是，并不是一定要把本地分支往远程推送，那么，哪些分支需要推送，哪些不需要呢？</p><ul><li><code>master</code>分支是主分支，因此要时刻与远程同步；</li><li><code>dev</code>分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步；</li><li>bug分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug；</li><li>feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发。</li></ul><p>总之，就是在Git中，分支完全可以在本地自己藏着玩，是否推送，视你的心情而定！</p><h3 id="抓取分支"><a href="#抓取分支" class="headerlink" title="抓取分支"></a>抓取分支</h3><p>多人协作时，大家都会往<code>master</code>和<code>dev</code>分支上推送各自的修改。</p><p>现在，模拟一个你的小伙伴，可以在另一台电脑（注意要把SSH Key添加到GitHub）或者同一台电脑的另一个目录下克隆：</p><pre class="line-numbers language-none"><code class="language-none">$ git clone git@github.com:michaelliao&#x2F;learngit.git
+Cloning into &#39;learngit&#39;...
+remote: Counting objects: 40, done.
+remote: Compressing objects: 100% (21&#x2F;21), done.
+remote: Total 40 (delta 14), reused 40 (delta 14), pack-reused 0
+Receiving objects: 100% (40&#x2F;40), done.
+Resolving deltas: 100% (14&#x2F;14), done.</code></pre><p>当你的小伙伴从远程库clone时，默认情况下，你的小伙伴只能看到本地的<code>master</code>分支。不信可以用<code>git branch</code>命令看看：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch
+* master</code></pre><p>现在，你的小伙伴要在<code>dev</code>分支上开发，就必须创建远程<code>origin</code>的<code>dev</code>分支到本地，于是他用这个命令创建本地<code>dev</code>分支：</p><pre class="line-numbers language-none"><code class="language-none">$ git checkout -b dev origin&#x2F;dev</code></pre><p>现在，他就可以在<code>dev</code>上继续修改，然后，时不时地把<code>dev</code>分支<code>push</code>到远程：</p><pre class="line-numbers language-none"><code class="language-none">$ git add env.txt
+
+$ git commit -m &quot;add env&quot;
+[dev 7a5e5dd] add env
+ 1 file changed, 1 insertion(+)
+ create mode 100644 env.txt
+
+$ git push origin dev
+Counting objects: 3, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (2&#x2F;2), done.
+Writing objects: 100% (3&#x2F;3), 308 bytes | 308.00 KiB&#x2F;s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To github.com:michaelliao&#x2F;learngit.git
+   f52c633..7a5e5dd  dev -&gt; dev</code></pre><p>你的小伙伴已经向<code>origin/dev</code>分支推送了他的提交，而碰巧你也对同样的文件作了修改，并试图推送：</p><pre class="line-numbers language-none"><code class="language-none">$ cat env.txt
+env
+
+$ git add env.txt
+
+$ git commit -m &quot;add new env&quot;
+[dev 7bd91f1] add new env
+ 1 file changed, 1 insertion(+)
+ create mode 100644 env.txt
+
+$ git push origin dev
+To github.com:michaelliao&#x2F;learngit.git
+ ! [rejected]        dev -&gt; dev (non-fast-forward)
+error: failed to push some refs to &#39;git@github.com:michaelliao&#x2F;learngit.git&#39;
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: &#39;git pull ...&#39;) before pushing again.
+hint: See the &#39;Note about fast-forwards&#39; in &#39;git push --help&#39; for details.</code></pre><p>推送失败，因为你的小伙伴的最新提交和你试图推送的提交有冲突，解决办法也很简单，Git已经提示我们，先用<code>git pull</code>把最新的提交从<code>origin/dev</code>抓下来，然后，在本地合并，解决冲突，再推送：</p><pre class="line-numbers language-none"><code class="language-none">$ git pull
+There is no tracking information for the current branch.
+Please specify which branch you want to merge with.
+See git-pull(1) for details.
+
+    git pull &lt;remote&gt; &lt;branch&gt;
+
+If you wish to set tracking information for this branch you can do so with:
+
+    git branch --set-upstream-to&#x3D;origin&#x2F;&lt;branch&gt; dev</code></pre><p><code>git pull</code>也失败了，原因是没有指定本地<code>dev</code>分支与远程<code>origin/dev</code>分支的链接，根据提示，设置<code>dev</code>和<code>origin/dev</code>的链接：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch --set-upstream-to&#x3D;origin&#x2F;dev dev
+Branch &#39;dev&#39; set up to track remote branch &#39;dev&#39; from &#39;origin&#39;.</code></pre><p>再pull：</p><pre class="line-numbers language-none"><code class="language-none">$ git pull
+Auto-merging env.txt
+CONFLICT (add&#x2F;add): Merge conflict in env.txt
+Automatic merge failed; fix conflicts and then commit the result.</code></pre><p>这回<code>git pull</code>成功，但是合并有冲突，需要手动解决，解决的方法和分支管理中的<a class="link" target="_blank" rel="noopener" href="http://www.liaoxuefeng.com/wiki/896043488029600/900004111093344">解决冲突<i class="fas fa-external-link-alt"></i></a>完全一样。解决后，提交，再push：</p><pre class="line-numbers language-none"><code class="language-none">$ git commit -m &quot;fix env conflict&quot;
+[dev 57c53ab] fix env conflict
+
+$ git push origin dev
+Counting objects: 6, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (4&#x2F;4), done.
+Writing objects: 100% (6&#x2F;6), 621 bytes | 621.00 KiB&#x2F;s, done.
+Total 6 (delta 0), reused 0 (delta 0)
+To github.com:michaelliao&#x2F;learngit.git
+   7a5e5dd..57c53ab  dev -&gt; dev</code></pre><p>因此，多人协作的工作模式通常是这样：</p><ol><li>首先，可以试图用<code>git push origin &lt;branch-name&gt;</code>推送自己的修改；</li><li>如果推送失败，则因为远程分支比你的本地更新，需要先用<code>git pull</code>试图合并；</li><li>如果合并有冲突，则解决冲突，并在本地提交；</li><li>没有冲突或者解决掉冲突后，再用<code>git push origin &lt;branch-name&gt;</code>推送就能成功！</li></ol><p>如果<code>git pull</code>提示<code>no tracking information</code>，则说明本地分支和远程分支的链接关系没有创建，用命令<code>git branch --set-upstream-to &lt;branch-name&gt; origin/&lt;branch-name&gt;</code>。</p><p>这就是多人协作的工作模式，一旦熟悉了，就非常简单。</p><p>小结</p><ul><li>查看远程库信息，使用<code>git remote -v</code>；</li><li>本地新建的分支如果不推送到远程，对其他人就是不可见的；</li><li>从本地推送分支，使用<code>git push origin branch-name</code>，如果推送失败，先用<code>git pull</code>抓取远程的新提交；</li><li>在本地创建和远程分支对应的分支，使用<code>git checkout -b branch-name origin/branch-name</code>，本地和远程分支的名称最好一致；</li><li>建立本地分支和远程分支的关联，使用<code>git branch --set-upstream branch-name origin/branch-name</code>；</li><li>从远程抓取分支，使用<code>git pull</code>，如果有冲突，要先处理冲突。</li></ul><h2 id="Rebase"><a href="#Rebase" class="headerlink" title="Rebase"></a>Rebase</h2><p>在上一节我们看到了，多人在同一个分支上协作时，很容易出现冲突。即使没有冲突，后push的童鞋不得不先pull，在本地合并，然后才能push成功。</p><p>每次合并再push后，分支变成了这样：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+* d1be385 (HEAD -&gt; master, origin&#x2F;master) init hello
+*   e5e69f1 Merge branch &#39;dev&#39;
+|\  
+| *   57c53ab (origin&#x2F;dev, dev) fix env conflict
+| |\  
+| | * 7a5e5dd add env
+| * | 7bd91f1 add new env
+| |&#x2F;  
+* |   12a631b merged bug fix 101
+|\ \  
+| * | 4c805e2 fix bug 101
+|&#x2F; &#x2F;  
+* |   e1e9c68 merge with no-ff
+|\ \  
+| |&#x2F;  
+| * f52c633 add merge
+|&#x2F;  
+*   cf810e4 conflict fixed</code></pre><p>总之看上去很乱，有强迫症的童鞋会问：为什么Git的提交历史不能是一条干净的直线？</p><p>其实是可以做到的！</p><p>Git有一种称为rebase的操作，有人把它翻译成“变基”。</p><p>先不要随意展开想象。我们还是从实际问题出发，看看怎么把分叉的提交变成直线。</p><p>在和远程分支同步后，我们对<code>hello.py</code>这个文件做了两次提交。用<code>git log</code>命令看看：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+* 582d922 (HEAD -&gt; master) add author
+* 8875536 add comment
+* d1be385 (origin&#x2F;master) init hello
+*   e5e69f1 Merge branch &#39;dev&#39;
+|\  
+| *   57c53ab (origin&#x2F;dev, dev) fix env conflict
+| |\  
+| | * 7a5e5dd add env
+| * | 7bd91f1 add new env
+...</code></pre><p>注意到Git用<code>(HEAD -&gt; master)</code>和<code>(origin/master)</code>标识出当前分支的HEAD和远程origin的位置分别是<code>582d922 add author</code>和<code>d1be385 init hello</code>，本地分支比远程分支快两个提交。</p><p>现在我们尝试推送本地分支：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin master
+To github.com:michaelliao&#x2F;learngit.git
+ ! [rejected]        master -&gt; master (fetch first)
+error: failed to push some refs to &#39;git@github.com:michaelliao&#x2F;learngit.git&#39;
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., &#39;git pull ...&#39;) before pushing again.
+hint: See the &#39;Note about fast-forwards&#39; in &#39;git push --help&#39; for details.</code></pre><p>很不幸，失败了，这说明有人先于我们推送了远程分支。按照经验，先pull一下：</p><pre class="line-numbers language-none"><code class="language-none">$ git pull
+remote: Counting objects: 3, done.
+remote: Compressing objects: 100% (1&#x2F;1), done.
+remote: Total 3 (delta 1), reused 3 (delta 1), pack-reused 0
+Unpacking objects: 100% (3&#x2F;3), done.
+From github.com:michaelliao&#x2F;learngit
+   d1be385..f005ed4  master     -&gt; origin&#x2F;master
+ * [new tag]         v1.0       -&gt; v1.0
+Auto-merging hello.py
+Merge made by the &#39;recursive&#39; strategy.
+ hello.py | 1 +
+ 1 file changed, 1 insertion(+)</code></pre><p>再用<code>git status</code>看看状态：</p><pre class="line-numbers language-none"><code class="language-none">$ git status
+On branch master
+Your branch is ahead of &#39;origin&#x2F;master&#39; by 3 commits.
+  (use &quot;git push&quot; to publish your local commits)
+
+nothing to commit, working tree clean</code></pre><p>加上刚才合并的提交，现在我们本地分支比远程分支超前3个提交。</p><p>用<code>git log</code>看看：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+*   e0ea545 (HEAD -&gt; master) Merge branch &#39;master&#39; of github.com:michaelliao&#x2F;learngit
+|\  
+| * f005ed4 (origin&#x2F;master) set exit&#x3D;1
+* | 582d922 add author
+* | 8875536 add comment
+|&#x2F;  
+* d1be385 init hello
+...</code></pre><p>对强迫症童鞋来说，现在事情有点不对头，提交历史分叉了。如果现在把本地分支push到远程，有没有问题？</p><p>有！</p><p>什么问题？</p><p>不好看！</p><p>有没有解决方法？</p><p>有！</p><p>这个时候，rebase就派上了用场。我们输入命令<code>git rebase</code>试试：</p><pre class="line-numbers language-none"><code class="language-none">$ git rebase
+First, rewinding head to replay your work on top of it...
+Applying: add comment
+Using index info to reconstruct a base tree...
+M	hello.py
+Falling back to patching base and 3-way merge...
+Auto-merging hello.py
+Applying: add author
+Using index info to reconstruct a base tree...
+M	hello.py
+Falling back to patching base and 3-way merge...
+Auto-merging hello.py</code></pre><p>输出了一大堆操作，到底是啥效果？再用<code>git log</code>看看：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+* 7e61ed4 (HEAD -&gt; master) add author
+* 3611cfe add comment
+* f005ed4 (origin&#x2F;master) set exit&#x3D;1
+* d1be385 init hello
+...</code></pre><p>原本分叉的提交现在变成一条直线了！这种神奇的操作是怎么实现的？其实原理非常简单。我们注意观察，发现Git把我们本地的提交“挪动”了位置，放到了<code>f005ed4 (origin/master) set exit=1</code>之后，这样，整个提交历史就成了一条直线。rebase操作前后，最终的提交内容是一致的，但是，我们本地的commit修改内容已经变化了，它们的修改不再基于<code>d1be385 init hello</code>，而是基于<code>f005ed4 (origin/master) set exit=1</code>，但最后的提交<code>7e61ed4</code>内容是一致的。</p><p>这就是rebase操作的特点：把分叉的提交历史“整理”成一条直线，看上去更直观。缺点是本地的分叉提交已经被修改过了。</p><p>最后，通过push操作把本地分支推送到远程：</p><pre class="line-numbers language-none"><code class="language-none">Mac:~&#x2F;learngit michael$ git push origin master
+Counting objects: 6, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (5&#x2F;5), done.
+Writing objects: 100% (6&#x2F;6), 576 bytes | 576.00 KiB&#x2F;s, done.
+Total 6 (delta 2), reused 0 (delta 0)
+remote: Resolving deltas: 100% (2&#x2F;2), completed with 1 local object.
+To github.com:michaelliao&#x2F;learngit.git
+   f005ed4..7e61ed4  master -&gt; master</code></pre><p>再用<code>git log</code>看看效果：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --graph --pretty&#x3D;oneline --abbrev-commit
+* 7e61ed4 (HEAD -&gt; master, origin&#x2F;master) add author
+* 3611cfe add comment
+* f005ed4 set exit&#x3D;1
+* d1be385 init hello
+...</code></pre><p>远程分支的提交历史也是一条直线。</p><p>小结</p><ul><li>rebase操作可以把本地未push的分叉提交历史整理成直线；</li><li>rebase的目的是使得我们在查看历史提交的变化时更容易，因为分叉的提交需要三方对比。</li></ul><h1 id="七、标签管理"><a href="#七、标签管理" class="headerlink" title="七、标签管理"></a>七、标签管理</h1><h2 id="创建标签"><a href="#创建标签" class="headerlink" title="创建标签"></a>创建标签</h2><p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p><pre class="line-numbers language-none"><code class="language-none">$ git branch
+* dev
+  master
+$ git checkout master
+Switched to branch &#39;master&#39;</code></pre><p>然后，敲命令<code>git tag &lt;name&gt;</code>就可以打一个新标签：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag v1.0</code></pre><p>可以用命令<code>git tag</code>查看所有标签：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag
+v1.0</code></pre><p>默认标签是打在最新提交的commit上的。有时候，如果忘了打标签，比如，现在已经是周五了，但应该在周一打的标签没有打，怎么办？</p><p>方法是找到历史提交的commit id，然后打上就可以了：</p><pre class="line-numbers language-none"><code class="language-none">$ git log --pretty&#x3D;oneline --abbrev-commit
+12a631b (HEAD -&gt; master, tag: v1.0, origin&#x2F;master) merged bug fix 101
+4c805e2 fix bug 101
+e1e9c68 merge with no-ff
+f52c633 add merge
+cf810e4 conflict fixed
+5dc6824 &amp; simple
+14096d0 AND simple
+b17d20e branch test
+d46f35e remove test.txt
+b84166e add test.txt
+519219b git tracks changes
+e43a48b understand how stage works
+1094adb append GPL
+e475afc add distributed
+eaadf4e wrote a readme file</code></pre><p>比方说要对<code>add merge</code>这次提交打标签，它对应的commit id是<code>f52c633</code>，敲入命令：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag v0.9 f52c633</code></pre><p>再用命令<code>git tag</code>查看标签：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag
+v0.9
+v1.0</code></pre><p>注意，标签不是按时间顺序列出，而是按字母排序的。可以用<code>git show &lt;tagname&gt;</code>查看标签信息：</p><pre class="line-numbers language-none"><code class="language-none">$ git show v0.9
+commit f52c63349bc3c1593499807e5c8e972b82c8f286 (tag: v0.9)
+Author: Michael Liao &lt;askxuefeng@gmail.com&gt;
+Date:   Fri May 18 21:56:54 2018 +0800
+
+    add merge
+
+diff --git a&#x2F;readme.txt b&#x2F;readme.txt
+...</code></pre><p>可以看到，<code>v0.9</code>确实打在<code>add merge</code>这次提交上。</p><p>还可以创建带有说明的标签，用<code>-a</code>指定标签名，<code>-m</code>指定说明文字：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 1094adb</code></pre><p>用命令<code>git show &lt;tagname&gt;</code>可以看到说明文字：</p><pre class="line-numbers language-none"><code class="language-none">$ git show v0.1
+tag v0.1
+Tagger: Michael Liao &lt;askxuefeng@gmail.com&gt;
+Date:   Fri May 18 22:48:43 2018 +0800
+
+version 0.1 released
+
+commit 1094adb7b9b3807259d8cb349e7df1d4d6477073 (tag: v0.1)
+Author: Michael Liao &lt;askxuefeng@gmail.com&gt;
+Date:   Fri May 18 21:06:15 2018 +0800
+
+    append GPL
+
+diff --git a&#x2F;readme.txt b&#x2F;readme.txt
+...</code></pre><p>小结</p><ul><li>命令<code>git tag &lt;tagname&gt;</code>用于新建一个标签，默认为<code>HEAD</code>，也可以指定一个commit id；</li><li>命令<code>git tag -a &lt;tagname&gt; -m &quot;blablabla...&quot;</code>可以指定标签信息；</li><li>命令<code>git tag</code>可以查看所有标签。</li></ul><h2 id="操作标签"><a href="#操作标签" class="headerlink" title="操作标签"></a>操作标签</h2><p>如果标签打错了，也可以删除：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag -d v0.1
+Deleted tag &#39;v0.1&#39; (was f15b0dd)</code></pre><p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p><p>如果要推送某个标签到远程，使用命令<code>git push origin &lt;tagname&gt;</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin v1.0
+Total 0 (delta 0), reused 0 (delta 0)
+To github.com:michaelliao&#x2F;learngit.git
+ * [new tag]         v1.0 -&gt; v1.0</code></pre><p>或者，一次性推送全部尚未推送到远程的本地标签：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin --tags
+Total 0 (delta 0), reused 0 (delta 0)
+To github.com:michaelliao&#x2F;learngit.git
+ * [new tag]         v0.9 -&gt; v0.9</code></pre><p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：</p><pre class="line-numbers language-none"><code class="language-none">$ git tag -d v0.9
+Deleted tag &#39;v0.9&#39; (was f52c633)</code></pre><p>然后，从远程删除。删除命令也是push，但是格式如下：</p><pre class="line-numbers language-none"><code class="language-none">$ git push origin :refs&#x2F;tags&#x2F;v0.9
+To github.com:michaelliao&#x2F;learngit.git
+ - [deleted]         v0.9</code></pre><p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p><p>小结</p><ul><li>命令<code>git push origin &lt;tagname&gt;</code>可以推送一个本地标签；</li><li>命令<code>git push origin --tags</code>可以推送全部未推送过的本地标签；</li><li>命令<code>git tag -d &lt;tagname&gt;</code>可以删除一个本地标签；</li><li>命令<code>git push origin :refs/tags/&lt;tagname&gt;</code>可以删除一个远程标签。</li></ul><h1 id="八、自定义Git"><a href="#八、自定义Git" class="headerlink" title="八、自定义Git"></a>八、自定义Git</h1><h2 id="忽略特殊文件"><a href="#忽略特殊文件" class="headerlink" title="忽略特殊文件"></a>忽略特殊文件</h2><p>有些时候，你必须把某些文件放到Git工作目录中，但又不能提交它们，比如保存了数据库密码的配置文件啦，等等，每次<code>git status</code>都会显示<code>Untracked files ...</code>，有强迫症的童鞋心里肯定不爽。</p><p>好在Git考虑到了大家的感受，这个问题解决起来也很简单，在Git工作区的根目录下创建一个特殊的<code>.gitignore</code>文件，然后把要忽略的文件名填进去，Git就会自动忽略这些文件。</p><p>不需要从头写<code>.gitignore</code>文件，GitHub已经为我们准备了各种配置文件，只需要组合一下就可以使用了。所有配置文件可以直接在线浏览：<a class="link" target="_blank" rel="noopener" href="https://github.com/github/gitignore">https://github.com/github/gitignore<i class="fas fa-external-link-alt"></i></a></p><p>忽略文件的原则是：</p><ol><li>忽略操作系统自动生成的文件，比如缩略图等；</li><li>忽略编译生成的中间文件、可执行文件等，也就是如果一个文件是通过另一个文件自动生成的，那自动生成的文件就没必要放进版本库，比如Java编译产生的<code>.class</code>文件；</li><li>忽略你自己的带有敏感信息的配置文件，比如存放口令的配置文件。</li></ol><p>举个例子：</p><p>假设你在Windows下进行Python开发，Windows会自动在有图片的目录下生成隐藏的缩略图文件，如果有自定义目录，目录下就会有<code>Desktop.ini</code>文件，因此你需要忽略Windows自动生成的垃圾文件：</p><pre class="line-numbers language-none"><code class="language-none"># Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini</code></pre><p>然后，继续忽略Python编译产生的<code>.pyc</code>、<code>.pyo</code>、<code>dist</code>等文件或目录：</p><pre class="line-numbers language-none"><code class="language-none"># Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+dist
+build</code></pre><p>加上你自己定义的文件，最终得到一个完整的<code>.gitignore</code>文件，内容如下：</p><pre class="line-numbers language-none"><code class="language-none"># Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# My configurations:
+db.ini
+deploy_key_rsa</code></pre><p>最后一步就是把<code>.gitignore</code>也提交到Git，就完成了！当然检验<code>.gitignore</code>的标准是<code>git status</code>命令是不是说<code>working directory clean</code>。</p><p>使用Windows的童鞋注意了，如果你在资源管理器里新建一个<code>.gitignore</code>文件，它会非常弱智地提示你必须输入文件名，但是在文本编辑器里“保存”或者“另存为”就可以把文件保存为<code>.gitignore</code>了。</p><p>有些时候，你想添加一个文件到Git，但发现添加不了，原因是这个文件被<code>.gitignore</code>忽略了：</p><pre class="line-numbers language-none"><code class="language-none">$ git add App.class
+The following paths are ignored by one of your .gitignore files:
+App.class
+Use -f if you really want to add them.</code></pre><p>如果你确实想添加该文件，可以用<code>-f</code>强制添加到Git：</p><pre class="line-numbers language-none"><code class="language-none">$ git add -f App.class</code></pre><p>或者你发现，可能是<code>.gitignore</code>写得有问题，需要找出来到底哪个规则写错了，可以用<code>git check-ignore</code>命令检查：</p><pre class="line-numbers language-none"><code class="language-none">$ git check-ignore -v App.class
+.gitignore:3:*.class	App.class</code></pre><p>Git会告诉我们，<code>.gitignore</code>的第3行规则忽略了该文件，于是我们就可以知道应该修订哪个规则。</p><p>小结</p><ul><li>忽略某些文件时，需要编写<code>.gitignore</code>；</li><li><code>.gitignore</code>文件本身要放到版本库里，并且可以对<code>.gitignore</code>做版本管理！</li></ul><h2 id="配置别名"><a href="#配置别名" class="headerlink" title="配置别名"></a>配置别名</h2><p>有没有经常敲错命令？比如<code>git status</code>？<code>status</code>这个单词真心不好记。</p><p>如果敲<code>git st</code>就表示<code>git status</code>那就简单多了，当然这种偷懒的办法我们是极力赞成的。</p><p>我们只需要敲一行命令，告诉Git，以后<code>st</code>就表示<code>status</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ git config --global alias.st status</code></pre><p>好了，现在敲<code>git st</code>看看效果。</p><p>当然还有别的命令可以简写，很多人都用<code>co</code>表示<code>checkout</code>，<code>ci</code>表示<code>commit</code>，<code>br</code>表示<code>branch</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ git config --global alias.co checkout
+$ git config --global alias.ci commit
+$ git config --global alias.br branch</code></pre><p>以后提交就可以简写成：</p><pre class="line-numbers language-none"><code class="language-none">$ git ci -m &quot;bala bala bala...&quot;</code></pre><p><code>--global</code>参数是全局参数，也就是这些命令在这台电脑的所有Git仓库下都有用。</p><p>在<a class="link" target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/896043488029600/897889638509536">撤销修改<i class="fas fa-external-link-alt"></i></a>一节中，我们知道，命令<code>git reset HEAD file</code>可以把暂存区的修改撤销掉（unstage），重新放回工作区。既然是一个unstage操作，就可以配置一个<code>unstage</code>别名：</p><pre class="line-numbers language-none"><code class="language-none">$ git config --global alias.unstage &#39;reset HEAD&#39;</code></pre><p>当你敲入命令：</p><pre class="line-numbers language-none"><code class="language-none">$ git unstage test.py</code></pre><p>实际上Git执行的是：</p><pre class="line-numbers language-none"><code class="language-none">$ git reset HEAD test.py</code></pre><p>配置一个<code>git last</code>，让其显示最后一次提交信息：</p><pre class="line-numbers language-none"><code class="language-none">$ git config --global alias.last &#39;log -1&#39;</code></pre><p>这样，用<code>git last</code>就能显示最近一次的提交：</p><pre class="line-numbers language-none"><code class="language-none">$ git last
+commit adca45d317e6d8a4b23f9811c3d7b7f0f180bfe2
+Merge: bd6ae48 291bea8
+Author: Michael Liao &lt;askxuefeng@gmail.com&gt;
+Date:   Thu Aug 22 22:49:22 2013 +0800
+
+    merge &amp; fix hello.py</code></pre><p>甚至还有人丧心病狂地把<code>lg</code>配置成了：</p><pre class="line-numbers language-none"><code class="language-none">git config --global alias.lg &quot;log --color --graph --pretty&#x3D;format:&#39;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&#39; --abbrev-commit&quot;</code></pre><p>来看看<code>git lg</code>的效果：</p><p><a class="link" target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/files/attachments/919059728302912/0">https://www.liaoxuefeng.com/files/attachments/919059728302912/0<i class="fas fa-external-link-alt"></i></a></p><p>为什么不早点告诉我？别激动，咱不是为了多记几个英文单词嘛！</p><p>配置文件</p><p>配置Git的时候，加上<code>--global</code>是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用。</p><p>配置文件放哪了？每个仓库的Git配置文件都放在<code>.git/config</code>文件中：</p><pre class="line-numbers language-none"><code class="language-none">$ cat .git&#x2F;config 
+[core]
+    repositoryformatversion &#x3D; 0
+    filemode &#x3D; true
+    bare &#x3D; false
+    logallrefupdates &#x3D; true
+    ignorecase &#x3D; true
+    precomposeunicode &#x3D; true
+[remote &quot;origin&quot;]
+    url &#x3D; git@github.com:michaelliao&#x2F;learngit.git
+    fetch &#x3D; +refs&#x2F;heads&#x2F;*:refs&#x2F;remotes&#x2F;origin&#x2F;*
+[branch &quot;master&quot;]
+    remote &#x3D; origin
+    merge &#x3D; refs&#x2F;heads&#x2F;master
+[alias]
+    last &#x3D; log -1</code></pre><p>别名就在<code>[alias]</code>后面，要删除别名，直接把对应的行删掉即可。</p><p>而当前用户的Git配置文件放在用户主目录下的一个隐藏文件<code>.gitconfig</code>中：</p><pre class="line-numbers language-none"><code class="language-none">$ cat .gitconfig
+[alias]
+    co &#x3D; checkout
+    ci &#x3D; commit
+    br &#x3D; branch
+    st &#x3D; status
+[user]
+    name &#x3D; Your Name
+    email &#x3D; your@email.com</code></pre><p>配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。</p><p>小结</p><p>给Git配置好别名，就可以输入命令时偷个懒。我们鼓励偷懒。</p><h2 id="搭建Git服务器"><a href="#搭建Git服务器" class="headerlink" title="搭建Git服务器"></a>搭建Git服务器</h2><p>在<a class="link" target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/896043488029600/896954117292416">远程仓库<i class="fas fa-external-link-alt"></i></a>一节中，我们讲了远程仓库实际上和本地仓库没啥不同，纯粹为了7x24小时开机并交换大家的修改。</p><p>GitHub就是一个免费托管开源代码的远程仓库。但是对于某些视源代码如生命的商业公司来说，既不想公开源代码，又舍不得给GitHub交保护费，那就只能自己搭建一台Git服务器作为私有仓库使用。</p><p>搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的<code>apt</code>命令就可以完成安装。</p><p>假设你已经有<code>sudo</code>权限的用户账号，下面，正式开始安装。</p><p>第一步，安装<code>git</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ sudo apt-get install git</code></pre><p>第二步，创建一个<code>git</code>用户，用来运行<code>git</code>服务：</p><pre class="line-numbers language-none"><code class="language-none">$ sudo adduser git</code></pre><p>第三步，创建证书登录：</p><p>收集所有需要登录的用户的公钥，就是他们自己的<code>id_rsa.pub</code>文件，把所有公钥导入到<code>/home/git/.ssh/authorized_keys</code>文件里，一行一个。</p><p>第四步，初始化Git仓库：</p><p>先选定一个目录作为Git仓库，假定是<code>/srv/sample.git</code>，在<code>/srv</code>目录下输入命令：</p><pre class="line-numbers language-none"><code class="language-none">$ sudo git init --bare sample.git</code></pre><p>Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以<code>.git</code>结尾。然后，把owner改为<code>git</code>：</p><pre class="line-numbers language-none"><code class="language-none">$ sudo chown -R git:git sample.git</code></pre><p>第五步，禁用shell登录：</p><p>出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑<code>/etc/passwd</code>文件完成。找到类似下面的一行：</p><pre class="line-numbers language-none"><code class="language-none">git:x:1001:1001:,,,:&#x2F;home&#x2F;git:&#x2F;bin&#x2F;bash</code></pre><p>改为：</p><pre class="line-numbers language-none"><code class="language-none">git:x:1001:1001:,,,:&#x2F;home&#x2F;git:&#x2F;usr&#x2F;bin&#x2F;git-shell</code></pre><p>这样，<code>git</code>用户可以正常通过ssh使用git，但无法登录shell，因为我们为<code>git</code>用户指定的<code>git-shell</code>每次一登录就自动退出。</p><p>第六步，克隆远程仓库：</p><p>现在，可以通过<code>git clone</code>命令克隆远程仓库了，在各自的电脑上运行：</p><pre class="line-numbers language-none"><code class="language-none">$ git clone git@server:&#x2F;srv&#x2F;sample.git
+Cloning into &#39;sample&#39;...
+warning: You appear to have cloned an empty repository.</code></pre><p>剩下的推送就简单了。</p><h3 id="管理公钥"><a href="#管理公钥" class="headerlink" title="管理公钥"></a>管理公钥</h3><p>如果团队很小，把每个人的公钥收集起来放到服务器的<code>/home/git/.ssh/authorized_keys</code>文件里就是可行的。如果团队有几百号人，就没法这么玩了，这时，可以用<a class="link" target="_blank" rel="noopener" href="https://github.com/res0nat0r/gitosis">Gitosis<i class="fas fa-external-link-alt"></i></a>来管理公钥。</p><p>这里我们不介绍怎么玩<a class="link" target="_blank" rel="noopener" href="https://github.com/res0nat0r/gitosis">Gitosis<i class="fas fa-external-link-alt"></i></a>了，几百号人的团队基本都在500强了，相信找个高水平的Linux管理员问题不大。</p><h3 id="管理权限"><a href="#管理权限" class="headerlink" title="管理权限"></a>管理权限</h3><p>有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为Git是为Linux源代码托管而开发的，所以Git也继承了开源社区的精神，不支持权限控制。不过，因为Git支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。<a class="link" target="_blank" rel="noopener" href="https://github.com/sitaramc/gitolite">Gitolite<i class="fas fa-external-link-alt"></i></a>就是这个工具。</p><p>这里我们也不介绍<a class="link" target="_blank" rel="noopener" href="https://github.com/sitaramc/gitolite">Gitolite<i class="fas fa-external-link-alt"></i></a>了，不要把有限的生命浪费到权限斗争中。</p><p>小结</p><ul><li>搭建Git服务器非常简单，通常10分钟即可完成；</li><li>要方便管理公钥，用<a class="link" target="_blank" rel="noopener" href="https://github.com/res0nat0r/gitosis">Gitosis<i class="fas fa-external-link-alt"></i></a>；</li><li>要像SVN那样变态地控制权限，用<a class="link" target="_blank" rel="noopener" href="https://github.com/sitaramc/gitolite">Gitolite<i class="fas fa-external-link-alt"></i></a>。</li></ul><h1 id="九、使用SourceTree"><a href="#九、使用SourceTree" class="headerlink" title="九、使用SourceTree"></a>九、使用SourceTree</h1><p>使用SourceTree可以以图形界面操作Git，省去了敲命令的过程，对于常用的提交、分支、推送等操作来说非常方便。</p><p>SourceTree使用Git命令执行操作，出错时，仍然需要阅读Git命令返回的错误信息。</p></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：Git基础</li><li>本文作者：白羊</li><li>创建时间：2020-07-20 21:37:46</li><li>本文链接：https://hellolisihui.com/page/Other/Git基础/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-prev"><a class="prev" rel="prev" href="/page/Other/CentOS%207%E5%AE%89%E8%A3%85Gitlab/"><span class="left arrow-icon flex-center"><i class="fas fa-chevron-left"></i> </span><span class="title flex-center"><span class="post-nav-title-item">CentOS 7安装Gitlab</span> <span class="post-nav-item">上一篇</span></span></a></div><div class="article-next"><a class="next" rel="next" href="/page/Other/VMware%E5%AE%89%E8%A3%85MacOS%E7%B3%BB%E7%BB%9F/"><span class="title flex-center"><span class="post-nav-title-item">VMware 安装 MacOS系统</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81Git%E6%A6%82%E8%BF%B0"><span class="nav-text">一、Git概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AFGit%EF%BC%9F"><span class="nav-text">1. 什么是Git？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%BB%80%E4%B9%88%E6%98%AF%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6%E7%B3%BB%E7%BB%9F%EF%BC%9F"><span class="nav-text">2. 什么是版本控制系统？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Git%E7%9A%84%E8%AF%9E%E7%94%9F"><span class="nav-text">3. Git的诞生</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-%E9%9B%86%E4%B8%AD%E5%BC%8FVS%E5%88%86%E5%B8%83%E5%BC%8F"><span class="nav-text">4. 集中式VS分布式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Git%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-text">二、Git的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Linux%E4%B8%8A%E5%AE%89%E8%A3%85Git"><span class="nav-text">1. Linux上安装Git</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Windows%E4%B8%8A%E5%AE%89%E8%A3%85Git"><span class="nav-text">2. Windows上安装Git</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%88%9B%E5%BB%BA%E7%89%88%E6%9C%AC%E5%BA%93"><span class="nav-text">三、创建版本库</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E7%89%88%E6%9C%AC%E4%BB%93%E5%BA%93"><span class="nav-text">1. 创建一个版本仓库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6%E5%88%B0%E6%9A%82%E5%AD%98%E5%8C%BA"><span class="nav-text">2. 上传文件到暂存区</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%8A%8A%E6%96%87%E4%BB%B6%E6%B7%BB%E5%8A%A0%E5%88%B0%E4%BB%93%E5%BA%93"><span class="nav-text">3. 把文件添加到仓库</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%97%B6%E5%85%89%E6%9C%BA%E7%A9%BF%E6%A2%AD"><span class="nav-text">四、时光机穿梭</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%8E%86%E5%8F%B2%E7%89%88%E6%9C%AC%E5%9B%9E%E9%80%80"><span class="nav-text">1. 历史版本回退</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E6%8F%90%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-text">前提准备工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%8E%86%E5%8F%B2%E7%89%88%E6%9C%AC"><span class="nav-text">查看历史版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E7%89%88%E6%9C%AC%E5%9B%9E%E9%80%80"><span class="nav-text">开始版本回退</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E8%BF%94%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC"><span class="nav-text">重返最新版本</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%B7%A5%E4%BD%9C%E5%8C%BA-amp-%E6%9A%82%E5%AD%98%E5%8C%BA"><span class="nav-text">2. 工作区&amp;暂存区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E5%8C%BA%EF%BC%88Working-Directory%EF%BC%89"><span class="nav-text">工作区（Working Directory）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%88%E6%9C%AC%E5%BA%93%EF%BC%88Repository%EF%BC%89"><span class="nav-text">版本库（Repository）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9A%82%E5%AD%98%E5%8C%BA%EF%BC%88Stage-Index%EF%BC%89"><span class="nav-text">暂存区（Stage&#x2F;Index）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%97%E8%AF%9D%E8%AF%B4%EF%BC%8C%E5%AE%9E%E8%B7%B5%E5%87%BA%E7%9C%9F%E7%9F%A5"><span class="nav-text">俗话说，实践出真知</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E8%BF%9C%E7%A8%8B%E4%BB%93%E5%BA%93"><span class="nav-text">五、远程仓库</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E8%BF%9C%E7%A8%8B%E5%BA%93"><span class="nav-text">添加远程库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E5%BA%93%E5%85%8B%E9%9A%86"><span class="nav-text">远程库克隆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SSH%E7%9A%84%E8%AD%A6%E5%91%8A"><span class="nav-text">SSH的警告</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E5%88%86%E6%94%AF%E7%AE%A1%E7%90%86"><span class="nav-text">六、分支管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E5%88%86%E6%94%AF"><span class="nav-text">关于分支</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%88%86%E6%94%AF"><span class="nav-text">查看分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%88%86%E6%94%AF"><span class="nav-text">创建分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%87%E6%8D%A2%E5%88%86%E6%94%AF"><span class="nav-text">切换分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E5%B9%B6%E5%88%86%E6%94%AF"><span class="nav-text">合并分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E5%88%86%E6%94%AF"><span class="nav-text">删除分支</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E5%86%B2%E7%AA%81"><span class="nav-text">分支冲突</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E7%AD%96%E7%95%A5"><span class="nav-text">管理策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BUG%E5%88%86%E6%94%AF"><span class="nav-text">BUG分支</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Feature%E5%88%86%E6%94%AF"><span class="nav-text">Feature分支</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E4%BA%BA%E5%8D%8F%E4%BD%9C"><span class="nav-text">多人协作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A8%E9%80%81%E5%88%86%E6%94%AF"><span class="nav-text">推送分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%93%E5%8F%96%E5%88%86%E6%94%AF"><span class="nav-text">抓取分支</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rebase"><span class="nav-text">Rebase</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E6%A0%87%E7%AD%BE%E7%AE%A1%E7%90%86"><span class="nav-text">七、标签管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%A0%87%E7%AD%BE"><span class="nav-text">创建标签</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%A0%87%E7%AD%BE"><span class="nav-text">操作标签</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%AB%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89Git"><span class="nav-text">八、自定义Git</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%BD%E7%95%A5%E7%89%B9%E6%AE%8A%E6%96%87%E4%BB%B6"><span class="nav-text">忽略特殊文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%88%AB%E5%90%8D"><span class="nav-text">配置别名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%AD%E5%BB%BAGit%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-text">搭建Git服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E5%85%AC%E9%92%A5"><span class="nav-text">管理公钥</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E6%9D%83%E9%99%90"><span class="nav-text">管理权限</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B9%9D%E3%80%81%E4%BD%BF%E7%94%A8SourceTree"><span class="nav-text">九、使用SourceTree</span></a></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>

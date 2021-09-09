@@ -1,0 +1,320 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>Keepalived 双机热备 | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">Keepalived 双机热备</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2021-04-25 23:15:13 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/">负载均衡</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/Keepalived/">Keepalived</a>&nbsp;</li><li>| <a href="/tags/LVS/">LVS</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><p>官方网站：<a class="link" target="_blank" rel="noopener" href="http://www.keepalived.org/">http://www.keepalived.org/<i class="fas fa-external-link-alt"></i></a></p><h1 id="一、Keepalived-概述"><a href="#一、Keepalived-概述" class="headerlink" title="一、Keepalived 概述"></a>一、Keepalived 概述</h1><p>Keepalived 起初是专门针对 LVS 设计的一款强大的辅助工具，主要用来提供故障切换（Failover）和健康检查（Health Checking）功能——判断 LVS 负载调度器、节点服务器的可用性，及时隔离并替换为新的服务器，当故障主机恢复后将其重新加入群集。</p><p>Keepalived 的热备方式：Keepalived 采用 VRRP（Virtual Router Redundancy Protocol，虚拟路由冗余协议）热备份协议，通过软件的方式实现 Linux 服务器的多机热备功能。热备组内的每台路由器都可能成为主路由器，虚拟路由器的 IP 地址（VIP）可以在热备组内的路由器之间进行转移，所以也称为漂移 IP 地址。使用 Keepalived 时，漂移地址的实现不需要通过手动建立虚接口配置文件（如 ens33:0），而是由 Keepalived 根据配置文件自动管理。</p><p>在非 LVS 集群环境中使用时，Keepalived 也可以作为热备软件使用。</p><h1 id="二、安装-Keepalived-服务"><a href="#二、安装-Keepalived-服务" class="headerlink" title="二、安装 Keepalived 服务"></a>二、安装 Keepalived 服务</h1><p>安装 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install keepalived ipvsadm</code></pre><p>设置服务开机自启</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl enable keepalived</code></pre><h1 id="三、Keepalived-双机热备"><a href="#三、Keepalived-双机热备" class="headerlink" title="三、Keepalived 双机热备"></a>三、Keepalived 双机热备</h1><h2 id="主服务器配置"><a href="#主服务器配置" class="headerlink" title="主服务器配置"></a>主服务器配置</h2><p>Keepalived 服务的配置目录位于<code>/etc/keepalived/</code>。<code>keepalived.conf</code>是主配置文件。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install keepalived
+cp &#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf &#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf.bak</code></pre><p>修改配置文件</p><pre class="line-numbers language-json" data-language="json"><code class="language-json">global_defs &#123;
+   router_id LVS_DEVEL_1    #路由器(服务器)名称
+&#125;
+
+vrrp_instance VI_1 &#123;        #定义VRRP热备实例
+    state MASTER            #热备状态,MASTER表示主服务器
+    interface ens33         #承载VIP地址的物理接口
+    virtual_router_id 51    #虚拟路由器ID号,每个热备组保持一致
+    priority 100            #优先级,数值越大优先级越高
+    advert_int 1            #心跳频率
+    authentication &#123;        #认证信息,每个热备组保持一致
+        auth_type PASS      #认证类型
+        auth_pass 1111      #认证密码
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.254      #漂移地址,可以添加多个
+    &#125;
+&#125;</code></pre><p>配置完成后，启动 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start keepalived
+systemctl enable keepalived</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ip address show ens33
+2: ens33: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link&#x2F;ether 00:0c:29:56:62:8c brd ff:ff:ff:ff:ff:ff
+    inet 192.168.10.10&#x2F;24 brd 192.168.10.255 scope global noprefixroute ens33
+       valid_lft forever preferred_lft forever
+    inet 192.168.10.254&#x2F;32 scope global ens33
+       valid_lft forever preferred_lft forever
+    inet6 fe80::333f:ab10:5acc:ea42&#x2F;64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever</code></pre><h2 id="备服务器配置"><a href="#备服务器配置" class="headerlink" title="备服务器配置"></a>备服务器配置</h2><p>安装 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install keepalived
+cp &#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf &#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf.bak</code></pre><p>修改配置文件</p><pre class="line-numbers language-json" data-language="json"><code class="language-json">global_defs &#123;
+   router_id LVS_DEVEL_2    #路由器(服务器)名称
+&#125;
+
+vrrp_instance VI_1 &#123;
+    state BACKUP            #热备状态,BACKUP表示备服务器
+    interface ens33
+    virtual_router_id 51
+    priority 99             #优先级,数值越大优先级越高,备应比主优先级小
+    advert_int 1
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1111
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.254      #漂移地址
+    &#125;
+&#125;</code></pre><p>配置完成后，启动 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start keepalived
+systemctl enable keepalived</code></pre><h1 id="四、LVS-Keepalived-高可用"><a href="#四、LVS-Keepalived-高可用" class="headerlink" title="四、LVS+Keepalived 高可用"></a>四、LVS+Keepalived 高可用</h1><p>DR模式配置 LVS+Keepalived 实现高可用群集。</p><table><thead><tr><th>OS</th><th>IP</th><th>hostname</th></tr></thead><tbody><tr><td>CentOS</td><td>192.168.10.10</td><td>LVS_Keepalived_master</td></tr><tr><td>CentOS</td><td>192.168.10.20</td><td>LVS_Keepalived_backup</td></tr><tr><td>CentOS</td><td>192.168.10.30</td><td>Real_Server1</td></tr><tr><td>CentOS</td><td>192.168.10.40</td><td>Real_Server2</td></tr></tbody></table><blockquote><p>虚拟 IP地址：192.168.10.254</p></blockquote><h2 id="主要服务器配置"><a href="#主要服务器配置" class="headerlink" title="主要服务器配置"></a>主要服务器配置</h2><p>1、安装 Keepalived 和 ipvsadm 管理工具</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install keepalived ipvsadm
+systemctl enable keepalived</code></pre><p>2、修改 Keepalive 配置文件</p><pre class="line-numbers language-json" data-language="json"><code class="language-json">#实现热备功能
+global_defs &#123;
+   router_id LVS_DEVEL_1    #路由器(服务器)名称
+&#125;
+
+vrrp_instance VI_1 &#123;        #定义VRRP热备实例
+    state MASTER            #热备状态,MASTER表示主服务器
+    interface ens33         #承载VIP地址的物理接口
+    virtual_router_id 51    #虚拟路由器ID号,每个热备组保持一致
+    priority 100            #优先级,数值越大优先级越高
+    advert_int 1            #心跳频率
+    authentication &#123;        #认证信息,每个热备组保持一致
+        auth_type PASS      #认证类型
+        auth_pass 1111      #认证密码
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.254      #漂移地址,可以添加多个
+    &#125;
+&#125;</code></pre><pre class="line-numbers language-json" data-language="json"><code class="language-json">#节点服务器池配置
+virtual_server 192.168.10.254 80 &#123;    #虚拟服务器IP地址、端口
+    delay_loop 6                      #健康检查的间隔时间(秒)
+    lb_algo rr                        #轮询(rr)调度算法
+    lb_kind DR                        #直接路由DR模式
+!    persistence_timeout 50           #连接保持时间(秒),实验环境禁用此项
+    protocol TCP                      #应用服务使用TCP协议
+
+    real_server 192.168.10.30 80 &#123;    #节点服务器的地址、端口
+        weight 1                      #节点权重
+        TCP_CHECK &#123;                   #健康检查方式
+            connect_port 80           #检查目标端口
+            connect_timeout 3         #连接超时(秒)
+            nb_get_retry 3            #重试次数
+            delay_before_retry 4      #重试间隔
+        &#125;
+    &#125;
+
+    real_server 192.168.10.40 80 &#123;    #配置节点服务器2
+        weight 1
+        TCP_CHECK &#123;
+            connect_port 80
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 4
+        &#125;
+    &#125; 
+&#125;</code></pre><p>3、启动 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl restart keepalived</code></pre><h2 id="备份服务器配置"><a href="#备份服务器配置" class="headerlink" title="备份服务器配置"></a>备份服务器配置</h2><p>1、安装 Keepalived 和 ipvsadm 管理工具</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install keepalived ipvsadm
+systemctl enable keepalived</code></pre><p>2、修改 Keepalive 配置文件</p><pre class="line-numbers language-json" data-language="json"><code class="language-json">global_defs &#123;
+   router_id LVS_DEVEL_2    #路由器(服务器)名称
+&#125;
+
+vrrp_instance VI_1 &#123;
+    state BACKUP            #热备状态,BACKUP表示备服务器
+    interface ens33
+    virtual_router_id 51
+    priority 99             #优先级,数值越大优先级越高,备应比主优先级小
+    advert_int 1
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1111
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.10.254      #漂移地址
+    &#125;
+&#125;</code></pre><pre class="line-numbers language-json" data-language="json"><code class="language-json">#节点服务器池配置
+virtual_server 192.168.10.254 80 &#123;
+    delay_loop 6
+    lb_algo rr
+    lb_kind DR
+!    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.10.30 80 &#123;
+        weight 1
+        TCP_CHECK &#123;
+            connect_port 80
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 4
+        &#125;
+    &#125;
+
+    real_server 192.168.10.40 80 &#123;
+        weight 1
+        TCP_CHECK &#123;
+            connect_port 80
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 4
+        &#125;
+    &#125; 
+&#125;</code></pre><p>3、启动 Keepalived 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl restart keepalived</code></pre><h2 id="节点服务器配置"><a href="#节点服务器配置" class="headerlink" title="节点服务器配置"></a>节点服务器配置</h2><p>1、配置虚拟 IP 地址</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-lo:0 &lt;&lt;EOF
+DEVICE&#x3D;lo:0
+IPADDR&#x3D;192.168.10.254
+NETMASK&#x3D;255.255.255.255
+ONBOOT&#x3D;yes
+EOF
+
+systemctl restart network</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 添加VIP本地访问路由
+echo &quot;&#x2F;sbin&#x2F;route add -host 192.168.10.254 dev lo:0&quot; &gt;&gt; &#x2F;etc&#x2F;rc.local
+route add -host 192.168.10.254 dev lo:0</code></pre><p>2、调整内核参数</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ARP应答
+echo &quot;net.ipv4.conf.all.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.all.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+
+sysctl -p</code></pre><p>3、安装 httpd 服务</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># Real_Server1(192.168.10.30)
+yum -y install httpd
+echo Real_Server1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+
+# Real_Server2(192.168.10.40)
+yum -y install httpd
+echo Real_Server2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd</code></pre><hr><p>keepalived.conf.bak</p><pre class="line-numbers language-json" data-language="json"><code class="language-json">! Configuration File for keepalived
+
+global_defs &#123;
+   notification_email &#123;
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   &#125;
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_strict
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+&#125;
+
+vrrp_instance VI_1 &#123;
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication &#123;
+        auth_type PASS
+        auth_pass 1111
+    &#125;
+    virtual_ipaddress &#123;
+        192.168.200.16
+        192.168.200.17
+        192.168.200.18
+    &#125;
+&#125;
+
+virtual_server 192.168.200.100 443 &#123;
+    delay_loop 6
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.201.100 443 &#123;
+        weight 1
+        SSL_GET &#123;
+            url &#123;
+              path &#x2F;
+              digest ff20ad2481f97b1754ef3e12ecd3a9cc
+            &#125;
+            url &#123;
+              path &#x2F;mrtg&#x2F;
+              digest 9b3a0c85a887a256d6939da88aabd8cd
+            &#125;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        &#125;
+    &#125;
+&#125;
+
+virtual_server 10.10.10.2 1358 &#123;
+    delay_loop 6
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    sorry_server 192.168.200.200 1358
+
+    real_server 192.168.200.2 1358 &#123;
+        weight 1
+        HTTP_GET &#123;
+            url &#123;
+              path &#x2F;testurl&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl2&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl3&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        &#125;
+    &#125;
+
+    real_server 192.168.200.3 1358 &#123;
+        weight 1
+        HTTP_GET &#123;
+            url &#123;
+              path &#x2F;testurl&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334c
+            &#125;
+            url &#123;
+              path &#x2F;testurl2&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334c
+            &#125;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        &#125;
+    &#125;
+&#125;
+
+virtual_server 10.10.10.3 1358 &#123;
+    delay_loop 3
+    lb_algo rr
+    lb_kind NAT
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.200.4 1358 &#123;
+        weight 1
+        HTTP_GET &#123;
+            url &#123;
+              path &#x2F;testurl&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl2&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl3&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        &#125;
+    &#125;
+
+    real_server 192.168.200.5 1358 &#123;
+        weight 1
+        HTTP_GET &#123;
+            url &#123;
+              path &#x2F;testurl&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl2&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            url &#123;
+              path &#x2F;testurl3&#x2F;test.jsp
+              digest 640205b7b0fc66c1ea91c463fac6334d
+            &#125;
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        &#125;
+    &#125;
+&#125;</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">iptables -I INPUT  -p 112 -j ACCEPT</code></pre></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：Keepalived 双机热备</li><li>本文作者：白羊</li><li>创建时间：2021-04-25 23:15:13</li><li>本文链接：https://hellolisihui.com/page/负载均衡/Keepalived/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-prev"><a class="prev" rel="prev" href="/page/%E7%BD%91%E7%BB%9C%E6%8A%80%E6%9C%AF/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4/"><span class="left arrow-icon flex-center"><i class="fas fa-chevron-left"></i> </span><span class="title flex-center"><span class="post-nav-title-item">网络基础命令</span> <span class="post-nav-item">上一篇</span></span></a></div><div class="article-next"><a class="next" rel="next" href="/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/LVS%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8/"><span class="title flex-center"><span class="post-nav-title-item">LVS虚拟服务器</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81Keepalived-%E6%A6%82%E8%BF%B0"><span class="nav-text">一、Keepalived 概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AE%89%E8%A3%85-Keepalived-%E6%9C%8D%E5%8A%A1"><span class="nav-text">二、安装 Keepalived 服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81Keepalived-%E5%8F%8C%E6%9C%BA%E7%83%AD%E5%A4%87"><span class="nav-text">三、Keepalived 双机热备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">主服务器配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%87%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">备服务器配置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81LVS-Keepalived-%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="nav-text">四、LVS+Keepalived 高可用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">主要服务器配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">备份服务器配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8A%82%E7%82%B9%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="nav-text">节点服务器配置</span></a></li></ol></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>

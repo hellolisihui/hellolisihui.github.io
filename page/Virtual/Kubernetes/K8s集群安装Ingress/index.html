@@ -1,0 +1,490 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>K8s集群安装Ingress | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">K8s集群安装Ingress</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2020-11-13 13:29:28 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/Kubernetes/">Kubernetes</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/K8s/">K8s</a>&nbsp;</li><li>| <a href="/tags/Ingress/">Ingress</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><h1 id="K8s集群安装Ingress"><a href="#K8s集群安装Ingress" class="headerlink" title="K8s集群安装Ingress"></a>K8s集群安装Ingress</h1><h2 id="Nginxinc-Ingress"><a href="#Nginxinc-Ingress" class="headerlink" title="Nginxinc-Ingress"></a>Nginxinc-Ingress</h2><p>GitHub项目地址：<a class="link" target="_blank" rel="noopener" href="https://github.com/nginxinc/kubernetes-ingress">Nginxinc/kubernetes-ingress<i class="fas fa-external-link-alt"></i></a></p><p>Nginx.docs文档：<a class="link" target="_blank" rel="noopener" href="https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/">Install Nginx Ingress<i class="fas fa-external-link-alt"></i></a></p><p>本文档介绍了如何使用Kubernetes清单在您的Kubernetes集群中安装NGINX Ingress Controller。</p><h3 id="安装先决条件"><a href="#安装先决条件" class="headerlink" title="安装先决条件"></a>安装先决条件</h3><ol><li><p>确保有权访问Ingress控制器映像：</p><ul><li><p>对于NGINX入口控制器，使用所述图像<code>nginx/nginx-ingress</code>从<a class="link" target="_blank" rel="noopener" href="https://hub.docker.com/r/nginx/nginx-ingress">DockerHub<i class="fas fa-external-link-alt"></i></a>。</p></li><li><p>对于NGINX Plus Ingress控制器，请按照<a class="link" target="_blank" rel="noopener" href="https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image">此处<i class="fas fa-external-link-alt"></i></a>的说明构建您自己的映像并将其推送到私有Docker注册表。</p></li></ul></li><li><p>克隆Ingress控制器存储库并更改到Deployments文件夹：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">git clone https:&#x2F;&#x2F;github.com&#x2F;nginxinc&#x2F;kubernetes-ingress&#x2F; 
+cd kubernetes-ingress&#x2F;deployments
+git checkout v1.9.0</code></pre></li></ol><h3 id="1-配置RBAC"><a href="#1-配置RBAC" class="headerlink" title="1. 配置RBAC"></a>1. 配置RBAC</h3><ol><li><p>为Ingress控制器创建一个名称空间和一个服务帐户：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f common&#x2F;ns-and-sa.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#common&#x2F;ns-and-sa.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-ingress
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress</code></pre></li><li><p>为服务帐户创建集群角色和集群角色绑定：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f rbac&#x2F;rbac.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#rbac&#x2F;rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io&#x2F;v1
+metadata:
+  name: nginx-ingress
+rules:
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - services
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - pods
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - list
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - list
+  - watch
+  - get
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses&#x2F;status
+  verbs:
+  - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers
+  - virtualserverroutes
+  - globalconfigurations
+  - transportservers
+  - policies
+  verbs:
+  - list
+  - watch
+  - get
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers&#x2F;status
+  - virtualserverroutes&#x2F;status
+  verbs:
+  - update
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - get
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io&#x2F;v1
+metadata:
+  name: nginx-ingress
+subjects:
+- kind: ServiceAccount
+  name: nginx-ingress
+  namespace: nginx-ingress
+roleRef:
+  kind: ClusterRole
+  name: nginx-ingress
+  apiGroup: rbac.authorization.k8s.io</code></pre></li><li><p>（仅适用于App Protect）创建App Protect角色和角色绑定：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f rbac&#x2F;ap-rbac.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#rbac&#x2F;ap-rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io&#x2F;v1
+metadata:
+  name: nginx-ingress-app-protect
+rules:
+- apiGroups: 
+  - appprotect.f5.com
+  resources: 
+  - appolicies
+  - aplogconfs
+  verbs: 
+  - &quot;get&quot; 
+  - &quot;watch&quot; 
+  - &quot;list&quot;
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io&#x2F;v1
+metadata:
+  name: nginx-ingress-app-protect
+subjects:
+- kind: ServiceAccount
+  name: nginx-ingress
+  namespace: nginx-ingress
+roleRef:
+  kind: ClusterRole
+  name: nginx-ingress-app-protect
+  apiGroup: rbac.authorization.k8s.io</code></pre></li></ol><p><strong>注意</strong>：要执行此步骤，您必须是集群管理员。请遵循您的Kubernetes平台的文档来配置管理员访问权限。对于GKE，请参阅<a class="link" target="_blank" rel="noopener" href="https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control">基于角色的访问控制<i class="fas fa-external-link-alt"></i></a>文档。</p><h3 id="2-创建公共资源"><a href="#2-创建公共资源" class="headerlink" title="2. 创建公共资源"></a>2. 创建公共资源</h3><p>在本部分中，将为大多数Ingress Controller安装创建通用的资源：</p><ol><li><p>为NGINX中的默认服务器创建一个具有TLS证书和密钥的密钥：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f common&#x2F;default-server-secret.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#common&#x2F;default-server-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: default-server-secret
+  namespace: nginx-ingress
+type: Opaque
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN2akNDQWFZQ0NRREFPRjl0THNhWFhEQU5CZ2txaGtpRzl3MEJBUXNGQURBaE1SOHdIUVlEVlFRRERCWk8KUjBsT1dFbHVaM0psYzNORGIyNTBjbTlzYkdWeU1CNFhEVEU0TURreE1qRTRNRE16TlZvWERUSXpNRGt4TVRFNApNRE16TlZvd0lURWZNQjBHQTFVRUF3d1dUa2RKVGxoSmJtZHlaWE56UTI5dWRISnZiR3hsY2pDQ0FTSXdEUVlKCktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUwvN2hIUEtFWGRMdjNyaUM3QlBrMTNpWkt5eTlyQ08KR2xZUXYyK2EzUDF0azIrS3YwVGF5aGRCbDRrcnNUcTZzZm8vWUk1Y2Vhbkw4WGM3U1pyQkVRYm9EN2REbWs1Qgo4eDZLS2xHWU5IWlg0Rm5UZ0VPaStlM2ptTFFxRlBSY1kzVnNPazFFeUZBL0JnWlJVbkNHZUtGeERSN0tQdGhyCmtqSXVuektURXUyaDU4Tlp0S21ScUJHdDEwcTNRYzhZT3ExM2FnbmovUWRjc0ZYYTJnMjB1K1lYZDdoZ3krZksKWk4vVUkxQUQ0YzZyM1lma1ZWUmVHd1lxQVp1WXN2V0RKbW1GNWRwdEMzN011cDBPRUxVTExSakZJOTZXNXIwSAo1TmdPc25NWFJNV1hYVlpiNWRxT3R0SmRtS3FhZ25TZ1JQQVpQN2MwQjFQU2FqYzZjNGZRVXpNQ0F3RUFBVEFOCkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQWpLb2tRdGRPcEsrTzhibWVPc3lySmdJSXJycVFVY2ZOUitjb0hZVUoKdGhrYnhITFMzR3VBTWI5dm15VExPY2xxeC9aYzJPblEwMEJCLzlTb0swcitFZ1U2UlVrRWtWcitTTFA3NTdUWgozZWI4dmdPdEduMS9ienM3bzNBaS9kclkrcUI5Q2k1S3lPc3FHTG1US2xFaUtOYkcyR1ZyTWxjS0ZYQU80YTY3Cklnc1hzYktNbTQwV1U3cG9mcGltU1ZmaXFSdkV5YmN3N0NYODF6cFErUyt1eHRYK2VBZ3V0NHh3VlI5d2IyVXYKelhuZk9HbWhWNThDd1dIQnNKa0kxNXhaa2VUWXdSN0diaEFMSkZUUkk3dkhvQXprTWIzbjAxQjQyWjNrN3RXNQpJUDFmTlpIOFUvOWxiUHNoT21FRFZkdjF5ZytVRVJxbStGSis2R0oxeFJGcGZnPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo&#x3D;
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdi91RWM4b1JkMHUvZXVJTHNFK1RYZUprckxMMnNJNGFWaEMvYjVyYy9XMlRiNHEvClJOcktGMEdYaVN1eE9ycXgrajlnamx4NXFjdnhkenRKbXNFUkJ1Z1B0ME9hVGtIekhvb3FVWmcwZGxmZ1dkT0EKUTZMNTdlT1l0Q29VOUZ4amRXdzZUVVRJVUQ4R0JsRlNjSVo0b1hFTkhzbysyR3VTTWk2Zk1wTVM3YUhudzFtMApxWkdvRWEzWFNyZEJ6eGc2clhkcUNlUDlCMXl3VmRyYURiUzc1aGQzdUdETDU4cGszOVFqVUFQaHpxdmRoK1JWClZGNGJCaW9CbTVpeTlZTW1hWVhsMm0wTGZzeTZuUTRRdFFzdEdNVWozcGJtdlFmazJBNnljeGRFeFpkZFZsdmwKMm82MjBsMllxcHFDZEtCRThCay90elFIVTlKcU56cHpoOUJUTXdJREFRQUJBb0lCQVFDZklHbXowOHhRVmorNwpLZnZJUXQwQ0YzR2MxNld6eDhVNml4MHg4Mm15d1kxUUNlL3BzWE9LZlRxT1h1SENyUlp5TnUvZ2IvUUQ4bUFOCmxOMjRZTWl0TWRJODg5TEZoTkp3QU5OODJDeTczckM5bzVvUDlkazAvYzRIbjAzSkVYNzZ5QjgzQm9rR1FvYksKMjhMNk0rdHUzUmFqNjd6Vmc2d2szaEhrU0pXSzBwV1YrSjdrUkRWYmhDYUZhNk5nMUZNRWxhTlozVDhhUUtyQgpDUDNDeEFTdjYxWTk5TEI4KzNXWVFIK3NYaTVGM01pYVNBZ1BkQUk3WEh1dXFET1lvMU5PL0JoSGt1aVg2QnRtCnorNTZud2pZMy8yUytSRmNBc3JMTnIwMDJZZi9oY0IraVlDNzVWYmcydVd6WTY3TWdOTGQ5VW9RU3BDRkYrVm4KM0cyUnhybnhBb0dCQU40U3M0ZVlPU2huMVpQQjdhTUZsY0k2RHR2S2ErTGZTTXFyY2pOZjJlSEpZNnhubmxKdgpGenpGL2RiVWVTbWxSekR0WkdlcXZXaHFISy9iTjIyeWJhOU1WMDlRQ0JFTk5jNmtWajJTVHpUWkJVbEx4QzYrCk93Z0wyZHhKendWelU0VC84ajdHalRUN05BZVpFS2FvRHFyRG5BYWkyaW5oZU1JVWZHRXFGKzJyQW9HQkFOMVAKK0tZL0lsS3RWRzRKSklQNzBjUis3RmpyeXJpY05iWCtQVzUvOXFHaWxnY2grZ3l4b25BWlBpd2NpeDN3QVpGdwpaZC96ZFB2aTBkWEppc1BSZjRMazg5b2pCUmpiRmRmc2l5UmJYbyt3TFU4NUhRU2NGMnN5aUFPaTVBRHdVU0FkCm45YWFweUNweEFkREtERHdObit3ZFhtaTZ0OHRpSFRkK3RoVDhkaVpBb0dCQUt6Wis1bG9OOTBtYlF4VVh5YUwKMjFSUm9tMGJjcndsTmVCaWNFSmlzaEhYa2xpSVVxZ3hSZklNM2hhUVRUcklKZENFaHFsV01aV0xPb2I2NTNyZgo3aFlMSXM1ZUtka3o0aFRVdnpldm9TMHVXcm9CV2xOVHlGanIrSWhKZnZUc0hpOGdsU3FkbXgySkJhZUFVWUNXCndNdlQ4NmNLclNyNkQrZG8wS05FZzFsL0FvR0FlMkFVdHVFbFNqLzBmRzgrV3hHc1RFV1JqclRNUzRSUjhRWXQKeXdjdFA4aDZxTGxKUTRCWGxQU05rMXZLTmtOUkxIb2pZT2pCQTViYjhibXNVU1BlV09NNENoaFJ4QnlHbmR2eAphYkJDRkFwY0IvbEg4d1R0alVZYlN5T294ZGt5OEp0ek90ajJhS0FiZHd6NlArWDZDODhjZmxYVFo5MWpYL3RMCjF3TmRKS2tDZ1lCbyt0UzB5TzJ2SWFmK2UwSkN5TGhzVDQ5cTN3Zis2QWVqWGx2WDJ1VnRYejN5QTZnbXo5aCsKcDNlK2JMRUxwb3B0WFhNdUFRR0xhUkcrYlNNcjR5dERYbE5ZSndUeThXczNKY3dlSTdqZVp2b0ZpbmNvVlVIMwphdmxoTUVCRGYxSjltSDB5cDBwWUNaS2ROdHNvZEZtQktzVEtQMjJhTmtsVVhCS3gyZzR6cFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo&#x3D;</code></pre><p><strong>注意</strong>：对于未定义Ingress规则的所有域请求，默认服务器都会返回404状态代码的Not Found页面。为了进行测试，包含了Ingress生成的自签名证书和密钥。但是，建议使用自己的证书和密钥。</p></li><li><p>创建用于自定义NGINX配置的配置图：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f common&#x2F;nginx-config.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#common&#x2F;nginx-config.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:</code></pre></li><li><p>创建一个IngressClass资源 (用于Kubernetes&gt; = 1.18)：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f common&#x2F;ingress-class.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#common&#x2F;ingress-class.yaml
+apiVersion: networking.k8s.io&#x2F;v1beta1
+kind: IngressClass
+metadata:
+  name: nginx
+  # annotations:
+  #   ingressclass.kubernetes.io&#x2F;is-default-class: &quot;true&quot;
+spec:
+  controller: nginx.org&#x2F;ingress-controller</code></pre></li></ol><p>如果要将Ingress Controller设置为默认控制器，请取消注释注释<code>ingressclass.kubernetes.io/is-default-class</code>。将此注释设置为true时，将为所有未指定ingressClassName字段的新Ingress分配此IngressClass。</p><p><strong>注意</strong>：如果没有IngressClass资源，则Ingress Controller将无法启动。</p><h4 id="创建自定义资源"><a href="#创建自定义资源" class="headerlink" title="创建自定义资源"></a>创建自定义资源</h4><h4 id="NGINX-App-Protect资源"><a href="#NGINX-App-Protect资源" class="headerlink" title="NGINX App Protect资源"></a>NGINX App Protect资源</h4><h3 id="3-部署Ingress-Controller"><a href="#3-部署Ingress-Controller" class="headerlink" title="3. 部署Ingress Controller"></a>3. 部署Ingress Controller</h3><p>两个用于部署Ingress控制器的选项：</p><ul><li><em>Deployment</em>。如果您计划动态更改Ingress控制器副本的数量，请使用Deployment。</li><li><em>DaemonSet</em>。使用DaemonSet在每个节点或节点子集上部署Ingress控制器。</li></ul><blockquote><p>在创建Deployment或Daemonset资源之前，请确保根据您的要求更新相应清单文件中Ingress Controller容器的 <a class="link" target="_blank" rel="noopener" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments">命令行参数<i class="fas fa-external-link-alt"></i></a>。</p></blockquote><h4 id="运行Ingress-Controller"><a href="#运行Ingress-Controller" class="headerlink" title="运行Ingress Controller"></a>运行Ingress Controller</h4><ul><li><p>使用Deployment：默认情况下，当您通过部署运行Ingress Controller时，Kubernetes将创建一个Ingress Controller Pod。</p><p>For NGINX.</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f deployment&#x2F;nginx-ingress.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#deployment&#x2F;nginx-ingress.yaml
+
+apiVersion: apps&#x2F;v1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+     #annotations:
+       #prometheus.io&#x2F;scrape: &quot;true&quot;
+       #prometheus.io&#x2F;port: &quot;9113&quot;
+    spec:
+      serviceAccountName: nginx-ingress
+      containers:
+      - image: nginx&#x2F;nginx-ingress:1.9.0
+        imagePullPolicy: IfNotPresent
+        name: nginx-ingress
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        - name: readiness-port
+          containerPort: 8081
+       #- name: prometheus
+         #containerPort: 9113
+        readinessProbe:
+          httpGet:
+            path: &#x2F;nginx-ready
+            port: readiness-port
+          periodSeconds: 1
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsUser: 101 #nginx
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        args:
+          - -nginx-configmaps&#x3D;$(POD_NAMESPACE)&#x2F;nginx-config
+          - -default-server-tls-secret&#x3D;$(POD_NAMESPACE)&#x2F;default-server-secret
+         #- -v&#x3D;3 # Enables extensive logging. Useful for troubleshooting.
+         #- -report-ingress-status
+         #- -external-service&#x3D;nginx-ingress
+         #- -enable-prometheus-metrics
+         #- -global-configuration&#x3D;$(POD_NAMESPACE)&#x2F;nginx-configuration</code></pre><p>For NGINX Plus.</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f deployment&#x2F;nginx-plus-ingress.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#deployment&#x2F;nginx-plus-ingress.yaml
+
+apiVersion: apps&#x2F;v1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+     #annotations:
+       #prometheus.io&#x2F;scrape: &quot;true&quot;
+       #prometheus.io&#x2F;port: &quot;9113&quot;
+    spec:
+      serviceAccountName: nginx-ingress
+      containers:
+      - image: nginx-plus-ingress:1.9.0
+        imagePullPolicy: IfNotPresent
+        name: nginx-plus-ingress
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        - name: readiness-port
+          containerPort: 8081
+       #- name: prometheus
+         #containerPort: 9113
+        readinessProbe:
+          httpGet:
+            path: &#x2F;nginx-ready
+            port: readiness-port
+          periodSeconds: 1
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsUser: 101 #nginx
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        args:
+          - -nginx-plus
+          - -nginx-configmaps&#x3D;$(POD_NAMESPACE)&#x2F;nginx-config
+          - -default-server-tls-secret&#x3D;$(POD_NAMESPACE)&#x2F;default-server-secret
+         #- -enable-app-protect
+         #- -v&#x3D;3 # Enables extensive logging. Useful for troubleshooting.
+         #- -report-ingress-status
+         #- -external-service&#x3D;nginx-ingress
+         #- -enable-prometheus-metrics
+         #- -global-configuration&#x3D;$(POD_NAMESPACE)&#x2F;nginx-configuration</code></pre><p><strong>注意</strong>：<code>nginx-plus-ingress.yaml</code>使用您已建立的容器映像更新。</p></li><li><p>使用DaemonSet：当使用DaemonSet运行Ingress Controller时，Kubernetes将在集群的每个节点上创建一个Ingress controller pod。</p><p>For NGINX, run:</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f daemon-set&#x2F;nginx-ingress.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#daemon-set&#x2F;nginx-ingress.yaml
+apiVersion: apps&#x2F;v1
+kind: DaemonSet
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+     #annotations:
+       #prometheus.io&#x2F;scrape: &quot;true&quot;
+       #prometheus.io&#x2F;port: &quot;9113&quot;
+    spec:
+      serviceAccountName: nginx-ingress
+      containers:
+      - image: nginx&#x2F;nginx-ingress:1.9.0
+        imagePullPolicy: IfNotPresent
+        name: nginx-ingress
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: https
+          containerPort: 443
+          hostPort: 443
+        - name: readiness-port
+          containerPort: 8081
+       #- name: prometheus
+         #containerPort: 9113
+        readinessProbe:
+         httpGet:
+           path: &#x2F;nginx-ready
+           port: readiness-port
+         periodSeconds: 1
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsUser: 101 #nginx
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        args:
+          - -nginx-configmaps&#x3D;$(POD_NAMESPACE)&#x2F;nginx-config
+          - -default-server-tls-secret&#x3D;$(POD_NAMESPACE)&#x2F;default-server-secret
+         #- -v&#x3D;3 # Enables extensive logging. Useful for troubleshooting.
+         #- -report-ingress-status
+         #- -external-service&#x3D;nginx-ingress
+         #- -enable-prometheus-metrics
+         #- -global-configuration&#x3D;$(POD_NAMESPACE)&#x2F;nginx-configuration</code></pre></li></ul><pre class="line-numbers language-none"><code class="language-none">  
+For NGINX Plus, run:
+  
+  &#96;&#96;&#96;bash
+  kubectl apply -f daemon-set&#x2F;nginx-plus-ingress.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#daemon-set&#x2F;nginx-plus-ingress.yaml
+apiVersion: apps&#x2F;v1
+kind: DaemonSet
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+     #annotations:
+       #prometheus.io&#x2F;scrape: &quot;true&quot;
+       #prometheus.io&#x2F;port: &quot;9113&quot;
+    spec:
+      serviceAccountName: nginx-ingress
+      containers:
+      - image: nginx-plus-ingress:1.9.0
+        imagePullPolicy: IfNotPresent
+        name: nginx-plus-ingress
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: https
+          containerPort: 443
+          hostPort: 443
+        - name: readiness-port
+          containerPort: 8081
+       #- name: prometheus
+         #containerPort: 9113
+        readinessProbe:
+          httpGet:
+            path: &#x2F;nginx-ready
+            port: readiness-port
+          periodSeconds: 1
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsUser: 101 #nginx
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        args:
+          - -nginx-plus
+          - -nginx-configmaps&#x3D;$(POD_NAMESPACE)&#x2F;nginx-config
+          - -default-server-tls-secret&#x3D;$(POD_NAMESPACE)&#x2F;default-server-secret
+         #- -enable-app-protect        
+         #- -v&#x3D;3 # Enables extensive logging. Useful for troubleshooting.
+         #- -report-ingress-status
+         #- -external-service&#x3D;nginx-ingress
+         #- -enable-prometheus-metrics
+       #- -global-configuration&#x3D;$(POD_NAMESPACE)&#x2F;nginx-configuration</code></pre><p><strong>注意</strong>：<code>nginx-plus-ingress.yaml</code>使用您已建立的容器映像更新。</p><h4 id="检查Ingress-Controller状态"><a href="#检查Ingress-Controller状态" class="headerlink" title="检查Ingress Controller状态"></a>检查Ingress Controller状态</h4><p>运行以下命令以确保Ingress控制器Pod正在运行：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get pods --namespace&#x3D;nginx-ingress
+NAME                  READY   STATUS    RESTARTS   AGE
+nginx-ingress-5cb2k   1&#x2F;1     Running   0          3m
+nginx-ingress-nhcd2   1&#x2F;1     Running   0          3m
+#输出结果为Daemonset控制器Pod</code></pre><h3 id="4-访问Ingress-Contoller"><a href="#4-访问Ingress-Contoller" class="headerlink" title="4. 访问Ingress Contoller"></a>4. 访问Ingress Contoller</h3><p><strong>使用DaemonSet创建</strong>，则Ingress控制器容器的端口80和443将映射到容器正在运行的节点的相同端口。要访问Ingress控制器，请使用这些端口和正在运行Ingress控制器的群集的任何节点的IP地址。</p><p>或者<strong>使用Deployment创建</strong>，则下面是用于访问Ingress控制器容器的两个选项。</p><h4 id="为Ingress-Controller-Pod创建服务"><a href="#为Ingress-Controller-Pod创建服务" class="headerlink" title="为Ingress Controller Pod创建服务"></a>为Ingress Controller Pod创建服务</h4><ul><li><p><em>使用NodePort服务</em>。</p><p>创建一个类型为<em>NodePort</em>的服务：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl create -f service&#x2F;nodeport.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">#service&#x2F;nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  type: NodePort 
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: nginx-ingress</code></pre><p>Kubernetes将在集群的每个节点上随机分配两个端口。要访问Ingress控制器，请使用集群中任何节点的IP地址以及两个分配的端口。</p><blockquote><p>在<a class="link" target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport">Kubernetes文档中<i class="fas fa-external-link-alt"></i></a>阅读有关NodePort类型的<a class="link" target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport">更多信息<i class="fas fa-external-link-alt"></i></a>。</p></blockquote></li><li><p><em>使用LoadBalancer服务</em>：</p><ol><li><p>使用清单为您的云提供商创建服务：</p><p>对于GCP或Azure，运行：</p><pre class="line-numbers language-none"><code class="language-none">$ kubectl apply -f service&#x2F;loadbalancer.yaml</code></pre><p>对于AWS，运行：</p><pre class="line-numbers language-none"><code class="language-none">$ kubectl apply -f service&#x2F;loadbalancer-aws-elb.yaml</code></pre><p>Kubernetes将在TCP模式下分配经典负载均衡器（ELB），并启用PROXY协议以传递客户端的信息（IP地址和端口）。必须将NGINX配置为使用PROXY协议：</p><p>将以下密钥添加到<code>nginx-config.yaml</code>步骤2中的配置映射文件中：</p><pre class="line-numbers language-none"><code class="language-none">proxy-protocol: &quot;True&quot;
+real-ip-header: &quot;proxy_protocol&quot;
+set-real-ip-from: &quot;0.0.0.0&#x2F;0&quot;</code></pre><p>更新配置图：</p><pre class="line-numbers language-none"><code class="language-none">kubectl apply -f common&#x2F;nginx-config.yaml</code></pre><p><strong>注意</strong>：对于AWS，可以使用有关分配的负载均衡器的其他选项，例如负载均衡器的类型和SSL终止。阅读<a class="link" target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer">Kubernetes文档<i class="fas fa-external-link-alt"></i></a>以了解更多信息。</p><p>Kubernetes将分配并配置一个云负载均衡器，以对Ingress控制器容器进行负载均衡。</p></li><li><p>使用负载均衡器的公共IP访问Ingress控制器。要获取公共IP：</p><p>对于GCP或Azure，运行：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl get svc nginx-ingress --namespace&#x3D;nginx-ingress</code></pre><p>对于AWS ELB，公共IP不会由报告<code>kubectl</code>，因为ELB IP地址不是静态的。通常，您应该依靠ELB DNS名称而不是ELB IP地址。但是，出于测试目的，您可以使用获取ELB的DNS名称，然后运行以查找关联的IP地址：<code>kubectl describe nslookup</code></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl describe svc nginx-ingress --namespace&#x3D;nginx-ingress</code></pre><p>您可以使用<code>nslookup</code>以下方式将DNS名称解析为IP地址：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nslookup &lt;dns-name&gt;</code></pre><p>可以以入口资源的状态报告公共IP。有关更多详细信息，请参见<a class="link" target="_blank" rel="noopener" href="https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status">报告资源状态文档<i class="fas fa-external-link-alt"></i></a>。</p></li></ol><blockquote><p>在<a class="link" target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer">Kubernetes文档中<i class="fas fa-external-link-alt"></i></a>了解有关类型LoadBalancer的<a class="link" target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer">更多信息<i class="fas fa-external-link-alt"></i></a>。</p></blockquote></li></ul><h3 id="5-卸载Ingress-Contoller"><a href="#5-卸载Ingress-Contoller" class="headerlink" title="5. 卸载Ingress Contoller"></a>5. 卸载Ingress Contoller</h3><ol><li><p>删除<code>nginx-ingress</code>名称空间以卸载Ingress控制器以及所有已创建的辅助资源：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl delete namespace nginx-ingress</code></pre></li><li><p>删除在该步骤中创建的ClusterRole和ClusterRoleBinding：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl delete clusterrole nginx-ingress
+$ kubectl delete clusterrolebinding nginx-ingress</code></pre></li></ol><h2 id="Kubernetes-Ingress"><a href="#Kubernetes-Ingress" class="headerlink" title="Kubernetes-Ingress"></a>Kubernetes-Ingress</h2><p>GitHub项目地址：<a class="link" target="_blank" rel="noopener" href="https://github.com/kubernetes/ingress-nginx">Kubernetes/ingress-nginx<i class="fas fa-external-link-alt"></i></a></p><p>Ingress安装指南：<a class="link" target="_blank" rel="noopener" href="https://kubernetes.github.io/ingress-nginx/deploy">https://kubernetes.github.io/ingress-nginx/deploy<i class="fas fa-external-link-alt"></i></a></p><h3 id="前提准备工作"><a href="#前提准备工作" class="headerlink" title="前提准备工作"></a>前提准备工作</h3><p>创建工作目录</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkdir ingress-nginx
+cd ingress-nginx&#x2F;</code></pre><p>下载所需镜像(所有节点下载)</p><p>镜像下载列表：<a class="link" target="_blank" rel="noopener" href="https://quay.io/repository/kubernetes-ingress-controller/nginx-ingress-controller?tab=tags">Nginx-ingress-controller<i class="fas fa-external-link-alt"></i></a></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">docker pull quay.io&#x2F;kubernetes-ingress-controller&#x2F;nginx-ingress-controller:0.31.1
+#使用的镜像版本3.31.1</code></pre><p>查看下载结果</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker images | grep nginx-ingress-controller
+quay.io&#x2F;kubernetes-ingress-controller&#x2F;nginx-ingress-controller   0.31.1              4dcfe75fbd73        6 months ago        325MB</code></pre><h3 id="部署Ingress-Controller"><a href="#部署Ingress-Controller" class="headerlink" title="部署Ingress Controller"></a>部署Ingress Controller</h3><h4 id="下载安装文件"><a href="#下载安装文件" class="headerlink" title="下载安装文件"></a>下载安装文件</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#当前目录&#x2F;root&#x2F;ingress-nginx
+$ wget https:&#x2F;&#x2F;raw.githubusercontent.com&#x2F;kubernetes&#x2F;ingress-nginx&#x2F;controller-v0.41.0&#x2F;deploy&#x2F;static&#x2F;provider&#x2F;baremetal&#x2F;deploy.yaml</code></pre><h4 id="修改并且安装"><a href="#修改并且安装" class="headerlink" title="修改并且安装"></a>修改并且安装</h4><p><strong>修改部署文件</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim deploy.yaml</code></pre><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">···
+329       hostNetwork: true
+330       dnsPolicy: ClusterFirst
+331       containers:
+332         - name: controller
+333           image: quay.io&#x2F;kubernetes-ingress-controller&#x2F;nginx-ingress-controller:0.31.1
+334           imagePullPolicy: IfNotPresent
+···</code></pre><blockquote><p>前3个字符为行号，不在文件中，添加<code>hostNetwork: true</code>，修改<code>image</code>字段为可用镜像。</p></blockquote><p><strong>执行部署安装</strong></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">kubectl apply -f deploy.yaml</code></pre><h4 id="验证安装结果"><a href="#验证安装结果" class="headerlink" title="验证安装结果"></a>验证安装结果</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get pods -n ingress-nginx -l app.kubernetes.io&#x2F;name&#x3D;ingress-nginx --watch
+NAME                                            READY   STATUS      RESTARTS   AGE
+pod&#x2F;ingress-nginx-admission-create-27tcd        0&#x2F;1     Completed   0          100s
+pod&#x2F;ingress-nginx-admission-patch-dhg2j         0&#x2F;1     Completed   0          100s
+pod&#x2F;ingress-nginx-controller-5cb6d9d4cf-nhcd2   1&#x2F;1     Running     0          100s</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get all -n ingress-nginx
+NAME                                            READY   STATUS      RESTARTS   AGE
+pod&#x2F;ingress-nginx-admission-create-27tcd        0&#x2F;1     Completed   0          19m
+pod&#x2F;ingress-nginx-admission-patch-dhg2j         0&#x2F;1     Completed   2          19m
+pod&#x2F;ingress-nginx-controller-5cb6d9d4cf-nhcd2   1&#x2F;1     Running     0          19m
+
+NAME                                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+service&#x2F;ingress-nginx-controller             NodePort    10.96.112.101   &lt;none&gt;        80:30983&#x2F;TCP,443:32270&#x2F;TCP   19m
+service&#x2F;ingress-nginx-controller-admission   ClusterIP   10.96.17.29     &lt;none&gt;        443&#x2F;TCP                      19m
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps&#x2F;ingress-nginx-controller   1&#x2F;1     1            1           19m
+
+NAME                                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps&#x2F;ingress-nginx-controller-5cb6d9d4cf   1         1         1       19m
+
+NAME                                       COMPLETIONS   DURATION   AGE
+job.batch&#x2F;ingress-nginx-admission-create   1&#x2F;1           37s        19m
+job.batch&#x2F;ingress-nginx-admission-patch    1&#x2F;1           51s        19m</code></pre><h4 id="查看安装的版本"><a href="#查看安装的版本" class="headerlink" title="查看安装的版本"></a>查看安装的版本</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">POD_NAMESPACE&#x3D;ingress-nginx
+POD_NAME&#x3D;$(kubectl get pods -n $POD_NAMESPACE -l app.kubernetes.io&#x2F;name&#x3D;ingress-nginx --field-selector&#x3D;status.phase&#x3D;Running -o jsonpath&#x3D;&#39;&#123;.items[0].metadata.name&#125;&#39;)
+-controller --version[root@master ingress-nginx]# 
+kubectl exec -it $POD_NAME -n $POD_NAMESPACE -- &#x2F;nginx-ingress-controller --version</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-------------------------------------------------------------------------------
+NGINX Ingress controller
+  Release:       0.31.1
+  Build:         git-b68839118
+  Repository:    https:&#x2F;&#x2F;github.com&#x2F;kubernetes&#x2F;ingress-nginx
+  nginx version: nginx&#x2F;1.17.10
+-------------------------------------------------------------------------------</code></pre></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：K8s集群安装Ingress</li><li>本文作者：白羊</li><li>创建时间：2020-11-13 13:29:28</li><li>本文链接：https://hellolisihui.com/page/Virtual/Kubernetes/K8s集群安装Ingress/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-prev"><a class="prev" rel="prev" href="/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/NFS%E6%9C%8D%E5%8A%A1/"><span class="left arrow-icon flex-center"><i class="fas fa-chevron-left"></i> </span><span class="title flex-center"><span class="post-nav-title-item">NFS 网络文件共享服务</span> <span class="post-nav-item">上一篇</span></span></a></div><div class="article-next"><a class="next" rel="next" href="/page/Virtual/Kubernetes/Kubernetes%E5%85%A5%E9%97%A8/"><span class="title flex-center"><span class="post-nav-title-item">Kubernetes入门</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#K8s%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85Ingress"><span class="nav-text">K8s集群安装Ingress</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginxinc-Ingress"><span class="nav-text">Nginxinc-Ingress</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%85%88%E5%86%B3%E6%9D%A1%E4%BB%B6"><span class="nav-text">安装先决条件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E9%85%8D%E7%BD%AERBAC"><span class="nav-text">1. 配置RBAC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E5%85%AC%E5%85%B1%E8%B5%84%E6%BA%90"><span class="nav-text">2. 创建公共资源</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E8%87%AA%E5%AE%9A%E4%B9%89%E8%B5%84%E6%BA%90"><span class="nav-text">创建自定义资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NGINX-App-Protect%E8%B5%84%E6%BA%90"><span class="nav-text">NGINX App Protect资源</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E9%83%A8%E7%BD%B2Ingress-Controller"><span class="nav-text">3. 部署Ingress Controller</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E8%A1%8CIngress-Controller"><span class="nav-text">运行Ingress Controller</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5Ingress-Controller%E7%8A%B6%E6%80%81"><span class="nav-text">检查Ingress Controller状态</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E8%AE%BF%E9%97%AEIngress-Contoller"><span class="nav-text">4. 访问Ingress Contoller</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BAIngress-Controller-Pod%E5%88%9B%E5%BB%BA%E6%9C%8D%E5%8A%A1"><span class="nav-text">为Ingress Controller Pod创建服务</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%8D%B8%E8%BD%BDIngress-Contoller"><span class="nav-text">5. 卸载Ingress Contoller</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Kubernetes-Ingress"><span class="nav-text">Kubernetes-Ingress</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E6%8F%90%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-text">前提准备工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2Ingress-Controller"><span class="nav-text">部署Ingress Controller</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85%E6%96%87%E4%BB%B6"><span class="nav-text">下载安装文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9%E5%B9%B6%E4%B8%94%E5%AE%89%E8%A3%85"><span class="nav-text">修改并且安装</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E5%AE%89%E8%A3%85%E7%BB%93%E6%9E%9C"><span class="nav-text">验证安装结果</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%AE%89%E8%A3%85%E7%9A%84%E7%89%88%E6%9C%AC"><span class="nav-text">查看安装的版本</span></a></li></ol></li></ol></li></ol></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>

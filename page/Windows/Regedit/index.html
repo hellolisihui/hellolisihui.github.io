@@ -1,0 +1,247 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>Windows 注册表命令 | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">Windows 注册表命令</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2021-08-01 20:36:09 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/Windows/">Windows</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/%E6%B3%A8%E5%86%8C%E8%A1%A8/">注册表</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><h1 id="Windows-注册表命令"><a href="#Windows-注册表命令" class="headerlink" title="Windows 注册表命令"></a>Windows 注册表命令</h1><h2 id="1-REG-QUERY"><a href="#1-REG-QUERY" class="headerlink" title="1. REG QUERY /?"></a>1. REG QUERY /?</h2><h3 id="语法："><a href="#语法：" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG QUERY KeyName [&#x2F;v [ValueName] | &#x2F;ve] [&#x2F;s]
+          [&#x2F;f Data [&#x2F;k] [&#x2F;d] [&#x2F;c] [&#x2F;e]] [&#x2F;t Type] [&#x2F;z] [&#x2F;se Separator]
+          [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释："><a href="#解释：" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName  [\\Machine\]FullKey
+          Machine - 远程机器名称，省略当前机器的默认值。在远程机器上
+                    只有 HKLM 和 HKU 可用。
+          FullKey - 以 ROOTKEY\SubKey 名称形式
+               ROOTKEY - [ HKLM | HKCU | HKCR | HKU | HKCC ]
+               SubKey  - 在选择的 ROOTKEY 下的注册表项的全名
+
+ &#x2F;v       具体的注册表项值的查询。
+          如果省略，会查询该项的所有值。
+
+          只有与 &#x2F;f 开关一起指定的情况下，此开关的参数才是可选的。它指定
+          只在值名称中搜索。
+
+ &#x2F;ve      查询默认值或空值名称(默认)。
+
+ &#x2F;s       循环查询所有子项和值(如 dir &#x2F;s)。
+
+ &#x2F;se      为 REG_MULTI_SZ 在数据字符串中指定分隔符(长度只为 1 个字符)。
+          默认分隔符为 &quot;\0&quot;。
+
+ &#x2F;f       指定搜索的数据或模式。
+          如果字符串包含空格，请使用双引号。默认为 &quot;*&quot;。
+
+ &#x2F;k       指定只在项名称中搜索。
+
+ &#x2F;d       指定只在数据中搜索。
+
+ &#x2F;c       指定搜索时区分大小写。
+          默认搜索为不区分大小写。
+
+ &#x2F;e       指定只返回完全匹配。
+          默认是返回所有匹配。
+
+ &#x2F;t       指定注册表值数据类型。
+          有效的类型是:
+            REG_SZ, REG_MULTI_SZ, REG_EXPAND_SZ,
+            REG_DWORD, REG_QWORD, REG_BINARY, REG_NONE
+          默认为所有类型。
+
+ &#x2F;z       详细: 显示值名称类型的数字等值。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例："><a href="#示例：" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG QUERY HKLM\Software\Microsoft\ResKit &#x2F;v Version
+  显示注册表值 Version 的值
+
+REG QUERY \\ABC\HKLM\Software\Microsoft\ResKit\Nt\Setup &#x2F;s
+  显示远程机器 ABC 上的、在注册表项设置下的所有子项和值
+
+REG QUERY HKLM\Software\Microsoft\ResKit\Nt\Setup &#x2F;se #
+  用 &quot;#&quot; 作为分隔符，显示类型为 REG_MULTI_SZ 的所有值名称的所有
+  子项和值。
+
+REG QUERY HKLM &#x2F;f SYSTEM &#x2F;t REG_SZ &#x2F;c &#x2F;e
+  以区分大小写的形式显示项、值和数据和数据类型 REG_SZ
+  的、在 HKLM 更目录下的、&quot;SYSTEM&quot; 出现的精确次数
+
+REG QUERY HKCU &#x2F;f 0F &#x2F;d &#x2F;t REG_BINARY
+  显示在 HKCU 根目录下、数据类型为 REG_BINARY 的数据的项、值和
+  数据的 &quot;0F&quot; 出现的次数。
+
+REG QUERY HKLM\SOFTWARE &#x2F;ve
+  显示在 HKLM\SOFTWARE 下的项、值和数据(默认)</code></pre><br><h2 id="2-REG-ADD"><a href="#2-REG-ADD" class="headerlink" title="2. REG ADD /?"></a>2. REG ADD /?</h2><h3 id="语法：-1"><a href="#语法：-1" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG ADD KeyName [&#x2F;v ValueName | &#x2F;ve] [&#x2F;t Type] [&#x2F;s Separator] [&#x2F;d Data] [&#x2F;f]
+        [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-1"><a href="#解释：-1" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName  [\\Machine\]FullKey
+          Machine  远程机器名 - 忽略默认到当前机器。远程机器上
+                   只有 HKLM 和 HKU 可用。
+          FullKey  ROOTKEY\SubKey
+          ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+          SubKey   所选 ROOTKEY 下注册表项的完整名称。
+
+ &#x2F;v       所选项之下要添加的值名称。
+
+ &#x2F;ve      为注册表项添加空白值名称(默认)。
+
+ &#x2F;t       RegKey 数据类型
+          [ REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ |
+            REG_DWORD | REG_QWORD    | REG_BINARY    | REG_NONE ]
+          如果忽略，则采用 REG_SZ。
+
+ &#x2F;s       指定一个在 REG_MULTI_SZ 数据字符串中用作分隔符的字符
+          如果忽略，则将 &quot;\0&quot; 用作分隔符。
+
+ &#x2F;d       要分配给添加的注册表 ValueName 的数据。
+
+ &#x2F;f       不用提示就强行覆盖现有注册表项。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-1"><a href="#示例：-1" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">  REG ADD \\ABC\HKLM\Software\MyCo
+    添加远程机器 ABC 上的一个注册表项 HKLM\Software\MyCo
+
+  REG ADD HKLM\Software\MyCo &#x2F;v Data &#x2F;t REG_BINARY &#x2F;d fe340ead
+    添加一个值(名称: Data，类型: REG_BINARY，数据: fe340ead)
+
+  REG ADD HKLM\Software\MyCo &#x2F;v MRU &#x2F;t REG_MULTI_SZ &#x2F;d fax\0mail
+    添加一个值(名称: MRU，类型: REG_MULTI_SZ，数据: fax\0mail\0\0)
+
+  REG ADD HKLM\Software\MyCo &#x2F;v Path &#x2F;t REG_EXPAND_SZ &#x2F;d ^%systemroot^%
+    添加一个值(名称: Path，类型: REG_EXPAND_SZ，数据: %systemroot%)
+    注意: 在扩充字符串中使用插入符号 ( ^ )
+REG ADD &quot;%ValueName%&quot; &#x2F;t REG_DWORD &#x2F;v &quot;CodePage&quot; &#x2F;d &quot;65001&quot; &#x2F;f</code></pre><br><h2 id="3-REG-DELETE"><a href="#3-REG-DELETE" class="headerlink" title="3. REG DELETE /?"></a>3. REG DELETE /?</h2><h3 id="语法：-2"><a href="#语法：-2" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG DELETE KeyName [&#x2F;v ValueName | &#x2F;ve | &#x2F;va] [&#x2F;f] [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-2"><a href="#解释：-2" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">KeyName    [\\Machine\]FullKey
+  远程机器名 - 如果省略，默认情况下将使用当前机器。
+           远程机器上只有 HKLM 和 HKU 可用。
+  FullKey  ROOTKEY\SubKey
+  ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+  SubKey   所选 ROOTKEY 下面的注册表项的全名。
+
+ValueName  所选项下面的要删除的值名称。
+           如果省略，则删除该项下面的所有子项和值。
+
+&#x2F;ve        删除空值名称的值(默认)。
+
+&#x2F;va        删除该项下面的所有值。
+
+&#x2F;f         不用提示，强制删除。
+
+&#x2F;reg:32    指定应使用 32 位注册表视图访问
+           注册表项。
+
+&#x2F;reg:64    指定应使用 64 位注册表视图访问
+           注册表项。</code></pre><h3 id="示例：-2"><a href="#示例：-2" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG DELETE HKLM\Software\MyCo\MyApp\Timeout
+  删除注册表项 Timeout 及其所有子项和值
+
+REG DELETE \\ZODIAC\HKLM\Software\MyCo &#x2F;v MTU
+  删除 ZODIAC 上的 MyCo 下面的注册表值 MTU</code></pre><br><h2 id="4-REG-COPY"><a href="#4-REG-COPY" class="headerlink" title="4. REG COPY /?"></a>4. REG COPY /?</h2><h3 id="语法：-3"><a href="#语法：-3" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG COPY KeyName1 KeyName2 [&#x2F;s] [&#x2F;f] [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-3"><a href="#解释：-3" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName    [\\Machine\]FullKey
+   Machine  远程机器名 - 如果省略，默认情况下将使用当前机器。
+            远程机器上只有 HKLM 和 HKU 可用。
+   FullKey  ROOTKEY\SubKey
+   ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+   SubKey   所选 ROOTKEY 下的注册表项的全名。
+
+ &#x2F;s         复制所有子项和值。
+
+ &#x2F;f         不用提示，强制复制。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-3"><a href="#示例：-3" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG COPY HKLM\Software\MyCo\MyApp HKLM\Software\MyCo\SaveMyApp &#x2F;s
+  将注册表项 MyApp 下的所有子项和值复制到注册表项 SaveMyApp
+
+REG COPY \\ZODIAC\HKLM\Software\MyCo HKLM\Software\MyCo1
+  将 ZODIAC 上注册表项 MyCo 下的所有值复制到当前机器上的
+  注册表项 MyCo1</code></pre><br><h2 id="5-REG-SAVE"><a href="#5-REG-SAVE" class="headerlink" title="5. REG SAVE /?"></a>5. REG SAVE /?</h2><h3 id="语法：-4"><a href="#语法：-4" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG SAVE KeyName FileName [&#x2F;y] [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-4"><a href="#解释：-4" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName    ROOTKEY\SubKey
+   ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+   SubKey   所选 ROOTKEY 下的注册表项的全名。
+
+ FileName   要保存的磁盘文件名。如果没有指定路径，文件会在调用进程的
+            当前文件夹中得到创建。
+
+ &#x2F;y         不用提示就强行覆盖现有文件。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-4"><a href="#示例：-4" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG SAVE HKLM\Software\MyCo\MyApp AppBkUp.hiv
+  将配置单元 MyApp 保存到当前文件夹中的文件 AppBkUp.hiv</code></pre><br><h2 id="6-REG-RESTORE"><a href="#6-REG-RESTORE" class="headerlink" title="6. REG RESTORE /?"></a>6. REG RESTORE /?</h2><h3 id="语法：-5"><a href="#语法：-5" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG RESTORE KeyName FileName [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-5"><a href="#解释：-5" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName    ROOTKEY\SubKey (只是本地机器)
+   ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+   SubKey   要将配置单元文件还原到的注册表项全名。
+            覆盖现有项的值和子项。
+
+ FileName   要还原的配置单元文件名。
+            你必须使用 REG SAVE 来创建这个文件。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-5"><a href="#示例：-5" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG RESTORE HKLM\Software\Microsoft\ResKit NTRKBkUp.hiv
+  还原文件 NTRKBkUp.hiv，覆盖注册表项 ResKit</code></pre><br><h2 id="7-REG-LOAD"><a href="#7-REG-LOAD" class="headerlink" title="7. REG LOAD /?"></a>7. REG LOAD /?</h2><h3 id="语法：-6"><a href="#语法：-6" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG LOAD KeyName FileName [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-6"><a href="#解释：-6" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> KeyName    ROOTKEY\SubKey (只是本地机器)
+   ROOTKEY  [ HKLM | HKU ]
+   SubKey   要将配置单元文件加载进的注册表项名称。创建一个新的注册表项。
+
+ FileName   要加载的配置单元文件名。
+            你必须使用 REG SAVE 来创建这个文件。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-6"><a href="#示例：-6" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG LOAD HKLM\TempHive TempHive.hiv
+  将文件 TempHive.hiv 加载到注册表项 HKLM\TempHive</code></pre><br><h2 id="8-REG-UNLOAD"><a href="#8-REG-UNLOAD" class="headerlink" title="8. REG UNLOAD /?"></a>8. REG UNLOAD /?</h2><h3 id="语法：-7"><a href="#语法：-7" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG UNLOAD KeyName</code></pre><h3 id="解释：-7"><a href="#解释：-7" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">KeyName    ROOTKEY\SubKey (只是本地机器)
+  ROOTKEY  [ HKLM | HKU ]
+  SubKey   要卸载的配置单元的注册表项名称。</code></pre><h3 id="示例：-7"><a href="#示例：-7" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG UNLOAD HKLM\TempHive
+  卸载 HKLM 中的配置单元 TempHive</code></pre><br><h2 id="9-REG-EXPORT"><a href="#9-REG-EXPORT" class="headerlink" title="9. REG EXPORT /?"></a>9. REG EXPORT /?</h2><h3 id="语法：-8"><a href="#语法：-8" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG EXPORT KeyName FileName [&#x2F;y] [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-8"><a href="#解释：-8" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> Keyname    ROOTKEY[\SubKey] (只是本地机器)。
+   ROOTKEY  [ HKLM | HKCU | HKCR | HKU | HKCC ]
+   SubKey   所选 ROOTKEY 下的注册表项的全名。
+
+ FileName   要导出的磁盘文件名。
+
+ &#x2F;y       不用提示就强行覆盖现有文件。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-8"><a href="#示例：-8" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG EXPORT HKLM\Software\MyCo\MyApp AppBkUp.reg
+  将注册表项 MyApp 的所有子项和值导出到文件 AppBkUp.reg</code></pre><br><h2 id="10-REG-IMPORT"><a href="#10-REG-IMPORT" class="headerlink" title="10. REG IMPORT /?"></a>10. REG IMPORT /?</h2><h3 id="语法：-9"><a href="#语法：-9" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG IMPORT FileName[&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-9"><a href="#解释：-9" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> FileName  要导入的磁盘文件名(只是本地机器)。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-9"><a href="#示例：-9" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG IMPORT AppBkUp.reg
+  从文件 AppBkUp.reg 导入注册表项</code></pre><br><h2 id="11-REG-FLAGS"><a href="#11-REG-FLAGS" class="headerlink" title="11. REG FLAGS /?"></a>11. REG FLAGS /?</h2><h3 id="语法：-10"><a href="#语法：-10" class="headerlink" title="语法："></a>语法：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG FLAGS KeyName [QUERY |
+                   SET [DONT_VIRTUALIZE] [DONT_SILENT_FAIL] [RECURSE_FLAG]]
+                  [&#x2F;reg:32 | &#x2F;reg:64]</code></pre><h3 id="解释：-10"><a href="#解释：-10" class="headerlink" title="解释："></a>解释：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd"> Keyname    &quot;HKLM\Software&quot;[\SubKey] (仅限本地计算机上的这些密钥)。
+   SubKey   HKLM\Software 下注册表项的全名。
+ DONT_VIRTUALIZE DONT_SILENT_FAIL RECURSE_FLAG
+  与 SET 一起使用；将设置在命令行上指定的标志，同时将清除没有指定的标志。
+
+&#x2F;reg:32  指定应该使用 32 位注册表视图访问的注册表项。
+
+&#x2F;reg:64  指定应该使用 64 位注册表视图访问的注册表项。</code></pre><h3 id="示例：-10"><a href="#示例：-10" class="headerlink" title="示例："></a>示例：</h3><pre class="line-numbers language-cmd" data-language="cmd"><code class="language-cmd">REG FLAGS HKLM\Software\MyCo\MyApp QUERY
+  显示密钥 MyApp 的当前标志。
+
+REG FLAGS HKLM\Software\MyCo\MyApp SET DONT_VIRTUALIZE &#x2F;s
+  设置 MyApp 及其所有子密钥上的 DONT_VIRTUALIZE 标志
+  (并清除 DONT_SILENT_FAIL 和 RECURSE_FLAG)</code></pre><br><h1 id="Bat-脚本示例"><a href="#Bat-脚本示例" class="headerlink" title="Bat 脚本示例"></a>Bat 脚本示例</h1><h2 id="1-CMD-代码页属性"><a href="#1-CMD-代码页属性" class="headerlink" title="1. CMD 代码页属性"></a>1. CMD 代码页属性</h2><pre class="line-numbers language-bat" data-language="bat"><code class="language-bat">@echo off
+echo.
+echo  1 ^| 437 (OEM - United States)
+echo  2 ^| 936 (ANSI&#x2F;OEM - Simplified Chinese GBK)
+echo  3 ^| 950 (ANSI&#x2F;OEM - Traditional Chinese Big5)
+echo  4 ^| 65001 (UTF-8)
+echo.
+echo Enter the serial number to change the code page number.
+
+set KEYNAME&#x3D;&quot;HKEY_CURRENT_USER\Console\%%SystemRoot%%_System32_cmd.exe&quot;
+set &#x2F;p NUM&#x3D;Enter code page serial number: 
+if %NUM% &#x3D;&#x3D; 1 goto 1
+if %NUM% &#x3D;&#x3D; 2 goto 2
+if %NUM% &#x3D;&#x3D; 3 goto 3
+if %NUM% &#x3D;&#x3D; 4 goto 4
+
+:1
+REG ADD %KEYNAME% &#x2F;t REG_DWORD &#x2F;v &quot;CodePage&quot; &#x2F;d &quot;437&quot; &#x2F;f
+pause
+goto end
+:2
+REG ADD %KEYNAME% &#x2F;t REG_DWORD &#x2F;v &quot;CodePage&quot; &#x2F;d &quot;936&quot; &#x2F;f
+pause
+goto end
+:3
+REG ADD %KEYNAME% &#x2F;t REG_DWORD &#x2F;v &quot;CodePage&quot; &#x2F;d &quot;950&quot; &#x2F;f
+pause
+goto end
+:4
+REG ADD %KEYNAME% &#x2F;t REG_DWORD &#x2F;v &quot;CodePage&quot; &#x2F;d &quot;65001&quot; &#x2F;f
+pause
+goto end</code></pre><blockquote><p><del>注意，在扩充字符串中使用插入符号 ( ^ )</del></p><p>值得注意，当命令移植到 Bat 脚本中，”^%SystemRoot^%” 转义字符并非使用 ( ^ )，而是改用 “%%SystemRoot%%”。</p></blockquote><br><h2 id="2-CMD-运行显示"><a href="#2-CMD-运行显示" class="headerlink" title="2. CMD 运行显示"></a>2. CMD 运行显示</h2><pre class="line-numbers language-bat" data-language="bat"><code class="language-bat">@echo off
+set Value&#x3D;&quot;echo https:&#x2F;&#x2F;hellolisihui.com&#x2F;&quot;
+REG ADD &quot;HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Command Processor&quot; &#x2F;v &quot;autorun&quot; &#x2F;d %Value% &#x2F;f
+echo 运行 CMD 时将执行此命令: %Value%
+pause</code></pre><blockquote><p>运行此 Bat 脚本后，每当打开 CMD 窗口后，都将执行 %Value% 变量中的命令。</p></blockquote><br><p>== END ==</p></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：Windows 注册表命令</li><li>本文作者：白羊</li><li>创建时间：2021-08-01 20:36:09</li><li>本文链接：https://hellolisihui.com/page/Windows/Regedit/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-prev"><a class="prev" rel="prev" href="/page/Other/Markdown/"><span class="left arrow-icon flex-center"><i class="fas fa-chevron-left"></i> </span><span class="title flex-center"><span class="post-nav-title-item">Markdown 语法</span> <span class="post-nav-item">上一篇</span></span></a></div><div class="article-next"><a class="next" rel="next" href="/page/Firewalld/"><span class="title flex-center"><span class="post-nav-title-item">Firewalld 防火墙命令总结</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Windows-%E6%B3%A8%E5%86%8C%E8%A1%A8%E5%91%BD%E4%BB%A4"><span class="nav-text">Windows 注册表命令</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-REG-QUERY"><span class="nav-text">1. REG QUERY &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-REG-ADD"><span class="nav-text">2. REG ADD &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-1"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-1"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-1"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-REG-DELETE"><span class="nav-text">3. REG DELETE &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-2"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-2"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-2"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-REG-COPY"><span class="nav-text">4. REG COPY &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-3"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-3"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-3"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-REG-SAVE"><span class="nav-text">5. REG SAVE &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-4"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-4"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-4"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-REG-RESTORE"><span class="nav-text">6. REG RESTORE &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-5"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-5"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-5"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7-REG-LOAD"><span class="nav-text">7. REG LOAD &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-6"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-6"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-6"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8-REG-UNLOAD"><span class="nav-text">8. REG UNLOAD &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-7"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-7"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-7"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9-REG-EXPORT"><span class="nav-text">9. REG EXPORT &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-8"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-8"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-8"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10-REG-IMPORT"><span class="nav-text">10. REG IMPORT &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-9"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-9"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-9"><span class="nav-text">示例：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11-REG-FLAGS"><span class="nav-text">11. REG FLAGS &#x2F;?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%EF%BC%9A-10"><span class="nav-text">语法：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%87%8A%EF%BC%9A-10"><span class="nav-text">解释：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%EF%BC%9A-10"><span class="nav-text">示例：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Bat-%E8%84%9A%E6%9C%AC%E7%A4%BA%E4%BE%8B"><span class="nav-text">Bat 脚本示例</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-CMD-%E4%BB%A3%E7%A0%81%E9%A1%B5%E5%B1%9E%E6%80%A7"><span class="nav-text">1. CMD 代码页属性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-CMD-%E8%BF%90%E8%A1%8C%E6%98%BE%E7%A4%BA"><span class="nav-text">2. CMD 运行显示</span></a></li></ol></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>

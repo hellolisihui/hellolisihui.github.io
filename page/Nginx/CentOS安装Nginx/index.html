@@ -1,0 +1,211 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="keywords" content="Hexo Theme Keep"><meta name="description" content="养一亿只猫！"><meta name="author" content="白羊"><title>CentOS 安装 Nginx | 一条理想鱼</title><link rel="stylesheet" href="/css/style.css"><link rel="shortcut icon" href="/images/favicon.svg"><link rel="stylesheet" href="/css/font-awesome.min.css"><script id="hexo-configurations">let KEEP=window.KEEP||{};KEEP.hexo_config={hostname:"hellolisihui.com",root:"/",language:"zh-CN",path:"search.xml"},KEEP.theme_config={toc:{enable:!0,number:!1,expand_all:!1,init_open:!1},style:{primary_color:"#0066CC",avatar:"/avatar.png",favicon:"/images/favicon.svg",article_img_align:"left",left_side_width:"260px",content_max_width:"920px",hover:{shadow:!0,scale:!0},first_screen:{enable:!0,background_img:"/images/bg.svg",description:"First i need your hand, then forever can begin."},scroll:{progress_bar:{enable:!0},percent:{enable:!1}}},local_search:{enable:!0,preload:!1},code_copy:{enable:"ture",style:"default"},pjax:{enable:!1},lazyload:{enable:!1},version:"3.4.3"},KEEP.language_ago={second:"%s 秒前",minute:"%s 分钟前",hour:"%s 小时前",day:"%s 天前",week:"%s 周前",month:"%s 月前",year:"%s 年前"}</script><link rel="stylesheet" href="/css/prism.css"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="一条理想鱼" type="application/atom+xml">
+</head><body><div class="progress-bar-container"><span class="scroll-progress-bar"></span></div><main class="page-container"><div class="page-main-content"><div class="page-main-content-top"><header class="header-wrapper"><div class="header-content"><div class="left"><a class="logo-title" href="/">一条理想鱼</a></div><div class="right"><div class="pc"><ul class="menu-list"><li class="menu-item"><a class="active" href="/">首页</a></li><li class="menu-item"><a href="/archives">归档</a></li><li class="menu-item"><a href="/categories">分类</a></li><li class="menu-item"><a href="/tags">标签</a></li><li class="menu-item"><a href="/links">链接</a></li><li class="menu-item"><a href="/about">关于</a></li><li class="menu-item search search-popup-trigger"><i class="fas fa-search"></i></li></ul></div><div class="mobile"><div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div><div class="icon-item menu-bar"><div class="menu-bar-middle"></div></div></div></div></div><div class="header-drawer"><ul class="drawer-menu-list"><li class="drawer-menu-item flex-center"><a class="active" href="/">首页</a></li><li class="drawer-menu-item flex-center"><a href="/archives">归档</a></li><li class="drawer-menu-item flex-center"><a href="/categories">分类</a></li><li class="drawer-menu-item flex-center"><a href="/tags">标签</a></li><li class="drawer-menu-item flex-center"><a href="/links">链接</a></li><li class="drawer-menu-item flex-center"><a href="/about">关于</a></li></ul></div><div class="window-mask"></div></header></div><div class="page-main-content-middle"><div class="main-content"><div class="fade-in-down-animation"><div class="article-content-container"><div class="article-title"><span class="title-hover-animation">CentOS 安装 Nginx</span></div><div class="article-header"><div class="avatar"><img src="/avatar.png"></div><div class="info"><div class="author"><span class="name">白羊</span></div><div class="meta-info"><div class="article-meta-info"><span class="article-date article-meta-item"><i class="fas fa-edit"></i>&nbsp;2020-07-01 22:10:00 </span><span class="article-categories article-meta-item"><i class="fas fa-folder"></i>&nbsp;<ul><li><a href="/categories/Nginx/">Nginx</a>&nbsp;</li></ul></span><span class="article-tags article-meta-item"><i class="fas fa-tags"></i>&nbsp;<ul><li><a href="/tags/Nginx/">Nginx</a>&nbsp;</li></ul></span><span class="article-pv article-meta-item"><i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span></span></div></div></div></div><div class="article-content markdown-body"><h1 id="一、什么是-Nginx"><a href="#一、什么是-Nginx" class="headerlink" title="一、什么是 Nginx"></a>一、什么是 Nginx</h1><p>Nginx 是一款自由的、开源的、高性能的 HTTP 服务器和反向代理服务器；同时也是一个 IMAP、POP3、SMTP 代理服务器；Nginx 可以作为一个 HTTP 服务器进行网站的发布处理，另外 Nginx 可以作为反向代理进行负载均衡的实现。</p><h1 id="二、Nginx的优点"><a href="#二、Nginx的优点" class="headerlink" title="二、Nginx的优点"></a>二、Nginx的优点</h1><ul><li>作为Web服务器，Nginx处理静态文件、索引文件，自动索引的效率非常高。</li><li>作为代理服务器，Nginx可以实现无缓存的反向代理加速，提高网站运行速度。</li><li>作为负载均衡服务器，Nginx既可以在内部直接支持Rails和PHP，也可以支持HTTP代理服务器对外进行服务，同时还支持简单的容错和利用算法进行负载均衡。</li><li>在稳定性方面，Nginx采取了分阶段资源分配技术，使得CPU与内存的占用率非常低。</li><li>在高可用性方面，Nginx支持热部署，启动速度特别迅速，因此可以在不间断服务的情况下，对软件版本或者配置进行升级，即使运行数月也无需重新启动，几乎可以做到7x24小时不间断地运行。</li></ul><h1 id="三、Nginx-的安装"><a href="#三、Nginx-的安装" class="headerlink" title="三、Nginx 的安装"></a>三、Nginx 的安装</h1><p>CentOS 7 安装 Nginx 服务.</p><p>官方网站：<a class="link" target="_blank" rel="noopener" href="http://nginx.org/">http://nginx.org<i class="fas fa-external-link-alt"></i></a></p><h2 id="1-源码编译安装"><a href="#1-源码编译安装" class="headerlink" title="1. 源码编译安装"></a>1. 源码编译安装</h2><p>官方网站提供了三种版本：</p><ul><li><p>Mainline version：Mainline 是 Nginx 目前主力在做的版本，开发版。</p></li><li><p>Stable version：最新稳定版，生产环境上建议使用的版本。</p></li><li><p>Legacy versions：遗留的老版本的稳定版。</p></li></ul><p>一般选择最新稳定版本(Stable version)，目前 Nginx 稳定版本为：1.18.0</p><p>源码下载地址：<a class="link" target="_blank" rel="noopener" href="http://nginx.org/en/download.html">http://nginx.org/en/download.html<i class="fas fa-external-link-alt"></i></a></p><h3 id="1-1-安装基本环境"><a href="#1-1-安装基本环境" class="headerlink" title="1.1 安装基本环境"></a>1.1 安装基本环境</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum install -y wget
+yum install -y make cmake gcc gcc-c++</code></pre><h3 id="1-2-下载Nginx安装包"><a href="#1-2-下载Nginx安装包" class="headerlink" title="1.2 下载Nginx安装包"></a>1.2 下载Nginx安装包</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget http:&#x2F;&#x2F;nginx.org&#x2F;download&#x2F;nginx-1.18.0.tar.gz</code></pre><h3 id="1-3-安装相关依赖"><a href="#1-3-安装相关依赖" class="headerlink" title="1.3 安装相关依赖"></a>1.3 安装相关依赖</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum install -y pcre pcre-devel
+yum install -y zlib zlib-devel
+yum install -y openssl openssl-devel</code></pre><ul><li>pcre：使 Nginx 支持 http rewrite 模块。</li><li>zlib：zlib 库提供了很多种压缩和解压缩的方式。</li><li>openssl：使 Nginx 支持 SSL。</li></ul><h3 id="1-4-解压Nginx安装包"><a href="#1-4-解压Nginx安装包" class="headerlink" title="1.4 解压Nginx安装包"></a>1.4 解压Nginx安装包</h3><p>解压 Nginx 安装包到<code>/usr/src</code>下。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf nginx-1.18.0.tar.gz -C &#x2F;usr&#x2F;src</code></pre><h3 id="1-5-进行configure配置"><a href="#1-5-进行configure配置" class="headerlink" title="1.5 进行configure配置"></a>1.5 进行configure配置</h3><p>创建 Nginx 用户</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">useradd -s &#x2F;sbin&#x2F;nologin nginx</code></pre><p>进行 configure 配置</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd &#x2F;usr&#x2F;src&#x2F;nginx-1.18.0&#x2F;</code></pre><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">.&#x2F;configure --user&#x3D;nginx --group&#x3D;nginx \
+--prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx \
+--conf-path&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf \
+--pid-path&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;logs&#x2F;nginx.pid \
+--http-log-path&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;logs&#x2F;access.log \
+--error-log-path&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;logs&#x2F;error.log \
+--http-client-body-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;client \
+--http-fastcgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;fastcgi \
+--http-proxy-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;proxy \
+--http-scgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;scgi \
+--http-uwsgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;uwsgi \
+--with-http_ssl_module \
+--with-http_gzip_static_module</code></pre><p>常用的编译选项：</p><p>编译选项：<a class="link" target="_blank" rel="noopener" href="http://nginx.org/en/docs/configure.html">http://nginx.org/en/docs/configure.html<i class="fas fa-external-link-alt"></i></a></p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">--prefix&#x3D;&#x2F;usr&#x2F;share&#x2F;nginx                        # 指向安装目录
+--conf-path&#x3D;&#x2F;etc&#x2F;nginx&#x2F;nginx.conf                # 指定配置文件
+--http-log-path&#x3D;&#x2F;var&#x2F;log&#x2F;nginx&#x2F;access.log        # 指定访问日志
+--error-log-path&#x3D;&#x2F;var&#x2F;log&#x2F;nginx&#x2F;error.log        # 指定错误日志
+--lock-path&#x3D;&#x2F;var&#x2F;lock&#x2F;nginx.lock                 # 指定lock文件
+--pid-path&#x3D;&#x2F;run&#x2F;nginx.pid                        # 指定pid文件
+
+--http-client-body-temp-path&#x3D;&#x2F;var&#x2F;lib&#x2F;nginx&#x2F;body    # 设定http客户端请求临时文件路径
+--http-fastcgi-temp-path&#x3D;&#x2F;var&#x2F;lib&#x2F;nginx&#x2F;fastcgi     # 设定http fastcgi临时文件路径
+--http-proxy-temp-path&#x3D;&#x2F;var&#x2F;lib&#x2F;nginx&#x2F;proxy         # 设定http代理临时文件路径
+--http-scgi-temp-path&#x3D;&#x2F;var&#x2F;lib&#x2F;nginx&#x2F;scgi           # 设定http scgi临时文件路径
+--http-uwsgi-temp-path&#x3D;&#x2F;var&#x2F;lib&#x2F;nginx&#x2F;uwsgi         # 设定http uwsgi临时文件路径
+
+--with-debug                                        # 启用debug日志
+--with-pcre-jit                                     # 编译PCRE包含“just-in-time compilation”
+--with-ipv6                                         # 启用ipv6支持
+--with-http_ssl_module                              # 启用ssl支持
+--with-http_stub_status_module                      # 获取nginx自上次启动以来的状态
+--with-http_realip_module                 # 允许从请求标头更改客户端的IP地址值，默认为关
+--with-http_auth_request_module           # 实现基于一个子请求的结果的客户端授权。如果该子请求返回的2xx响应代码，所述接入是允许的。如果它返回401或403中，访问被拒绝与相应的错误代码。由子请求返回的任何其他响应代码被认为是一个错误。
+--with-http_addition_module               # 作为一个输出过滤器，支持不完全缓冲，分部分响应请求
+--with-http_dav_module                    # 增加PUT,DELETE,MKCOL：创建集合,COPY和MOVE方法 默认关闭，需编译开启
+--with-http_geoip_module                  # 使用预编译的MaxMind数据库解析客户端IP地址，得到变量值
+--with-http_gunzip_module                 # 它为不支持“gzip”编码方法的客户端解压具有“Content-Encoding: gzip”头的响应。
+--with-http_gzip_static_module            # 在线实时压缩输出数据流
+--with-http_image_filter_module           # 传输JPEG&#x2F;GIF&#x2F;PNG 图片的一个过滤器）（默认为不启用。gd库要用到）
+--with-http_spdy_module                   # SPDY可以缩短网页的加载时间
+--with-http_sub_module                    # 允许用一些其他文本替换nginx响应中的一些文本
+--with-http_xslt_module                   # 过滤转换XML请求
+--with-mail                               # 启用POP3&#x2F;IMAP4&#x2F;SMTP代理模块支持
+--with-mail_ssl_module                    # 启用ngx_mail_ssl_module支持启用外部模块支持
+--add-module                              # 添加自定义模块</code></pre><p>Nginx缓存包(ngx_cache_purge)下载地址：<a class="link" target="_blank" rel="noopener" href="http://labs.frickle.com/nginx_ngx_cache_purge">http://labs.frickle.com/nginx_ngx_cache_purge<i class="fas fa-external-link-alt"></i></a></p><p>Nginx保持会话(nginx-goodies-nginx-sticky-module-ng)：<a class="link" target="_blank" rel="noopener" href="https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/downloads/">https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng/downloads/<i class="fas fa-external-link-alt"></i></a></p><h3 id="1-6-Make编译安装"><a href="#1-6-Make编译安装" class="headerlink" title="1.6 Make编译安装"></a>1.6 Make编译安装</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">make &amp;&amp; make install</code></pre><h3 id="1-7-Nginx命令"><a href="#1-7-Nginx命令" class="headerlink" title="1.7 Nginx命令"></a>1.7 Nginx命令</h3><p>优化执行路径</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ln -s &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;sbin&#x2F;nginx &#x2F;usr&#x2F;local&#x2F;sbin&#x2F;</code></pre><p>Nginx常用命令</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nginx -v                  #查看当前版本
+nginx -V                  #查看编译选项
+nginx -t                  #检查配置文件
+nginx                     #启动 Nginx
+nginx -s reload           #重载Nginx服务
+nginx -s shop             #停止Nginx服务
+nginx -s quit             #退出Nginx服务
+
+nginx -c &#x2F;path&#x2F;to&#x2F;nginx.conf     # 以特定目录下的配置文件启动nginx:
+nginx -s reopen                  # 重新打开日志文件
+nginx -t -c &#x2F;path&#x2F;to&#x2F;nginx.conf  # 测试特定的nginx配置文件是否正确</code></pre><h3 id="1-8-添加系统服务"><a href="#1-8-添加系统服务" class="headerlink" title="1.8 添加系统服务"></a>1.8 添加系统服务</h3><p>创建服务配置文件</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &lt;&lt;EOF &gt; &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service
+[Unit]
+Description&#x3D;nginx - high performance web server
+Documentation&#x3D;http:&#x2F;&#x2F;nginx.org&#x2F;en&#x2F;docs&#x2F;
+After&#x3D;network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type&#x3D;forking
+PIDFile&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;logs&#x2F;nginx.pid
+ExecStartPre&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;sbin&#x2F;nginx -t -c &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf
+ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;sbin&#x2F;nginx -c &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf
+ExecReload&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;sbin&#x2F;nginx -s reload
+ExecStop&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;sbin&#x2F;nginx -s stop
+PrivateTmp&#x3D;true
+
+[Install]
+WantedBy&#x3D;multi-user.target
+EOF</code></pre><p>添加执行权限</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">chmod +x &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service</code></pre><p>启动 Nginx 服务(先停止 Nginx 服务)</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl daemon-reload
+systemctl start nginx.service    # 启动服务
+systemctl stop nginx.service     # 停止服务
+ systemctl reload nginx.service  # 重载服务
+systemctl restart nginx.service  # 重启服务
+systemctl status nginx           # 查看服务状态</code></pre><h2 id="2-Yum方式安装"><a href="#2-Yum方式安装" class="headerlink" title="2. Yum方式安装"></a>2. Yum方式安装</h2><p>Nginx官方文档：<a class="link" target="_blank" rel="noopener" href="http://nginx.org/en/linux_packages.html">http://nginx.org/en/linux_packages.html<i class="fas fa-external-link-alt"></i></a></p><h3 id="2-1-安装先决条件"><a href="#2-1-安装先决条件" class="headerlink" title="2.1 安装先决条件"></a>2.1 安装先决条件</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install yum-utils</code></pre><h3 id="2-2-创建repo文件"><a href="#2-2-创建repo文件" class="headerlink" title="2.2 创建repo文件"></a>2.2 创建repo文件</h3><p>创建 repo 文件</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &lt;&lt;EOF &gt; &#x2F;etc&#x2F;yum.repos.d&#x2F;nginx.repo
+[nginx-stable]
+name&#x3D;nginx stable repo
+baseurl&#x3D;http:&#x2F;&#x2F;nginx.org&#x2F;packages&#x2F;centos&#x2F;\$releasever&#x2F;\$basearch&#x2F;
+gpgcheck&#x3D;1
+enabled&#x3D;1
+gpgkey&#x3D;https:&#x2F;&#x2F;nginx.org&#x2F;keys&#x2F;nginx_signing.key
+module_hotfixes&#x3D;true
+
+[nginx-mainline]
+name&#x3D;nginx mainline repo
+baseurl&#x3D;http:&#x2F;&#x2F;nginx.org&#x2F;packages&#x2F;mainline&#x2F;centos&#x2F;\$releasever&#x2F;\$basearch&#x2F;
+gpgcheck&#x3D;1
+enabled&#x3D;0
+gpgkey&#x3D;https:&#x2F;&#x2F;nginx.org&#x2F;keys&#x2F;nginx_signing.key
+module_hotfixes&#x3D;true
+EOF</code></pre><p>默认安装最新稳定版本，如果需要安装开发版本运行命令：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum-config-manager --enable nginx-mainline</code></pre><h3 id="2-3-安装Nginx"><a href="#2-3-安装Nginx" class="headerlink" title="2.3 安装Nginx"></a>2.3 安装Nginx</h3><p>要安装 Nginx，运行命令：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install nginx</code></pre><h1 id="四、Nginx配置文件"><a href="#四、Nginx配置文件" class="headerlink" title="四、Nginx配置文件"></a>四、Nginx配置文件</h1><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">#user  nobody;
+worker_processes  1;
+
+#error_log  logs&#x2F;error.log;
+#error_log  logs&#x2F;error.log  notice;
+#error_log  logs&#x2F;error.log  info;
+
+#pid        logs&#x2F;nginx.pid;
+
+
+events &#123;
+    worker_connections  1024;
+&#125;
+
+
+http &#123;
+    include       mime.types;
+    default_type  application&#x2F;octet-stream;
+
+    #log_format  main  &#39;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &#39;
+    #                  &#39;$status $body_bytes_sent &quot;$http_referer&quot; &#39;
+    #                  &#39;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&#39;;
+
+    #access_log  logs&#x2F;access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    server &#123;
+        listen       80;
+        server_name  localhost;
+
+        #charset koi8-r;
+
+        #access_log  logs&#x2F;host.access.log  main;
+
+        location &#x2F; &#123;
+            root   html;
+            index  index.html index.htm;
+        &#125;
+
+        #error_page  404              &#x2F;404.html;
+
+        # redirect server error pages to the static page &#x2F;50x.html
+        #
+        error_page   500 502 503 504  &#x2F;50x.html;
+        location &#x3D; &#x2F;50x.html &#123;
+            root   html;
+        &#125;
+
+        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+        #
+        #location ~ \.php$ &#123;
+        #    proxy_pass   http:&#x2F;&#x2F;127.0.0.1;
+        #&#125;
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        #location ~ \.php$ &#123;
+        #    root           html;
+        #    fastcgi_pass   127.0.0.1:9000;
+        #    fastcgi_index  index.php;
+        #    fastcgi_param  SCRIPT_FILENAME  &#x2F;scripts$fastcgi_script_name;
+        #    include        fastcgi_params;
+        #&#125;
+
+        # deny access to .htaccess files, if Apache&#39;s document root
+        # concurs with nginx&#39;s one
+        #
+        #location ~ &#x2F;\.ht &#123;
+        #    deny  all;
+        #&#125;
+    &#125;
+
+
+    # another virtual host using mix of IP-, name-, and port-based configuration
+    #
+    #server &#123;
+    #    listen       8000;
+    #    listen       somename:8080;
+    #    server_name  somename  alias  another.alias;
+
+    #    location &#x2F; &#123;
+    #        root   html;
+    #        index  index.html index.htm;
+    #    &#125;
+    #&#125;
+
+
+    # HTTPS server
+    #
+    #server &#123;
+    #    listen       443 ssl;
+    #    server_name  localhost;
+
+    #    ssl_certificate      cert.pem;
+    #    ssl_certificate_key  cert.key;
+
+    #    ssl_session_cache    shared:SSL:1m;
+    #    ssl_session_timeout  5m;
+
+    #    ssl_ciphers  HIGH:!aNULL:!MD5;
+    #    ssl_prefer_server_ciphers  on;
+
+    #    location &#x2F; &#123;
+    #        root   html;
+    #        index  index.html index.htm;
+    #    &#125;
+    #&#125;
+
+&#125;</code></pre></div><div class="post-copyright-info"><div class="article-copyright-info-container"><ul><li>本文标题：CentOS 安装 Nginx</li><li>本文作者：白羊</li><li>创建时间：2020-07-01 22:10:00</li><li>本文链接：https://hellolisihui.com/page/Nginx/CentOS安装Nginx/</li><li>版权声明：本博客所有文章除特别声明外，均采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div></div><div class="article-nav"><div class="article-prev"><a class="prev" rel="prev" href="/page/Nginx/Nginx%E5%B8%B8%E7%94%A8%E5%8A%9F%E8%83%BD/"><span class="left arrow-icon flex-center"><i class="fas fa-chevron-left"></i> </span><span class="title flex-center"><span class="post-nav-title-item">Nginx 常用功能</span> <span class="post-nav-item">上一篇</span></span></a></div><div class="article-next"><a class="next" rel="next" href="/page/Nginx/Nginx%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6/"><span class="title flex-center"><span class="post-nav-title-item">Nginx 安装证书</span> <span class="post-nav-item">下一篇</span> </span><span class="right arrow-icon flex-center"><i class="fas fa-chevron-right"></i></span></a></div></div><div class="comment-container"><div class="comments-container"><div id="comment-anchor"></div><div class="comment-area-title"><i class="fas fa-comments">&nbsp;评论</i></div><div class="twikoo-container"><script src="//cdn.jsdelivr.net/npm/twikoo@1.0.0/dist/twikoo.all.min.js"></script><div id="twikoo-comment"></div><script>function loadTwikoo(){twikoo.init({el:"#twikoo-comment",envId:"https://twikoo-hellolisihui.vercel.app/",region:""})}{const o=setTimeout(()=>{loadTwikoo(),clearTimeout(o)},1e3)}</script></div></div></div></div></div></div></div><div class="page-main-content-bottom"><footer class="footer"><div class="info-container"><div class="copyright-info info-item">&copy; <span>2020</span>&nbsp;-&nbsp; 2021&nbsp;<i class="fas fa-at"></i>&nbsp;<a href="/">白羊</a></div><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="website-count info-item"></div><div class="theme-info info-item">由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.4.3</a></div></div></footer></div></div><div class="post-tools"><div class="post-tools-container"><ul class="tools-list"><li class="tools-item page-aside-toggle"><i class="fas fa-outdent"></i></li><li class="go-comment"><i class="fas fa-comment"></i></li></ul></div></div><div class="right-bottom-side-tools"><div class="side-tools-container"><ul class="side-tools-list"><li class="tools-item tool-font-adjust-plus flex-center"><i class="fas fa-search-plus"></i></li><li class="tools-item tool-font-adjust-minus flex-center"><i class="fas fa-search-minus"></i></li><li class="tools-item tool-expand-width flex-center"><i class="fas fa-arrows-alt-h"></i></li><li class="tools-item tool-dark-light-toggle flex-center"><i class="fas fa-moon"></i></li><li class="tools-item rss flex-center"><a class="flex-center" href="/atom.xml" target="_blank"><i class="fas fa-rss"></i></a></li><li class="tools-item tool-scroll-to-top flex-center"><i class="fas fa-arrow-up"></i></li><li class="tools-item tool-scroll-to-bottom flex-center"><i class="fas fa-arrow-down"></i></li></ul><ul class="exposed-tools-list"><li class="tools-item tool-toggle-show flex-center"><i class="fas fa-cog fa-spin"></i></li></ul></div></div><aside class="page-aside"><div class="post-toc-wrap"><div class="post-toc"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF-Nginx"><span class="nav-text">一、什么是 Nginx</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Nginx%E7%9A%84%E4%BC%98%E7%82%B9"><span class="nav-text">二、Nginx的优点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81Nginx-%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-text">三、Nginx 的安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="nav-text">1. 源码编译安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E5%AE%89%E8%A3%85%E5%9F%BA%E6%9C%AC%E7%8E%AF%E5%A2%83"><span class="nav-text">1.1 安装基本环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E4%B8%8B%E8%BD%BDNginx%E5%AE%89%E8%A3%85%E5%8C%85"><span class="nav-text">1.2 下载Nginx安装包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3%E4%BE%9D%E8%B5%96"><span class="nav-text">1.3 安装相关依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-4-%E8%A7%A3%E5%8E%8BNginx%E5%AE%89%E8%A3%85%E5%8C%85"><span class="nav-text">1.4 解压Nginx安装包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-5-%E8%BF%9B%E8%A1%8Cconfigure%E9%85%8D%E7%BD%AE"><span class="nav-text">1.5 进行configure配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-6-Make%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="nav-text">1.6 Make编译安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-7-Nginx%E5%91%BD%E4%BB%A4"><span class="nav-text">1.7 Nginx命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-8-%E6%B7%BB%E5%8A%A0%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1"><span class="nav-text">1.8 添加系统服务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Yum%E6%96%B9%E5%BC%8F%E5%AE%89%E8%A3%85"><span class="nav-text">2. Yum方式安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%AE%89%E8%A3%85%E5%85%88%E5%86%B3%E6%9D%A1%E4%BB%B6"><span class="nav-text">2.1 安装先决条件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%88%9B%E5%BB%BArepo%E6%96%87%E4%BB%B6"><span class="nav-text">2.2 创建repo文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E5%AE%89%E8%A3%85Nginx"><span class="nav-text">2.3 安装Nginx</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Nginx%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-text">四、Nginx配置文件</span></a></li></ol></div></div></aside><div class="image-viewer-container"><img src=""></div><div class="search-pop-overlay"><div class="popup search-popup"><div class="search-header"><span class="search-input-field-pre"><i class="fas fa-keyboard"></i></span><div class="search-input-container"><input autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input"></div><span class="popup-btn-close"><i class="fas fa-times"></i></span></div><div id="search-result"><div id="no-result"><i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i></div></div></div></div></main><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/header-shrink.js"></script><script src="/js/back2top.js"></script><script src="/js/dark-light-toggle.js"></script><script src="/js/local-search.js"></script><script src="/js/code-copy.js"></script><div class="post-scripts"><script src="/js/left-side-toggle.js"></script><script src="/js/libs/anime.min.js"></script><script src="/js/toc.js"></script></div><script src="/js/prism.js"></script></body></html>
