@@ -2433,6 +2433,122 @@ theme: keep</code></pre>
       </tags>
   </entry>
   <entry>
+    <title>搭建 OneIndex 个人网盘</title>
+    <url>/page/Tools/OneIndex/</url>
+    <content><![CDATA[<p><strong>OneIndex</strong>：OneDrive 目录索引。</p>
+<h1 id="安装-Nginx-服务"><a href="#安装-Nginx-服务" class="headerlink" title="安装 Nginx 服务"></a>安装 Nginx 服务</h1><p>使用脚本进行安装</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">export NGINX_VERSION&#x3D;1.18.0
+curl https:&#x2F;&#x2F;hellolisihui.com&#x2F;code&#x2F;nginx_install.sh | bash</code></pre>
+
+
+
+<h1 id="安装-PHP-环境"><a href="#安装-PHP-环境" class="headerlink" title="安装 PHP 环境"></a>安装 PHP 环境</h1><p>解决依赖环境</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install gcc gcc-c++ libxml2 libxml2-devel curl curl-devel wget sqlite-devel</code></pre>
+
+<p>下载 PHP 源码</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;www.php.net&#x2F;distributions&#x2F;php-7.4.21.tar.gz</code></pre>
+
+<p>解压缩 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf php-7.4.21.tar.gz -C &#x2F;usr&#x2F;local&#x2F;src&#x2F;</code></pre>
+
+<p>源码编译 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 开启php-fpm模块, 添加curl支持
+cd &#x2F;usr&#x2F;local&#x2F;src&#x2F;php-7.4.21&#x2F;
+.&#x2F;configure --enable-fpm --with-curl
+# 若内存不足 1024MB, 添加 &quot;--disable-fileinfo&quot; 参数</code></pre>
+
+<p>编译安装 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">make
+make install</code></pre>
+
+
+
+<p>调整 PHP 配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp php.ini-development &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini
+cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf
+cp sapi&#x2F;fpm&#x2F;php-fpm &#x2F;usr&#x2F;local&#x2F;bin</code></pre>
+
+
+
+<p>如果文件不存在，则阻止 Nginx 将请求发送到后端的 PHP-FPM 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini</code></pre>
+
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">cgi.fix_pathinfo&#x3D;0</code></pre>
+
+
+
+<p>修改 PHP 配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf
+vim &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf</code></pre>
+
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">#最后一行
+include&#x3D;&#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;*.conf</code></pre>
+
+
+
+<p>启动 php-fpm 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;php-fpm</code></pre>
+
+
+
+<h1 id="下载所需文件"><a href="#下载所需文件" class="headerlink" title="下载所需文件"></a>下载所需文件</h1><p>下载 OneIndex 文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html
+yum -y install git
+git clone https:&#x2F;&#x2F;github.com&#x2F;hellolisihui&#x2F;oneindex.git</code></pre>
+
+<p>修改目录权限</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;config
+chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;cache</code></pre>
+
+
+
+<h1 id="修改-Nginx-配置"><a href="#修改-Nginx-配置" class="headerlink" title="修改 Nginx 配置"></a>修改 Nginx 配置</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</code></pre>
+
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+    listen       80;
+    server_name  localhost;
+
+    root   html&#x2F;oneindex;
+    index  index.php index.html index.htm;
+
+    access_log  logs&#x2F;index.access.log;
+
+    location ~ \.php$ &#123;
+        root           html&#x2F;oneindex;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    &#125;
+
+    # Nginx 伪静态
+    if (!-f $request_filename)&#123;
+        set $rule_0 1$rule_0;
+    &#125;
+    if (!-d $request_filename)&#123;
+        set $rule_0 2$rule_0;
+    &#125;
+    if ($rule_0 &#x3D; &quot;21&quot;)&#123;
+        rewrite ^&#x2F;(.*) &#x2F;?&#x2F;$1 last;
+    &#125;
+
+&#125;</code></pre>
+
+<p>启动 Nginx 服务</p>
+<pre class="line-numbers language-none"><code class="language-none">systemctl start nginx</code></pre>
+
+
+
+<h1 id="安装-OneIndex"><a href="#安装-OneIndex" class="headerlink" title="安装 OneIndex"></a>安装 OneIndex</h1><p>访问服务器地址。</p>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>OneDrive</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>搭建 Clash 订阅转换</title>
     <url>/page/Tools/Clash%E8%AE%A2%E9%98%85%E8%BD%AC%E6%8D%A2/</url>
     <content><![CDATA[<p>Github 项目地址：</p>
@@ -2557,119 +2673,27 @@ systemctl start subconverter</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>搭建 OneIndex 个人网盘</title>
-    <url>/page/Tools/OneIndex/</url>
-    <content><![CDATA[<p><strong>OneIndex</strong>：OneDrive 目录索引。</p>
-<h1 id="安装-Nginx-服务"><a href="#安装-Nginx-服务" class="headerlink" title="安装 Nginx 服务"></a>安装 Nginx 服务</h1><p>使用脚本进行安装</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">export NGINX_VERSION&#x3D;1.18.0
-curl https:&#x2F;&#x2F;hellolisihui.com&#x2F;code&#x2F;nginx_install.sh | bash</code></pre>
+    <title>你的名字</title>
+    <url>/page/Video/YourName/</url>
+    <content><![CDATA[<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"loop":false,"screenshot":false,"video":{"url":"https://index.hellolisihui.com/video/Your_Name.mp4"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script>
 
-
-
-<h1 id="安装-PHP-环境"><a href="#安装-PHP-环境" class="headerlink" title="安装 PHP 环境"></a>安装 PHP 环境</h1><p>解决依赖环境</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install gcc gcc-c++ libxml2 libxml2-devel curl curl-devel wget sqlite-devel</code></pre>
-
-<p>下载 PHP 源码</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;www.php.net&#x2F;distributions&#x2F;php-7.4.21.tar.gz</code></pre>
-
-<p>解压缩 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf php-7.4.21.tar.gz -C &#x2F;usr&#x2F;local&#x2F;src&#x2F;</code></pre>
-
-<p>源码编译 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 开启php-fpm模块, 添加curl支持
-cd &#x2F;usr&#x2F;local&#x2F;src&#x2F;php-7.4.21&#x2F;
-.&#x2F;configure --enable-fpm --with-curl
-# 若内存不足 1024MB, 添加 &quot;--disable-fileinfo&quot; 参数</code></pre>
-
-<p>编译安装 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">make
-make install</code></pre>
-
-
-
-<p>调整 PHP 配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp php.ini-development &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini
-cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf
-cp sapi&#x2F;fpm&#x2F;php-fpm &#x2F;usr&#x2F;local&#x2F;bin</code></pre>
-
-
-
-<p>如果文件不存在，则阻止 Nginx 将请求发送到后端的 PHP-FPM 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini</code></pre>
-
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">cgi.fix_pathinfo&#x3D;0</code></pre>
-
-
-
-<p>修改 PHP 配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf
-vim &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf</code></pre>
-
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">#最后一行
-include&#x3D;&#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;*.conf</code></pre>
-
-
-
-<p>启动 php-fpm 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;php-fpm</code></pre>
-
-
-
-<h1 id="下载所需文件"><a href="#下载所需文件" class="headerlink" title="下载所需文件"></a>下载所需文件</h1><p>下载 OneIndex 文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html
-yum -y install git
-git clone https:&#x2F;&#x2F;github.com&#x2F;hellolisihui&#x2F;oneindex.git</code></pre>
-
-<p>修改目录权限</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;config
-chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;cache</code></pre>
-
-
-
-<h1 id="修改-Nginx-配置"><a href="#修改-Nginx-配置" class="headerlink" title="修改 Nginx 配置"></a>修改 Nginx 配置</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</code></pre>
-
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
-    listen       80;
-    server_name  localhost;
-
-    root   html&#x2F;oneindex;
-    index  index.php index.html index.htm;
-
-    access_log  logs&#x2F;index.access.log;
-
-    location ~ \.php$ &#123;
-        root           html&#x2F;oneindex;
-        fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-        include        fastcgi_params;
-    &#125;
-
-    # Nginx 伪静态
-    if (!-f $request_filename)&#123;
-        set $rule_0 1$rule_0;
-    &#125;
-    if (!-d $request_filename)&#123;
-        set $rule_0 2$rule_0;
-    &#125;
-    if ($rule_0 &#x3D; &quot;21&quot;)&#123;
-        rewrite ^&#x2F;(.*) &#x2F;?&#x2F;$1 last;
-    &#125;
-
-&#125;</code></pre>
-
-<p>启动 Nginx 服务</p>
-<pre class="line-numbers language-none"><code class="language-none">systemctl start nginx</code></pre>
-
-
-
-<h1 id="安装-OneIndex"><a href="#安装-OneIndex" class="headerlink" title="安装 OneIndex"></a>安装 OneIndex</h1><p>访问服务器地址。</p>
+]]></content>
+      <categories>
+        <category>Video</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Speedtest 测速网站</title>
+    <url>/page/Tools/Speedtest%E6%B5%8B%E9%80%9F%E7%BD%91%E7%AB%99/</url>
+    <content><![CDATA[<p>官方网址：<a class="link"   href="https://account.speedtestcustom.com/" >https://account.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
+<p>Demo：<a class="link"   href="https://hellolisihui.speedtestcustom.com/" >https://hellolisihui.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
+<iframe width="100%" height="650px" frameborder="0" src="https://hellolisihui.speedtestcustom.com"></iframe>
 ]]></content>
       <categories>
         <category>Tools</category>
       </categories>
       <tags>
-        <tag>OneDrive</tag>
+        <tag>Speedtest</tag>
       </tags>
   </entry>
   <entry>
@@ -2703,30 +2727,6 @@ chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;cache</co
         <tag>Speedyfox</tag>
         <tag>Chrome</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Speedtest 测速网站</title>
-    <url>/page/Tools/Speedtest%E6%B5%8B%E9%80%9F%E7%BD%91%E7%AB%99/</url>
-    <content><![CDATA[<p>官方网址：<a class="link"   href="https://account.speedtestcustom.com/" >https://account.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
-<p>Demo：<a class="link"   href="https://hellolisihui.speedtestcustom.com/" >https://hellolisihui.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
-<iframe width="100%" height="650px" frameborder="0" src="https://hellolisihui.speedtestcustom.com"></iframe>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>Speedtest</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>你的名字</title>
-    <url>/page/Video/YourName/</url>
-    <content><![CDATA[<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"loop":false,"screenshot":false,"video":{"url":"https://index.hellolisihui.com/video/Your_Name.mp4"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script>
-
-]]></content>
-      <categories>
-        <category>Video</category>
-      </categories>
   </entry>
   <entry>
     <title>KVM笔记</title>
@@ -3441,349 +3441,6 @@ cp &#x2F;usr&#x2F;share&#x2F;fonts&#x2F;wqy-microhei&#x2F;wqy-microhei.ttc &#x2F
       </tags>
   </entry>
   <entry>
-    <title>LVS虚拟服务器</title>
-    <url>/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/LVS%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
-    <content><![CDATA[<p>官方网站 ：<a class="link"   href="http://www.linuxvirtualserver.org/" >http://www.linuxvirtualserver.org<i class="fas fa-external-link-alt"></i></a></p>
-<h1 id="一、LVS-是什么？"><a href="#一、LVS-是什么？" class="headerlink" title="一、LVS 是什么？"></a>一、LVS 是什么？</h1><p>LVS 是 Linux Virtual Server 的简写，也就是 Linux 虚拟服务器，是一个虚拟的服务器集群系统，该项目在1998年5月由章文嵩博士成立，是中国国内最早出现的自由软件项目之一。LVS 实际上相当于基于 IP 地址的虚拟化应用，为基于 IP 地址和内容请求分发的负载均衡提出了高效的解决方法，现在 LVS 已经是 Linux 内核标准的一部分。</p>
-<p>使用 LVS 可以达到的技术目标是：通过 LVS 达到的负载均衡技术和 Linux 操作系统实现一个高性能高可用的 Linux 服务器集群，具有良好的可靠性、可扩展性和可操作性。从而以低廉的成本实现最优的性能。LVS 是一个实现负载均衡集群的开源软件项目，LVS 架构从逻辑上可分为调度层、Server 集群层和共享存储层。</p>
-<h1 id="二、LVS-的优点"><a href="#二、LVS-的优点" class="headerlink" title="二、LVS 的优点"></a>二、LVS 的优点</h1><ul>
-<li><p>LVS 具有更强的抗负载能力，性能高，对内存和 CPU 资源消耗较低；</p>
-</li>
-<li><p>LVS 工作在网络层，具体流量由操作系统内核进行处理；</p>
-</li>
-<li><p>LVS 适用的协议范围广；</p>
-</li>
-<li><p>LVS 安装配置较复杂，网络依赖性大，但是稳定性高；</p>
-</li>
-</ul>
-<blockquote>
-<p>缺点：LVS 不支持正则匹配处理，无法实现动静分离效果。</p>
-</blockquote>
-<p><strong>LVS 负载均衡集群的类型</strong></p>
-<p><strong>负载均衡群集：</strong>Load Balance Cluster，以提高应用系统的响应能力，尽可能处理更多的访问请求、减少延迟为目标，从而获得高并发、高负载的整体性能。</p>
-<p><strong>高可用群集：</strong>High Availability Cluster，以提高应用系统的可靠性，尽可能的减少终端时间为目标、确保服务的连续性，达到高可用的容错效果。</p>
-<p><strong>高性能运算群集：</strong>High Performance Computer Cluster，以提高应用系统的 CPU 运算速度、扩展硬件资源和分析能力为目标、从而获得相当于大型、超级计算机的高性能计算能力</p>
-<h1 id="三、LVS-的构成"><a href="#三、LVS-的构成" class="headerlink" title="三、LVS 的构成"></a>三、LVS 的构成</h1><p>LVS 现在已成为 Linux 内核的一部分，默认编译为 ip_vs 模块，必要时能够自动调用。</p>
-<p>加载 ip_vs 模块</p>
-<pre class="line-numbers language-none"><code class="language-none">modprobe ip_vs</code></pre>
-
-<p>查看 ip_vs 模块版本</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &#x2F;proc&#x2F;net&#x2F;ip_vs</code></pre>
-
-
-
-<h1 id="四、负载调度算法"><a href="#四、负载调度算法" class="headerlink" title="四、负载调度算法"></a>四、负载调度算法</h1><ul>
-<li>轮询（Round Robin）</li>
-<li>加权轮询（Weighted Round Robin）</li>
-<li>最少连接（Least Connections）</li>
-<li>加权最少连接（Weighted Least Connections）</li>
-</ul>
-<h1 id="五、ipvsadm"><a href="#五、ipvsadm" class="headerlink" title="五、ipvsadm"></a>五、ipvsadm</h1><p>ipvsadm 是在负载调度器上使用的 LVS 集群管理工具。</p>
-<p>1、安装 ipvsadm 管理工具</p>
-<pre class="line-numbers language-none"><code class="language-none">yum -y install ipvsadm</code></pre>
-
-
-
-<p>2、使用 ipvsadm 管理工具</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 创建虚拟服务器
-ipvsadm -A -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -s rr
-
-# 添加RS真实服务器
-ipvsadm -a -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt; -m -w 1
-
-# 查看节点状态
-ipvsadm -ln
-
-# 删除RS真实服务器
-ipvsadm -d -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt;
-
-# 保存策略
-ipvsadm-save &gt; ipvsadm.txt
-
-# 清除策略
-ipvsadm -C
-
-# 导入策略
-ipvsadm-restore &lt; ipvsadm.txt</code></pre>
-
-
-
-<h1 id="六、LVS-负载均衡"><a href="#六、LVS-负载均衡" class="headerlink" title="六、LVS 负载均衡"></a>六、LVS 负载均衡</h1><h2 id="地址转换模式（LVS-NAT）"><a href="#地址转换模式（LVS-NAT）" class="headerlink" title="地址转换模式（LVS-NAT）"></a>地址转换模式（LVS-NAT）</h2><table>
-<thead>
-<tr>
-<th>OS</th>
-<th>IP</th>
-<th>hostname</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CentOS</td>
-<td>192.168.10.10;172.16.10.128</td>
-<td>LVS</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.20</td>
-<td>RS-1</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.30</td>
-<td>RS-2</td>
-</tr>
-</tbody></table>
-<h3 id="配置负载调度器"><a href="#配置负载调度器" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
-
-
-
-<p>2、开启路由转发规则</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;net.ipv4.ip_forward &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-sysctl -p</code></pre>
-
-<p>验证配置，正常会输出<code>OK</code></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">if [ &#96;cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_forward&#96; -eq 1 ]; then echo OK; fi</code></pre>
-
-
-
-<p>3、安装 ipvsadm</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
-ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
-
-
-
-<p>4、配置分配策略</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
-ipvsadm -A -t 172.16.10.128:80 -s rr
-ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.20 -m -w 1
-ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.30 -m -w 1
-ipvsadm-save</code></pre>
-
-<ul>
-<li>-A：添加带有选项的虚拟服务</li>
-<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
-<li>-t：TCP 服务地址，host[:port]</li>
-<li>-a：添加 RS 服务器地址</li>
-<li>-r：指定 RS 服务器地址</li>
-<li>-m：地址伪装（NAT）</li>
-<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
-</ul>
-<h3 id="配置节点服务器"><a href="#配置节点服务器" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>安装 httpd 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
-yum -y install httpd
-echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-route add default gw 192.168.10.10
-
-# RS-2(192.168.10.30)
-yum -y install httpd
-echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-route add default gw 192.168.10.10</code></pre>
-
-
-
-<h2 id="直接路由模式（LVS-DR）"><a href="#直接路由模式（LVS-DR）" class="headerlink" title="直接路由模式（LVS-DR）"></a>直接路由模式（LVS-DR）</h2><table>
-<thead>
-<tr>
-<th>OS</th>
-<th>IP</th>
-<th>hostname</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CentOS</td>
-<td>192.168.10.10</td>
-<td>LVS</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.20</td>
-<td>RS-1</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.30</td>
-<td>RS-2</td>
-</tr>
-</tbody></table>
-<p>各个节点配置虚拟 IP 地址(VIP)：192.168.10.254</p>
-<h3 id="配置负载调度器-1"><a href="#配置负载调度器-1" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
-
-
-
-<p>2、配置虚拟 IP 地址</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-ens33:0 &lt;&lt;EOF
-TYPE&#x3D;Ethernet
-BOOTPROTO&#x3D;static
-DEFROUTE&#x3D;yes
-NAME&#x3D;ens33:0
-DEVICE&#x3D;ens33:0
-ONBOOT&#x3D;yes
-IPADDR&#x3D;192.168.10.254
-NETMASK&#x3D;255.255.255.0
-EOF
-
-systemctl restart network</code></pre>
-
-
-
-<p>3、调整内核参数</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ICMP重定向
-echo &quot;net.ipv4.conf.all.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.ens33.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-sysctl -p</code></pre>
-
-
-
-<p>4、安装 ipvsadm</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
-ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
-
-
-
-<p>5、配置分配策略</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
-ipvsadm -A -t 192.168.10.254:80 -s rr
-ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.20 -g -w 1
-ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.30 -g -w 1
-ipvsadm-save</code></pre>
-
-<ul>
-<li>-A：添加带有选项的虚拟服务</li>
-<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
-<li>-t：TCP ，host[:port]</li>
-<li>-a：添加 RS 服务器地址</li>
-<li>-r：指定 RS 服务器地址</li>
-<li>-m：地址伪装（NAT）</li>
-<li>-g：默认，直接路由（DR）</li>
-<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
-</ul>
-<h3 id="配置节点服务器-1"><a href="#配置节点服务器-1" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>1、配置虚拟 IP 地址</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-lo:0 &lt;&lt;EOF
-DEVICE&#x3D;lo:0
-IPADDR&#x3D;192.168.10.254
-NETMASK&#x3D;255.255.255.255
-ONBOOT&#x3D;yes
-EOF
-
-systemctl restart network</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 添加VIP本地访问路由
-echo &quot;&#x2F;sbin&#x2F;route add -host 192.168.10.254 dev lo:0&quot; &gt;&gt; &#x2F;etc&#x2F;rc.local
-route add -host 192.168.10.254 dev lo:0</code></pre>
-
-
-
-<p>2、调整内核参数</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ARP应答
-echo &quot;net.ipv4.conf.all.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.all.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.lo.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.lo.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-
-sysctl -p</code></pre>
-
-
-
-<p>3、安装 httpd 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
-yum -y install httpd
-echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-
-# RS-2(192.168.10.30)
-yum -y install httpd
-echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd</code></pre>
-
-
-
-<hr>
-<p>ipvsadm –help</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)
-Usage:
-  ipvsadm -A|E -t|u|f service-address [-s scheduler] [-p [timeout]] [-M netmask] [--pe persistence_engine] [-b sched-flags]
-  ipvsadm -D -t|u|f service-address
-  ipvsadm -C
-  ipvsadm -R
-  ipvsadm -S [-n]
-  ipvsadm -a|e -t|u|f service-address -r server-address [options]
-  ipvsadm -d -t|u|f service-address -r server-address
-  ipvsadm -L|l [options]
-  ipvsadm -Z [-t|u|f service-address]
-  ipvsadm --set tcp tcpfin udp
-  ipvsadm --start-daemon state [--mcast-interface interface] [--syncid sid]
-  ipvsadm --stop-daemon state
-  ipvsadm -h
-
-Commands:
-Either long or short options are allowed.
-  --add-service     -A        add virtual service with options
-  --edit-service    -E        edit virtual service with options
-  --delete-service  -D        delete virtual service
-  --clear           -C        clear the whole table
-  --restore         -R        restore rules from stdin
-  --save            -S        save rules to stdout
-  --add-server      -a        add real server with options
-  --edit-server     -e        edit real server with options
-  --delete-server   -d        delete real server
-  --list            -L|-l     list the table
-  --zero            -Z        zero counters in a service or all services
-  --set tcp tcpfin udp        set connection timeout values
-  --start-daemon              start connection sync daemon
-  --stop-daemon               stop connection sync daemon
-  --help            -h        display this help message
-
-Options:
-  --tcp-service  -t service-address   service-address is host[:port]
-  --udp-service  -u service-address   service-address is host[:port]
-  --fwmark-service  -f fwmark         fwmark is an integer greater than zero
-  --ipv6         -6                   fwmark entry uses IPv6
-  --scheduler    -s scheduler         one of rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq,
-                                      the default scheduler is wlc.
-  --pe            engine              alternate persistence engine may be sip,
-                                      not set by default.
-  --persistent   -p [timeout]         persistent service
-  --netmask      -M netmask           persistent granularity mask
-  --real-server  -r server-address    server-address is host (and port)
-  --gatewaying   -g                   gatewaying (direct routing) (default)
-  --ipip         -i                   ipip encapsulation (tunneling)
-  --masquerading -m                   伪装（NAT）
-  --weight       -w weight            capacity of real server
-  --u-threshold  -x uthreshold        upper threshold of connections
-  --l-threshold  -y lthreshold        lower threshold of connections
-  --mcast-interface interface         multicast interface for connection sync
-  --syncid sid                        syncid for connection sync (default&#x3D;255)
-  --connection   -c                   output of current IPVS connections
-  --timeout                           output of timeout (tcp tcpfin udp)
-  --daemon                            output of daemon information
-  --stats                             output of statistics information
-  --rate                              output of rate information
-  --exact                             expand numbers (display exact values)
-  --thresholds                        output of thresholds information
-  --persistent-conn                   output of persistent connection info
-  --nosort                            disable sorting output of service&#x2F;server entries
-  --sort                              does nothing, for backwards compatibility
-  --ops          -o                   one-packet scheduling
-  --numeric      -n                   numeric output of addresses and ports
-  --sched-flags  -b flags             scheduler flags (comma-separated)</code></pre>]]></content>
-      <categories>
-        <category>负载均衡</category>
-      </categories>
-      <tags>
-        <tag>LVS</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Keepalived 双机热备</title>
     <url>/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/Keepalived/</url>
     <content><![CDATA[<p>官方网站：<a class="link"   href="http://www.keepalived.org/" >http://www.keepalived.org/<i class="fas fa-external-link-alt"></i></a></p>
@@ -4243,8 +3900,351 @@ virtual_server 10.10.10.3 1358 &#123;
         <category>负载均衡</category>
       </categories>
       <tags>
-        <tag>LVS</tag>
         <tag>Keepalived</tag>
+        <tag>LVS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>LVS虚拟服务器</title>
+    <url>/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/LVS%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
+    <content><![CDATA[<p>官方网站 ：<a class="link"   href="http://www.linuxvirtualserver.org/" >http://www.linuxvirtualserver.org<i class="fas fa-external-link-alt"></i></a></p>
+<h1 id="一、LVS-是什么？"><a href="#一、LVS-是什么？" class="headerlink" title="一、LVS 是什么？"></a>一、LVS 是什么？</h1><p>LVS 是 Linux Virtual Server 的简写，也就是 Linux 虚拟服务器，是一个虚拟的服务器集群系统，该项目在1998年5月由章文嵩博士成立，是中国国内最早出现的自由软件项目之一。LVS 实际上相当于基于 IP 地址的虚拟化应用，为基于 IP 地址和内容请求分发的负载均衡提出了高效的解决方法，现在 LVS 已经是 Linux 内核标准的一部分。</p>
+<p>使用 LVS 可以达到的技术目标是：通过 LVS 达到的负载均衡技术和 Linux 操作系统实现一个高性能高可用的 Linux 服务器集群，具有良好的可靠性、可扩展性和可操作性。从而以低廉的成本实现最优的性能。LVS 是一个实现负载均衡集群的开源软件项目，LVS 架构从逻辑上可分为调度层、Server 集群层和共享存储层。</p>
+<h1 id="二、LVS-的优点"><a href="#二、LVS-的优点" class="headerlink" title="二、LVS 的优点"></a>二、LVS 的优点</h1><ul>
+<li><p>LVS 具有更强的抗负载能力，性能高，对内存和 CPU 资源消耗较低；</p>
+</li>
+<li><p>LVS 工作在网络层，具体流量由操作系统内核进行处理；</p>
+</li>
+<li><p>LVS 适用的协议范围广；</p>
+</li>
+<li><p>LVS 安装配置较复杂，网络依赖性大，但是稳定性高；</p>
+</li>
+</ul>
+<blockquote>
+<p>缺点：LVS 不支持正则匹配处理，无法实现动静分离效果。</p>
+</blockquote>
+<p><strong>LVS 负载均衡集群的类型</strong></p>
+<p><strong>负载均衡群集：</strong>Load Balance Cluster，以提高应用系统的响应能力，尽可能处理更多的访问请求、减少延迟为目标，从而获得高并发、高负载的整体性能。</p>
+<p><strong>高可用群集：</strong>High Availability Cluster，以提高应用系统的可靠性，尽可能的减少终端时间为目标、确保服务的连续性，达到高可用的容错效果。</p>
+<p><strong>高性能运算群集：</strong>High Performance Computer Cluster，以提高应用系统的 CPU 运算速度、扩展硬件资源和分析能力为目标、从而获得相当于大型、超级计算机的高性能计算能力</p>
+<h1 id="三、LVS-的构成"><a href="#三、LVS-的构成" class="headerlink" title="三、LVS 的构成"></a>三、LVS 的构成</h1><p>LVS 现在已成为 Linux 内核的一部分，默认编译为 ip_vs 模块，必要时能够自动调用。</p>
+<p>加载 ip_vs 模块</p>
+<pre class="line-numbers language-none"><code class="language-none">modprobe ip_vs</code></pre>
+
+<p>查看 ip_vs 模块版本</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &#x2F;proc&#x2F;net&#x2F;ip_vs</code></pre>
+
+
+
+<h1 id="四、负载调度算法"><a href="#四、负载调度算法" class="headerlink" title="四、负载调度算法"></a>四、负载调度算法</h1><ul>
+<li>轮询（Round Robin）</li>
+<li>加权轮询（Weighted Round Robin）</li>
+<li>最少连接（Least Connections）</li>
+<li>加权最少连接（Weighted Least Connections）</li>
+</ul>
+<h1 id="五、ipvsadm"><a href="#五、ipvsadm" class="headerlink" title="五、ipvsadm"></a>五、ipvsadm</h1><p>ipvsadm 是在负载调度器上使用的 LVS 集群管理工具。</p>
+<p>1、安装 ipvsadm 管理工具</p>
+<pre class="line-numbers language-none"><code class="language-none">yum -y install ipvsadm</code></pre>
+
+
+
+<p>2、使用 ipvsadm 管理工具</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 创建虚拟服务器
+ipvsadm -A -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -s rr
+
+# 添加RS真实服务器
+ipvsadm -a -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt; -m -w 1
+
+# 查看节点状态
+ipvsadm -ln
+
+# 删除RS真实服务器
+ipvsadm -d -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt;
+
+# 保存策略
+ipvsadm-save &gt; ipvsadm.txt
+
+# 清除策略
+ipvsadm -C
+
+# 导入策略
+ipvsadm-restore &lt; ipvsadm.txt</code></pre>
+
+
+
+<h1 id="六、LVS-负载均衡"><a href="#六、LVS-负载均衡" class="headerlink" title="六、LVS 负载均衡"></a>六、LVS 负载均衡</h1><h2 id="地址转换模式（LVS-NAT）"><a href="#地址转换模式（LVS-NAT）" class="headerlink" title="地址转换模式（LVS-NAT）"></a>地址转换模式（LVS-NAT）</h2><table>
+<thead>
+<tr>
+<th>OS</th>
+<th>IP</th>
+<th>hostname</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CentOS</td>
+<td>192.168.10.10;172.16.10.128</td>
+<td>LVS</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.20</td>
+<td>RS-1</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.30</td>
+<td>RS-2</td>
+</tr>
+</tbody></table>
+<h3 id="配置负载调度器"><a href="#配置负载调度器" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
+
+
+
+<p>2、开启路由转发规则</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;net.ipv4.ip_forward &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+sysctl -p</code></pre>
+
+<p>验证配置，正常会输出<code>OK</code></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">if [ &#96;cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_forward&#96; -eq 1 ]; then echo OK; fi</code></pre>
+
+
+
+<p>3、安装 ipvsadm</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
+ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
+
+
+
+<p>4、配置分配策略</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
+ipvsadm -A -t 172.16.10.128:80 -s rr
+ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.20 -m -w 1
+ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.30 -m -w 1
+ipvsadm-save</code></pre>
+
+<ul>
+<li>-A：添加带有选项的虚拟服务</li>
+<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
+<li>-t：TCP 服务地址，host[:port]</li>
+<li>-a：添加 RS 服务器地址</li>
+<li>-r：指定 RS 服务器地址</li>
+<li>-m：地址伪装（NAT）</li>
+<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
+</ul>
+<h3 id="配置节点服务器"><a href="#配置节点服务器" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>安装 httpd 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
+yum -y install httpd
+echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+route add default gw 192.168.10.10
+
+# RS-2(192.168.10.30)
+yum -y install httpd
+echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+route add default gw 192.168.10.10</code></pre>
+
+
+
+<h2 id="直接路由模式（LVS-DR）"><a href="#直接路由模式（LVS-DR）" class="headerlink" title="直接路由模式（LVS-DR）"></a>直接路由模式（LVS-DR）</h2><table>
+<thead>
+<tr>
+<th>OS</th>
+<th>IP</th>
+<th>hostname</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CentOS</td>
+<td>192.168.10.10</td>
+<td>LVS</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.20</td>
+<td>RS-1</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.30</td>
+<td>RS-2</td>
+</tr>
+</tbody></table>
+<p>各个节点配置虚拟 IP 地址(VIP)：192.168.10.254</p>
+<h3 id="配置负载调度器-1"><a href="#配置负载调度器-1" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
+
+
+
+<p>2、配置虚拟 IP 地址</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-ens33:0 &lt;&lt;EOF
+TYPE&#x3D;Ethernet
+BOOTPROTO&#x3D;static
+DEFROUTE&#x3D;yes
+NAME&#x3D;ens33:0
+DEVICE&#x3D;ens33:0
+ONBOOT&#x3D;yes
+IPADDR&#x3D;192.168.10.254
+NETMASK&#x3D;255.255.255.0
+EOF
+
+systemctl restart network</code></pre>
+
+
+
+<p>3、调整内核参数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ICMP重定向
+echo &quot;net.ipv4.conf.all.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.ens33.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+sysctl -p</code></pre>
+
+
+
+<p>4、安装 ipvsadm</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
+ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
+
+
+
+<p>5、配置分配策略</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
+ipvsadm -A -t 192.168.10.254:80 -s rr
+ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.20 -g -w 1
+ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.30 -g -w 1
+ipvsadm-save</code></pre>
+
+<ul>
+<li>-A：添加带有选项的虚拟服务</li>
+<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
+<li>-t：TCP ，host[:port]</li>
+<li>-a：添加 RS 服务器地址</li>
+<li>-r：指定 RS 服务器地址</li>
+<li>-m：地址伪装（NAT）</li>
+<li>-g：默认，直接路由（DR）</li>
+<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
+</ul>
+<h3 id="配置节点服务器-1"><a href="#配置节点服务器-1" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>1、配置虚拟 IP 地址</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-lo:0 &lt;&lt;EOF
+DEVICE&#x3D;lo:0
+IPADDR&#x3D;192.168.10.254
+NETMASK&#x3D;255.255.255.255
+ONBOOT&#x3D;yes
+EOF
+
+systemctl restart network</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 添加VIP本地访问路由
+echo &quot;&#x2F;sbin&#x2F;route add -host 192.168.10.254 dev lo:0&quot; &gt;&gt; &#x2F;etc&#x2F;rc.local
+route add -host 192.168.10.254 dev lo:0</code></pre>
+
+
+
+<p>2、调整内核参数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ARP应答
+echo &quot;net.ipv4.conf.all.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.all.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+
+sysctl -p</code></pre>
+
+
+
+<p>3、安装 httpd 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
+yum -y install httpd
+echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+
+# RS-2(192.168.10.30)
+yum -y install httpd
+echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd</code></pre>
+
+
+
+<hr>
+<p>ipvsadm –help</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)
+Usage:
+  ipvsadm -A|E -t|u|f service-address [-s scheduler] [-p [timeout]] [-M netmask] [--pe persistence_engine] [-b sched-flags]
+  ipvsadm -D -t|u|f service-address
+  ipvsadm -C
+  ipvsadm -R
+  ipvsadm -S [-n]
+  ipvsadm -a|e -t|u|f service-address -r server-address [options]
+  ipvsadm -d -t|u|f service-address -r server-address
+  ipvsadm -L|l [options]
+  ipvsadm -Z [-t|u|f service-address]
+  ipvsadm --set tcp tcpfin udp
+  ipvsadm --start-daemon state [--mcast-interface interface] [--syncid sid]
+  ipvsadm --stop-daemon state
+  ipvsadm -h
+
+Commands:
+Either long or short options are allowed.
+  --add-service     -A        add virtual service with options
+  --edit-service    -E        edit virtual service with options
+  --delete-service  -D        delete virtual service
+  --clear           -C        clear the whole table
+  --restore         -R        restore rules from stdin
+  --save            -S        save rules to stdout
+  --add-server      -a        add real server with options
+  --edit-server     -e        edit real server with options
+  --delete-server   -d        delete real server
+  --list            -L|-l     list the table
+  --zero            -Z        zero counters in a service or all services
+  --set tcp tcpfin udp        set connection timeout values
+  --start-daemon              start connection sync daemon
+  --stop-daemon               stop connection sync daemon
+  --help            -h        display this help message
+
+Options:
+  --tcp-service  -t service-address   service-address is host[:port]
+  --udp-service  -u service-address   service-address is host[:port]
+  --fwmark-service  -f fwmark         fwmark is an integer greater than zero
+  --ipv6         -6                   fwmark entry uses IPv6
+  --scheduler    -s scheduler         one of rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq,
+                                      the default scheduler is wlc.
+  --pe            engine              alternate persistence engine may be sip,
+                                      not set by default.
+  --persistent   -p [timeout]         persistent service
+  --netmask      -M netmask           persistent granularity mask
+  --real-server  -r server-address    server-address is host (and port)
+  --gatewaying   -g                   gatewaying (direct routing) (default)
+  --ipip         -i                   ipip encapsulation (tunneling)
+  --masquerading -m                   伪装（NAT）
+  --weight       -w weight            capacity of real server
+  --u-threshold  -x uthreshold        upper threshold of connections
+  --l-threshold  -y lthreshold        lower threshold of connections
+  --mcast-interface interface         multicast interface for connection sync
+  --syncid sid                        syncid for connection sync (default&#x3D;255)
+  --connection   -c                   output of current IPVS connections
+  --timeout                           output of timeout (tcp tcpfin udp)
+  --daemon                            output of daemon information
+  --stats                             output of statistics information
+  --rate                              output of rate information
+  --exact                             expand numbers (display exact values)
+  --thresholds                        output of thresholds information
+  --persistent-conn                   output of persistent connection info
+  --nosort                            disable sorting output of service&#x2F;server entries
+  --sort                              does nothing, for backwards compatibility
+  --ops          -o                   one-packet scheduling
+  --numeric      -n                   numeric output of addresses and ports
+  --sched-flags  -b flags             scheduler flags (comma-separated)</code></pre>]]></content>
+      <categories>
+        <category>负载均衡</category>
+      </categories>
+      <tags>
+        <tag>LVS</tag>
       </tags>
   </entry>
   <entry>
@@ -4614,67 +4614,6 @@ include &quot;&#x2F;etc&#x2F;named.root.key&quot;;</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>NTP 时间同步服务</title>
-    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/NTP%E6%9C%8D%E5%8A%A1/</url>
-    <content><![CDATA[<h1 id="一、什么是-NTP？"><a href="#一、什么是-NTP？" class="headerlink" title="一、什么是 NTP？"></a>一、什么是 NTP？</h1><p>NTP 全名“Network TimeProtocol”，即网络时间协议，是由 RFC 1305 定义的时间同步协议，用来在分布式时间服务器和客户端之间进行时间同步。</p>
-<p>NTP 基于 UDP 报文进行传输，使用的 UDP 端口号为 123。使用NTP的目的是对网络内所有具有时钟的设备进行时钟同步，使网络内所有设备的时钟保持一致，从而使设备能够提供基于统一时间的多种应用。对于运行 NTP 的本地系统，既可以接收来自其他时钟源的同步，又可以作为时钟源同步其他的时钟，并且可以和其他设备互相同步。</p>
-<h1 id="二、安装-NTP-服务"><a href="#二、安装-NTP-服务" class="headerlink" title="二、安装 NTP 服务"></a>二、安装 NTP 服务</h1><h2 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h2><p>关闭防火墙</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop firewalld.service
-# 服务端关闭防火墙，或者开放 UDP 123 端口。
-firewall-cmd --permanent --zone&#x3D;public --add-port&#x3D;123&#x2F;udp
-firewall-cmd --reload</code></pre>
-
-<p>安装 NTP 服务：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntp</code></pre>
-
-<p>编辑配置文件：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># NTP 配置文件为 &#x2F;etc&#x2F;ntp.conf
-
-# server 0.centos.pool.ntp.org iburst
-# server 1.centos.pool.ntp.org iburst
-# server 2.centos.pool.ntp.org iburst
-# server 3.centos.pool.ntp.org iburst
-server 127.127.1.0
-fugde 127.127.1.0 stratum 10</code></pre>
-
-<p>启动 NTP 服务：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start ntpd
-systemctl enable ntpd</code></pre>
-
-
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ~]# ntpq -p
-     remote           refid      st t when poll reach   delay   offset  jitter
-&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
-*LOCAL(0)        .LOCL.           5 l   21   64    7    0.000    0.000   0.000</code></pre>
-
-
-
-<h2 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h2><p>安装 NTP 同步命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntpdate</code></pre>
-
-<p>同步服务器时间：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ntpdate 192.168.10.10 # NTP服务器IP地址</code></pre>
-
-
-
-<p>可能用到的其他命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">date              #查看当前时间
-hwclock -w        #保存当前时间到硬件
-hwclock -r        #查看硬件时间</code></pre>
-
-
-
-]]></content>
-      <categories>
-        <category>Linux基础服务</category>
-      </categories>
-      <tags>
-        <tag>Linux</tag>
-        <tag>NTP</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>FTP服务</title>
     <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/FTP%E6%9C%8D%E5%8A%A1/</url>
     <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
@@ -4771,6 +4710,67 @@ mount -t nfs 192.168.10.10:&#x2F;data &#x2F;data</code></pre>
       <tags>
         <tag>Linux</tag>
         <tag>NFS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NTP 时间同步服务</title>
+    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/NTP%E6%9C%8D%E5%8A%A1/</url>
+    <content><![CDATA[<h1 id="一、什么是-NTP？"><a href="#一、什么是-NTP？" class="headerlink" title="一、什么是 NTP？"></a>一、什么是 NTP？</h1><p>NTP 全名“Network TimeProtocol”，即网络时间协议，是由 RFC 1305 定义的时间同步协议，用来在分布式时间服务器和客户端之间进行时间同步。</p>
+<p>NTP 基于 UDP 报文进行传输，使用的 UDP 端口号为 123。使用NTP的目的是对网络内所有具有时钟的设备进行时钟同步，使网络内所有设备的时钟保持一致，从而使设备能够提供基于统一时间的多种应用。对于运行 NTP 的本地系统，既可以接收来自其他时钟源的同步，又可以作为时钟源同步其他的时钟，并且可以和其他设备互相同步。</p>
+<h1 id="二、安装-NTP-服务"><a href="#二、安装-NTP-服务" class="headerlink" title="二、安装 NTP 服务"></a>二、安装 NTP 服务</h1><h2 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h2><p>关闭防火墙</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop firewalld.service
+# 服务端关闭防火墙，或者开放 UDP 123 端口。
+firewall-cmd --permanent --zone&#x3D;public --add-port&#x3D;123&#x2F;udp
+firewall-cmd --reload</code></pre>
+
+<p>安装 NTP 服务：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntp</code></pre>
+
+<p>编辑配置文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># NTP 配置文件为 &#x2F;etc&#x2F;ntp.conf
+
+# server 0.centos.pool.ntp.org iburst
+# server 1.centos.pool.ntp.org iburst
+# server 2.centos.pool.ntp.org iburst
+# server 3.centos.pool.ntp.org iburst
+server 127.127.1.0
+fugde 127.127.1.0 stratum 10</code></pre>
+
+<p>启动 NTP 服务：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start ntpd
+systemctl enable ntpd</code></pre>
+
+
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ~]# ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+*LOCAL(0)        .LOCL.           5 l   21   64    7    0.000    0.000   0.000</code></pre>
+
+
+
+<h2 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h2><p>安装 NTP 同步命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntpdate</code></pre>
+
+<p>同步服务器时间：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ntpdate 192.168.10.10 # NTP服务器IP地址</code></pre>
+
+
+
+<p>可能用到的其他命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">date              #查看当前时间
+hwclock -w        #保存当前时间到硬件
+hwclock -r        #查看硬件时间</code></pre>
+
+
+
+]]></content>
+      <categories>
+        <category>Linux基础服务</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>NTP</tag>
       </tags>
   </entry>
   <entry>
