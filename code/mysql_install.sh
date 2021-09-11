@@ -11,51 +11,51 @@ MySQL_FILE=${MySQL_FILE:-"mysql-${MySQL_VERSION}-${MySQL_OS}.tar.gz"}
 
 # Create user and group.
 create_user() {
-    if grep -q ${MySQL_GROUP} /etc/group;then
+    if grep -q "${MySQL_GROUP}" /etc/group;then
         echo "${yellow}[INFO]${reset}: ${MySQL_GROUP} group already exists."
     else
-        groupadd ${MySQL_GROUP}
+        groupadd "${MySQL_GROUP}"
         echo "${green}[INFO]${reset}: ${MySQL_GROUP} group has been created."
     fi
-    if id -u ${MySQL_USER} >& /dev/null;then
+    if id -u "${MySQL_USER}" >& /dev/null;then
         echo "${yellow}[INFO]${reset}: ${MySQL_USER} user already exists."
     else
-        useradd -r -g ${MySQL_GROUP} -s /bin/false ${MySQL_USER}
+        useradd -r -g "${MySQL_GROUP}" -s /bin/false "${MySQL_USER}"
         echo "${green}[INFO]${reset}: ${MySQL_USER} user has been created."
     fi
+    sleep 0.5s
 }
 
 # Copy files to the specified directory.
 copy_file() {
     # wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.32-linux-glibc2.12-x86_64.tar.gz
     echo "${green}[INFO]${reset}: Extracting files to destination folder..."
-    mkdir ${MySQL_DIR}
-    tar zxf ${MySQL_FILE} -C ${MySQL_DIR} --strip-components 1
-    mkdir ${MySQL_DIR}/mysql-files
-    chown ${MySQL_USER}:${MySQL_GROUP} ${MySQL_DIR}/mysql-files
-    chmod 750 ${MySQL_DIR}/mysql-files
+    mkdir "${MySQL_DIR}"
+    tar xf "${MySQL_FILE}" -C "${MySQL_DIR}" --strip-components 1
+    mkdir "${MySQL_DIR}"/mysql-files
+    chown "${MySQL_USER}":"${MySQL_GROUP}" "${MySQL_DIR}"/mysql-files
+    chmod 750 "${MySQL_DIR}/mysql-files"
 }
 
 # Configuration MySQL.
 configuration_mysql() {
-    echo "" > /etc/my.cnf
-    echo "[mysqld]" >> /etc/my.cnf
-    echo "basedir=${MySQL_DIR}" >> /etc/my.cnf
-    echo "datadir=${MySQL_DIR}/data" >> /etc/my.cnf
-    echo "socket=/tmp/mysql.sock" >> /etc/my.cnf
-    echo "log-error=${MySQL_DIR}/data/mysql.err" >> /etc/my.cnf
-    echo "pid-file=${MySQL_DIR}/data/mysqld.pid" >> /etc/my.cnf
-}
+    echo '[mysqld]'
+    echo "basedir=${MySQL_DIR}"
+    echo "datadir=${MySQL_DIR}/data"
+    echo "socket=/tmp/mysql.sock"
+    echo "log-error=${MySQL_DIR}/data/mysql.err"
+    echo "pid-file=${MySQL_DIR}/data/mysqld.pid"
+} > /etc/my.cnf
 
 # Initialize MySQL.
 init_mysql() {
     echo "${green}[INFO]${reset}: Initializing Database..."
-    ${MySQL_DIR}/bin/mysqld --initialize --user=${MySQL_USER}
-    grep 'password' ${MySQL_DIR}/data/mysql.err
-    cp ${MySQL_DIR}/support-files/mysql.server /etc/init.d/mysqld
+    "${MySQL_DIR}"/bin/mysqld --initialize --user="${MySQL_USER}"
+    grep 'password' "${MySQL_DIR}"/data/mysql.err
+    cp "${MySQL_DIR}"/support-files/mysql.server /etc/init.d/mysqld
     systemctl daemon-reload
     echo "${green}[INFO]${reset}: Enter \"systemctl start mysqld\" command to run MySQL Service."
-    echo 'export PATH=$PATH:'"${MySQL_DIR}/bin" >> /etc/profile
+    echo "export PATH=\$PATH:${MySQL_DIR}/bin" >> /etc/profile
     echo "${green}[INFO]${reset}: Enter \"source /etc/profile\" reload environment variables."
 }
 
