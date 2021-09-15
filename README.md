@@ -1,4 +1,4 @@
-# https://hellolisihui.com/
+# hellolisihui.com
 
-## E-mail：hellolisihui@gmail.com
+E-mail：hellolisihui@gmail.com
 
