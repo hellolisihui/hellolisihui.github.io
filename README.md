@@ -1,4 +1,2 @@
-# hellolisihui.com
-
-![](https://hellolisihui.com/images/lisihui.svg)
+# https://hellolisihui.com/
 
