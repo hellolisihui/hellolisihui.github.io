@@ -777,6 +777,125 @@ server-id&#x3D;2</code></pre>
       </tags>
   </entry>
   <entry>
+    <title>Nginx 安装脚本</title>
+    <url>/page/Nginx/Nginx%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC/</url>
+    <content><![CDATA[<h1 id="Nginx安装脚本-源码编译"><a href="#Nginx安装脚本-源码编译" class="headerlink" title="Nginx安装脚本(源码编译)"></a>Nginx安装脚本(源码编译)</h1><p>1、设置 Nginx_Install 变量</p>
+<p>2、安装依赖环境</p>
+<p>3、使用 wget 下载 Nginx 源码</p>
+<p>4、源码编译安装 Nginx</p>
+<p>5、优化执行路径</p>
+<p>6、添加 Nginx 系统服务。</p>
+<p>Nginx 安装脚本，内容如下：</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">#!&#x2F;bin&#x2F;bash
+
+# Nginx_Install 变量
+NGINX_VERSION&#x3D;1.18.0
+
+SOFT_DIR&#x3D;&#x2F;usr&#x2F;local&#x2F;src
+INSTALL_PATH&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx
+NGINX_USER&#x3D;nginx
+
+# 安装依赖环境
+. &#x2F;etc&#x2F;init.d&#x2F;functions
+
+rely()&#123;
+  for i in &quot;$@&quot;;do
+
+    yum -y install $i
+    if [ $? -ne 0 ];then
+      action &quot;Install $i&quot; &#x2F;bin&#x2F;false
+      exit 1
+    fi
+
+  done
+&#125;
+
+rely wget gcc gcc-c++ make cmake pcre pcre-devel zlib zlib-devel openssl openssl-devel
+
+# 下载 Nginx 源码
+wget -N -P $SOFT_DIR http:&#x2F;&#x2F;nginx.org&#x2F;download&#x2F;nginx-$&#123;NGINX_VERSION&#125;.tar.gz
+if [ $? -ne 0 ];then
+    action &quot;wget nginx-$&#123;NGINX_VERSION&#125;.tar.gz&quot; &#x2F;bin&#x2F;false
+    exit 1
+fi
+
+tar zxf $SOFT_DIR&#x2F;nginx-$&#123;NGINX_VERSION&#125;.tar.gz -C $SOFT_DIR
+
+id $NGINX_USER &gt;&amp; &#x2F;dev&#x2F;null
+  if [ $? -ne 0 ];then
+  useradd -s &#x2F;sbin&#x2F;nologin -M $NGINX_USER
+fi
+
+# 编译安装 Nginx
+cd $SOFT_DIR&#x2F;nginx-$NGINX_VERSION
+
+.&#x2F;configure --prefix&#x3D;$INSTALL_PATH \
+--user&#x3D;$NGINX_USER --group&#x3D;$NGINX_USER \
+--conf-path&#x3D;$INSTALL_PATH&#x2F;conf&#x2F;nginx.conf \
+--pid-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;nginx.pid \
+--http-log-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;access.log \
+--error-log-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;error.log \
+--http-client-body-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;client \
+--http-fastcgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;fastcgi \
+--http-proxy-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;proxy \
+--http-scgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;scgi \
+--http-uwsgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;uwsgi \
+--with-http_ssl_module \
+--with-http_gzip_static_module
+if [ $? -ne 0 ];then
+    action &quot;Configure Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
+    exit 1
+fi
+make
+if [ $? -ne 0 ];then
+    action &quot;make Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
+    exit 1
+fi
+make install
+if [ $? -ne 0 ];then
+    action &quot;make install Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
+    exit 1
+else
+    action &quot;Install Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;true
+fi
+
+# 优化执行路径
+ln -s $INSTALL_PATH&#x2F;sbin&#x2F;nginx &#x2F;usr&#x2F;local&#x2F;sbin&#x2F;
+
+# 添加系统服务
+cat &lt;&lt;EOF &gt; &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service
+[Unit]
+Description&#x3D;nginx - high performance web server
+Documentation&#x3D;http:&#x2F;&#x2F;nginx.org&#x2F;en&#x2F;docs&#x2F;
+After&#x3D;network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type&#x3D;forking
+PIDFile&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;nginx.pid
+ExecStartPre&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -t -c $INSTALL_PATH&#x2F;conf&#x2F;nginx.conf
+ExecStart&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -c $INSTALL_PATH&#x2F;conf&#x2F;nginx.conf
+ExecReload&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -s reload
+ExecStop&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -s stop
+PrivateTmp&#x3D;true
+
+[Install]
+WantedBy&#x3D;multi-user.target
+EOF
+
+chmod +x &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service
+systemctl daemon-reload</code></pre>
+
+<p>下载地址：<a href="https://hellolisihui.com/code/nginx_install.sh">https://hellolisihui.com/code/nginx_install.sh</a></p>
+]]></content>
+      <categories>
+        <category>Nginx</category>
+      </categories>
+      <tags>
+        <tag>Shell</tag>
+        <tag>Nginx</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>CentOS 安装 Nginx</title>
     <url>/page/Nginx/CentOS%E5%AE%89%E8%A3%85Nginx/</url>
     <content><![CDATA[<h1 id="一、什么是-Nginx"><a href="#一、什么是-Nginx" class="headerlink" title="一、什么是 Nginx"></a>一、什么是 Nginx</h1><p>Nginx 是一款自由的、开源的、高性能的 HTTP 服务器和反向代理服务器；同时也是一个 IMAP、POP3、SMTP 代理服务器；Nginx 可以作为一个 HTTP 服务器进行网站的发布处理，另外 Nginx 可以作为反向代理进行负载均衡的实现。</p>
@@ -1095,125 +1214,6 @@ http &#123;
       </tags>
   </entry>
   <entry>
-    <title>Nginx 安装脚本</title>
-    <url>/page/Nginx/Nginx%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC/</url>
-    <content><![CDATA[<h1 id="Nginx安装脚本-源码编译"><a href="#Nginx安装脚本-源码编译" class="headerlink" title="Nginx安装脚本(源码编译)"></a>Nginx安装脚本(源码编译)</h1><p>1、设置 Nginx_Install 变量</p>
-<p>2、安装依赖环境</p>
-<p>3、使用 wget 下载 Nginx 源码</p>
-<p>4、源码编译安装 Nginx</p>
-<p>5、优化执行路径</p>
-<p>6、添加 Nginx 系统服务。</p>
-<p>Nginx 安装脚本，内容如下：</p>
-<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">#!&#x2F;bin&#x2F;bash
-
-# Nginx_Install 变量
-NGINX_VERSION&#x3D;1.18.0
-
-SOFT_DIR&#x3D;&#x2F;usr&#x2F;local&#x2F;src
-INSTALL_PATH&#x3D;&#x2F;usr&#x2F;local&#x2F;nginx
-NGINX_USER&#x3D;nginx
-
-# 安装依赖环境
-. &#x2F;etc&#x2F;init.d&#x2F;functions
-
-rely()&#123;
-  for i in &quot;$@&quot;;do
-
-    yum -y install $i
-    if [ $? -ne 0 ];then
-      action &quot;Install $i&quot; &#x2F;bin&#x2F;false
-      exit 1
-    fi
-
-  done
-&#125;
-
-rely wget gcc gcc-c++ make cmake pcre pcre-devel zlib zlib-devel openssl openssl-devel
-
-# 下载 Nginx 源码
-wget -N -P $SOFT_DIR http:&#x2F;&#x2F;nginx.org&#x2F;download&#x2F;nginx-$&#123;NGINX_VERSION&#125;.tar.gz
-if [ $? -ne 0 ];then
-    action &quot;wget nginx-$&#123;NGINX_VERSION&#125;.tar.gz&quot; &#x2F;bin&#x2F;false
-    exit 1
-fi
-
-tar zxf $SOFT_DIR&#x2F;nginx-$&#123;NGINX_VERSION&#125;.tar.gz -C $SOFT_DIR
-
-id $NGINX_USER &gt;&amp; &#x2F;dev&#x2F;null
-  if [ $? -ne 0 ];then
-  useradd -s &#x2F;sbin&#x2F;nologin -M $NGINX_USER
-fi
-
-# 编译安装 Nginx
-cd $SOFT_DIR&#x2F;nginx-$NGINX_VERSION
-
-.&#x2F;configure --prefix&#x3D;$INSTALL_PATH \
---user&#x3D;$NGINX_USER --group&#x3D;$NGINX_USER \
---conf-path&#x3D;$INSTALL_PATH&#x2F;conf&#x2F;nginx.conf \
---pid-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;nginx.pid \
---http-log-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;access.log \
---error-log-path&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;error.log \
---http-client-body-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;client \
---http-fastcgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;fastcgi \
---http-proxy-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;proxy \
---http-scgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;scgi \
---http-uwsgi-temp-path&#x3D;&#x2F;var&#x2F;tmp&#x2F;uwsgi \
---with-http_ssl_module \
---with-http_gzip_static_module
-if [ $? -ne 0 ];then
-    action &quot;Configure Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
-    exit 1
-fi
-make
-if [ $? -ne 0 ];then
-    action &quot;make Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
-    exit 1
-fi
-make install
-if [ $? -ne 0 ];then
-    action &quot;make install Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;false
-    exit 1
-else
-    action &quot;Install Nginx-$&#123;NGINX_VERSION&#125;&quot; &#x2F;bin&#x2F;true
-fi
-
-# 优化执行路径
-ln -s $INSTALL_PATH&#x2F;sbin&#x2F;nginx &#x2F;usr&#x2F;local&#x2F;sbin&#x2F;
-
-# 添加系统服务
-cat &lt;&lt;EOF &gt; &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service
-[Unit]
-Description&#x3D;nginx - high performance web server
-Documentation&#x3D;http:&#x2F;&#x2F;nginx.org&#x2F;en&#x2F;docs&#x2F;
-After&#x3D;network.target remote-fs.target nss-lookup.target
-
-[Service]
-Type&#x3D;forking
-PIDFile&#x3D;$INSTALL_PATH&#x2F;logs&#x2F;nginx.pid
-ExecStartPre&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -t -c $INSTALL_PATH&#x2F;conf&#x2F;nginx.conf
-ExecStart&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -c $INSTALL_PATH&#x2F;conf&#x2F;nginx.conf
-ExecReload&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -s reload
-ExecStop&#x3D;$INSTALL_PATH&#x2F;sbin&#x2F;nginx -s stop
-PrivateTmp&#x3D;true
-
-[Install]
-WantedBy&#x3D;multi-user.target
-EOF
-
-chmod +x &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;nginx.service
-systemctl daemon-reload</code></pre>
-
-<p>下载地址：<a href="https://hellolisihui.com/code/nginx_install.sh">https://hellolisihui.com/code/nginx_install.sh</a></p>
-]]></content>
-      <categories>
-        <category>Nginx</category>
-      </categories>
-      <tags>
-        <tag>Shell</tag>
-        <tag>Nginx</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Nginx 安装证书</title>
     <url>/page/Nginx/Nginx%E5%AE%89%E8%A3%85%E8%AF%81%E4%B9%A6/</url>
     <content><![CDATA[<h1 id="1-前提准备条件"><a href="#1-前提准备条件" class="headerlink" title="1. 前提准备条件"></a>1. 前提准备条件</h1><p>您的Nginx或Tengine服务器需具备以下条件：</p>
@@ -1303,6 +1303,107 @@ server &#123;
         <tag>Nginx</tag>
         <tag>证书</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>Nginx 正则匹配</title>
+    <url>/page/Nginx/Nginx%E6%AD%A3%E5%88%99%E5%8C%B9%E9%85%8D/</url>
+    <content><![CDATA[<h1 id="Nginx-正则匹配"><a href="#Nginx-正则匹配" class="headerlink" title="Nginx 正则匹配"></a>Nginx 正则匹配</h1><ol>
+<li>以 <code>=</code> 开头，表示精确匹配</li>
+<li>以 <code>^~</code> 开头，表示uri以某个常规字符串开头，理解为匹配 URL 路径即可</li>
+<li><code>~</code> 开头，表示<code>区分大小写</code>的正则匹配</li>
+<li><code>~*</code> 开头，表示<code>不区分大小写</code>的正则匹配</li>
+<li><code>!~</code> 和<code>!~*</code> 分别为<code>区分大小写不匹配</code>及<code>不区分大小写不匹配</code> 的正则</li>
+<li><code>/</code> 通用匹配，任何请求都会匹配到。</li>
+</ol>
+<h1 id="一、精确匹配"><a href="#一、精确匹配" class="headerlink" title="一、精确匹配"></a>一、精确匹配</h1><h2 id="以-开头，表示精确匹配"><a href="#以-开头，表示精确匹配" class="headerlink" title="以=开头，表示精确匹配"></a>以<code>=</code>开头，表示精确匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location &#x3D; &#x2F; &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html;
+    index   index.html index.htm;
+&#125;
+location &#x3D; &#x2F;a.png &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html;
+    index   index.html index.htm;
+&#125;</code></pre>
+
+<p>访问<code>127.0.0.1</code>和<code>127.0.0.1/a.png</code>精准匹配。</p>
+<h1 id="二、普通匹配"><a href="#二、普通匹配" class="headerlink" title="二、普通匹配"></a>二、普通匹配</h1><h2 id="通用匹配，任何请求都会匹配到。"><a href="#通用匹配，任何请求都会匹配到。" class="headerlink" title="/ 通用匹配，任何请求都会匹配到。"></a><code>/</code> 通用匹配，任何请求都会匹配到。</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location &#x2F; &#123;
+    root   html;
+    index  index.html index.htm;
+&#125;</code></pre>
+
+
+
+<h1 id="三、正则匹配"><a href="#三、正则匹配" class="headerlink" title="三、正则匹配"></a>三、正则匹配</h1><h2 id="1-以-开头，表示-URL-以某个字符串开头，理解为匹配-URL-路径即可"><a href="#1-以-开头，表示-URL-以某个字符串开头，理解为匹配-URL-路径即可" class="headerlink" title="1. 以^~开头，表示 URL 以某个字符串开头，理解为匹配 URL 路径即可"></a>1. 以<code>^~</code>开头，表示 URL 以某个字符串开头，理解为匹配 URL 路径即可</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ^~ &#x2F;static &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
+    index   index.html,index.htm;
+&#125;</code></pre>
+
+<p>访问<code>127.0.0.1/static/</code>正则匹配。</p>
+<h2 id="2-以-开头，表示区分大小写的正则匹配"><a href="#2-以-开头，表示区分大小写的正则匹配" class="headerlink" title="2. 以~ 开头，表示区分大小写的正则匹配"></a>2. 以<code>~</code> 开头，表示<code>区分大小写</code>的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ~ \.(gif|jpg|jpeg|png|bmp|swf|js|css)$ &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
+    index   index.html,index.htm;
+&#125;</code></pre>
+
+
+
+<h2 id="3-以-开头，表示不区分大小写的正则匹配"><a href="#3-以-开头，表示不区分大小写的正则匹配" class="headerlink" title="3. 以~* 开头，表示不区分大小写的正则匹配"></a>3. 以<code>~*</code> 开头，表示<code>不区分大小写</code>的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ~* \.png$ &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
+    index   index.html,index.htm;
+&#125;</code></pre>
+
+
+
+<h2 id="4-以-和-分别为区分大小写不匹配及不区分大小写不匹配-的正则匹配"><a href="#4-以-和-分别为区分大小写不匹配及不区分大小写不匹配-的正则匹配" class="headerlink" title="4. 以!~ 和!~* 分别为区分大小写不匹配及不区分大小写不匹配 的正则匹配"></a>4. 以<code>!~</code> 和<code>!~*</code> 分别为<code>区分大小写不匹配</code>及<code>不区分大小写不匹配</code> 的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location !~ \.(gif|jpg|jpeg|png|bmp|swf|js|css)$ &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
+    index   index.html,index.htm;
+&#125;
+location !~* \.png$ &#123;
+    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
+    index   index.html,index.htm;
+&#125;</code></pre>
+
+
+
+<h1 id="四、匹配顺序"><a href="#四、匹配顺序" class="headerlink" title="四、匹配顺序"></a>四、匹配顺序</h1><p>location 命中过程是这样的：</p>
+<ol>
+<li><p>先判断精准命中，如果命中，立即返回结果并结束解析过程</p>
+</li>
+<li><p>判断普通命中，如果有多个命中，记录下来最长的命中结果</p>
+</li>
+<li><p>继续判断正则表达式的解析结果，按配置里的正则表达式顺序为准，由上到下开始匹配，一旦匹配成功立刻返回结果，并结束解析过程。</p>
+</li>
+</ol>
+<p>延伸分析：</p>
+<p>a. 普通命中：顺序无所谓，是因为按命中长短来确定的</p>
+<p>b. 正则命中：顺序有所谓，因为是从前往后命中的</p>
+<p>root 和 alias 的区别</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"># http:&#x2F;&#x2F;127.0.0.1&#x2F;static
+# location &#x2F;static &#123; 则没有区别
+location &#x2F;static&#x2F; &#123;
+    # 访问目录:var&#x2F;www&#x2F;html&#x2F;static&#x2F;下的文件
+    # root &#x2F;var&#x2F;www&#x2F;html;
+    
+    # 访问目录:var&#x2F;www&#x2F;html&#x2F;static&#x2F;下的文件
+    # root &#x2F;var&#x2F;www&#x2F;html&#x2F;;
+    
+    # 会出现 403 错误,配置错误
+    alias &#x2F;var&#x2F;www&#x2F;html;
+    
+    # 访问目录:var&#x2F;www&#x2F;html&#x2F;下的文件
+    # alias &#x2F;var&#x2F;www&#x2F;html&#x2F;;
+    
+    index index.html index.htm;
+&#125;
+root:
+location+root+&#x2F;static&#x2F;
+alias:
+location+root&#x2F;</code></pre>
+
+
+
+]]></content>
+      <categories>
+        <category>Nginx</category>
+      </categories>
   </entry>
   <entry>
     <title>Nginx 常用功能</title>
@@ -1844,174 +1945,6 @@ location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|css)$ &#123;
       </tags>
   </entry>
   <entry>
-    <title>Nginx 正则匹配</title>
-    <url>/page/Nginx/Nginx%E6%AD%A3%E5%88%99%E5%8C%B9%E9%85%8D/</url>
-    <content><![CDATA[<h1 id="Nginx-正则匹配"><a href="#Nginx-正则匹配" class="headerlink" title="Nginx 正则匹配"></a>Nginx 正则匹配</h1><ol>
-<li>以 <code>=</code> 开头，表示精确匹配</li>
-<li>以 <code>^~</code> 开头，表示uri以某个常规字符串开头，理解为匹配 URL 路径即可</li>
-<li><code>~</code> 开头，表示<code>区分大小写</code>的正则匹配</li>
-<li><code>~*</code> 开头，表示<code>不区分大小写</code>的正则匹配</li>
-<li><code>!~</code> 和<code>!~*</code> 分别为<code>区分大小写不匹配</code>及<code>不区分大小写不匹配</code> 的正则</li>
-<li><code>/</code> 通用匹配，任何请求都会匹配到。</li>
-</ol>
-<h1 id="一、精确匹配"><a href="#一、精确匹配" class="headerlink" title="一、精确匹配"></a>一、精确匹配</h1><h2 id="以-开头，表示精确匹配"><a href="#以-开头，表示精确匹配" class="headerlink" title="以=开头，表示精确匹配"></a>以<code>=</code>开头，表示精确匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location &#x3D; &#x2F; &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html;
-    index   index.html index.htm;
-&#125;
-location &#x3D; &#x2F;a.png &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html;
-    index   index.html index.htm;
-&#125;</code></pre>
-
-<p>访问<code>127.0.0.1</code>和<code>127.0.0.1/a.png</code>精准匹配。</p>
-<h1 id="二、普通匹配"><a href="#二、普通匹配" class="headerlink" title="二、普通匹配"></a>二、普通匹配</h1><h2 id="通用匹配，任何请求都会匹配到。"><a href="#通用匹配，任何请求都会匹配到。" class="headerlink" title="/ 通用匹配，任何请求都会匹配到。"></a><code>/</code> 通用匹配，任何请求都会匹配到。</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location &#x2F; &#123;
-    root   html;
-    index  index.html index.htm;
-&#125;</code></pre>
-
-
-
-<h1 id="三、正则匹配"><a href="#三、正则匹配" class="headerlink" title="三、正则匹配"></a>三、正则匹配</h1><h2 id="1-以-开头，表示-URL-以某个字符串开头，理解为匹配-URL-路径即可"><a href="#1-以-开头，表示-URL-以某个字符串开头，理解为匹配-URL-路径即可" class="headerlink" title="1. 以^~开头，表示 URL 以某个字符串开头，理解为匹配 URL 路径即可"></a>1. 以<code>^~</code>开头，表示 URL 以某个字符串开头，理解为匹配 URL 路径即可</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ^~ &#x2F;static &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
-    index   index.html,index.htm;
-&#125;</code></pre>
-
-<p>访问<code>127.0.0.1/static/</code>正则匹配。</p>
-<h2 id="2-以-开头，表示区分大小写的正则匹配"><a href="#2-以-开头，表示区分大小写的正则匹配" class="headerlink" title="2. 以~ 开头，表示区分大小写的正则匹配"></a>2. 以<code>~</code> 开头，表示<code>区分大小写</code>的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ~ \.(gif|jpg|jpeg|png|bmp|swf|js|css)$ &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
-    index   index.html,index.htm;
-&#125;</code></pre>
-
-
-
-<h2 id="3-以-开头，表示不区分大小写的正则匹配"><a href="#3-以-开头，表示不区分大小写的正则匹配" class="headerlink" title="3. 以~* 开头，表示不区分大小写的正则匹配"></a>3. 以<code>~*</code> 开头，表示<code>不区分大小写</code>的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location ~* \.png$ &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
-    index   index.html,index.htm;
-&#125;</code></pre>
-
-
-
-<h2 id="4-以-和-分别为区分大小写不匹配及不区分大小写不匹配-的正则匹配"><a href="#4-以-和-分别为区分大小写不匹配及不区分大小写不匹配-的正则匹配" class="headerlink" title="4. 以!~ 和!~* 分别为区分大小写不匹配及不区分大小写不匹配 的正则匹配"></a>4. 以<code>!~</code> 和<code>!~*</code> 分别为<code>区分大小写不匹配</code>及<code>不区分大小写不匹配</code> 的正则匹配</h2><pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">location !~ \.(gif|jpg|jpeg|png|bmp|swf|js|css)$ &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
-    index   index.html,index.htm;
-&#125;
-location !~* \.png$ &#123;
-    root    &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;;
-    index   index.html,index.htm;
-&#125;</code></pre>
-
-
-
-<h1 id="四、匹配顺序"><a href="#四、匹配顺序" class="headerlink" title="四、匹配顺序"></a>四、匹配顺序</h1><p>location 命中过程是这样的：</p>
-<ol>
-<li><p>先判断精准命中，如果命中，立即返回结果并结束解析过程</p>
-</li>
-<li><p>判断普通命中，如果有多个命中，记录下来最长的命中结果</p>
-</li>
-<li><p>继续判断正则表达式的解析结果，按配置里的正则表达式顺序为准，由上到下开始匹配，一旦匹配成功立刻返回结果，并结束解析过程。</p>
-</li>
-</ol>
-<p>延伸分析：</p>
-<p>a. 普通命中：顺序无所谓，是因为按命中长短来确定的</p>
-<p>b. 正则命中：顺序有所谓，因为是从前往后命中的</p>
-<p>root 和 alias 的区别</p>
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"># http:&#x2F;&#x2F;127.0.0.1&#x2F;static
-# location &#x2F;static &#123; 则没有区别
-location &#x2F;static&#x2F; &#123;
-    # 访问目录:var&#x2F;www&#x2F;html&#x2F;static&#x2F;下的文件
-    # root &#x2F;var&#x2F;www&#x2F;html;
-    
-    # 访问目录:var&#x2F;www&#x2F;html&#x2F;static&#x2F;下的文件
-    # root &#x2F;var&#x2F;www&#x2F;html&#x2F;;
-    
-    # 会出现 403 错误,配置错误
-    alias &#x2F;var&#x2F;www&#x2F;html;
-    
-    # 访问目录:var&#x2F;www&#x2F;html&#x2F;下的文件
-    # alias &#x2F;var&#x2F;www&#x2F;html&#x2F;;
-    
-    index index.html index.htm;
-&#125;
-root:
-location+root+&#x2F;static&#x2F;
-alias:
-location+root&#x2F;</code></pre>
-
-
-
-]]></content>
-      <categories>
-        <category>Nginx</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>Git 命令总结</title>
-    <url>/page/Other/Git%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#初始化仓库
-git init
-
-#提交文件到暂存区
-git add &lt;file&gt;
-
-#放弃提交文件并撤销修改
-git restore &lt;file&gt;
-
-#暂存区文件上传到仓库
-git commit -m &quot;&lt;说明&gt;&quot;
-
-#查看仓库状态
-git status
-
-#查看版本日志
-git log
-#查看操作日志
-git reflog
-
-#回退版本
-git reset --hard HEAD^ #回退上一个版本
-git reset --hard &lt;commit&gt; #回退指定的版本
-
-
-#查看分支
-git branch
-#创建分支
-git branch &lt;分支&gt;
-#删除分支
-git branch -d &lt;分支&gt;
-
-#切换分支
-git switch &lt;分支&gt;
-git checkout &lt;分支&gt;
-#合并分支
-git merge &lt;分支&gt;
-
-
-#添加远程仓库
-git remote add &lt;origin&gt; &lt;仓库地址&gt;
-
-#查看远程仓库列表
-git remote -v
-
-#克隆远程仓库
-git clone &lt;仓库地址&gt;
-#上传文件到远程仓库
-git -u &lt;origin&gt; &lt;master&gt;</code></pre>
-
-
-
-
-
-
-
-]]></content>
-      <categories>
-        <category>Other</category>
-      </categories>
-      <tags>
-        <tag>Git</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>CentOS 7安装Gitlab</title>
     <url>/page/Other/CentOS%207%E5%AE%89%E8%A3%85Gitlab/</url>
     <content><![CDATA[<blockquote>
@@ -2111,6 +2044,73 @@ git push -u origin ops
       <categories>
         <category>Other</category>
       </categories>
+  </entry>
+  <entry>
+    <title>Git 命令总结</title>
+    <url>/page/Other/Git%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#初始化仓库
+git init
+
+#提交文件到暂存区
+git add &lt;file&gt;
+
+#放弃提交文件并撤销修改
+git restore &lt;file&gt;
+
+#暂存区文件上传到仓库
+git commit -m &quot;&lt;说明&gt;&quot;
+
+#查看仓库状态
+git status
+
+#查看版本日志
+git log
+#查看操作日志
+git reflog
+
+#回退版本
+git reset --hard HEAD^ #回退上一个版本
+git reset --hard &lt;commit&gt; #回退指定的版本
+
+
+#查看分支
+git branch
+#创建分支
+git branch &lt;分支&gt;
+#删除分支
+git branch -d &lt;分支&gt;
+
+#切换分支
+git switch &lt;分支&gt;
+git checkout &lt;分支&gt;
+#合并分支
+git merge &lt;分支&gt;
+
+
+#添加远程仓库
+git remote add &lt;origin&gt; &lt;仓库地址&gt;
+
+#查看远程仓库列表
+git remote -v
+
+#克隆远程仓库
+git clone &lt;仓库地址&gt;
+#上传文件到远程仓库
+git -u &lt;origin&gt; &lt;master&gt;</code></pre>
+
+
+
+
+
+
+
+]]></content>
+      <categories>
+        <category>Other</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+      </tags>
   </entry>
   <entry>
     <title>Markdown 语法</title>
@@ -2514,122 +2514,6 @@ theme: keep</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>搭建 OneIndex 个人网盘</title>
-    <url>/page/Tools/OneIndex/</url>
-    <content><![CDATA[<p><strong>OneIndex</strong>：OneDrive 目录索引。</p>
-<h1 id="安装-Nginx-服务"><a href="#安装-Nginx-服务" class="headerlink" title="安装 Nginx 服务"></a>安装 Nginx 服务</h1><p>使用脚本进行安装</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">export NGINX_VERSION&#x3D;1.18.0
-curl https:&#x2F;&#x2F;hellolisihui.com&#x2F;code&#x2F;nginx_install.sh | bash</code></pre>
-
-
-
-<h1 id="安装-PHP-环境"><a href="#安装-PHP-环境" class="headerlink" title="安装 PHP 环境"></a>安装 PHP 环境</h1><p>解决依赖环境</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install gcc gcc-c++ libxml2 libxml2-devel curl curl-devel wget sqlite-devel</code></pre>
-
-<p>下载 PHP 源码</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;www.php.net&#x2F;distributions&#x2F;php-7.4.21.tar.gz</code></pre>
-
-<p>解压缩 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf php-7.4.21.tar.gz -C &#x2F;usr&#x2F;local&#x2F;src&#x2F;</code></pre>
-
-<p>源码编译 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 开启php-fpm模块, 添加curl支持
-cd &#x2F;usr&#x2F;local&#x2F;src&#x2F;php-7.4.21&#x2F;
-.&#x2F;configure --enable-fpm --with-curl
-# 若内存不足 1024MB, 添加 &quot;--disable-fileinfo&quot; 参数</code></pre>
-
-<p>编译安装 PHP</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">make
-make install</code></pre>
-
-
-
-<p>调整 PHP 配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp php.ini-development &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini
-cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf
-cp sapi&#x2F;fpm&#x2F;php-fpm &#x2F;usr&#x2F;local&#x2F;bin</code></pre>
-
-
-
-<p>如果文件不存在，则阻止 Nginx 将请求发送到后端的 PHP-FPM 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini</code></pre>
-
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">cgi.fix_pathinfo&#x3D;0</code></pre>
-
-
-
-<p>修改 PHP 配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf
-vim &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf</code></pre>
-
-<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">#最后一行
-include&#x3D;&#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;*.conf</code></pre>
-
-
-
-<p>启动 php-fpm 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;php-fpm</code></pre>
-
-
-
-<h1 id="下载所需文件"><a href="#下载所需文件" class="headerlink" title="下载所需文件"></a>下载所需文件</h1><p>下载 OneIndex 文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html
-yum -y install git
-git clone https:&#x2F;&#x2F;github.com&#x2F;hellolisihui&#x2F;oneindex.git</code></pre>
-
-<p>修改目录权限</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;config
-chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;cache</code></pre>
-
-
-
-<h1 id="修改-Nginx-配置"><a href="#修改-Nginx-配置" class="headerlink" title="修改 Nginx 配置"></a>修改 Nginx 配置</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</code></pre>
-
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
-    listen       80;
-    server_name  localhost;
-
-    root   html&#x2F;oneindex;
-    index  index.php index.html index.htm;
-
-    access_log  logs&#x2F;index.access.log;
-
-    location ~ \.php$ &#123;
-        root           html&#x2F;oneindex;
-        fastcgi_pass   127.0.0.1:9000;
-        fastcgi_index  index.php;
-        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-        include        fastcgi_params;
-    &#125;
-
-    # Nginx 伪静态
-    if (!-f $request_filename)&#123;
-        set $rule_0 1$rule_0;
-    &#125;
-    if (!-d $request_filename)&#123;
-        set $rule_0 2$rule_0;
-    &#125;
-    if ($rule_0 &#x3D; &quot;21&quot;)&#123;
-        rewrite ^&#x2F;(.*) &#x2F;?&#x2F;$1 last;
-    &#125;
-
-&#125;</code></pre>
-
-<p>启动 Nginx 服务</p>
-<pre class="line-numbers language-none"><code class="language-none">systemctl start nginx</code></pre>
-
-
-
-<h1 id="安装-OneIndex"><a href="#安装-OneIndex" class="headerlink" title="安装 OneIndex"></a>安装 OneIndex</h1><p>访问服务器地址。</p>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>OneDrive</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>搭建 Clash 订阅转换</title>
     <url>/page/Tools/Clash%E8%AE%A2%E9%98%85%E8%BD%AC%E6%8D%A2/</url>
     <content><![CDATA[<p>Github 项目地址：</p>
@@ -2754,20 +2638,6 @@ systemctl start subconverter</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>Speedtest 测速网站</title>
-    <url>/page/Tools/Speedtest%E6%B5%8B%E9%80%9F%E7%BD%91%E7%AB%99/</url>
-    <content><![CDATA[<p>官方网址：<a class="link"   href="https://account.speedtestcustom.com/" >https://account.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
-<p>Demo：<a class="link"   href="https://hellolisihui.speedtestcustom.com/" >https://hellolisihui.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
-<iframe width="100%" height="650px" frameborder="0" src="https://hellolisihui.speedtestcustom.com"></iframe>
-]]></content>
-      <categories>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>Speedtest</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Speedyfox 浏览器优化</title>
     <url>/page/Tools/Speedyfox%E6%B5%8F%E8%A7%88%E5%99%A8%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<p>官方网站：<a class="link"   href="https://crystalidea.com/speedyfox" >https://crystalidea.com/speedyfox<i class="fas fa-external-link-alt"></i></a></p>
@@ -2800,290 +2670,133 @@ systemctl start subconverter</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>你的名字</title>
-    <url>/page/Video/YourName/</url>
-    <content><![CDATA[<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"loop":false,"screenshot":false,"video":{"url":"https://index.hellolisihui.com/video/Your_Name.mp4"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script>
+    <title>搭建 OneIndex 个人网盘</title>
+    <url>/page/Tools/OneIndex/</url>
+    <content><![CDATA[<p><strong>OneIndex</strong>：OneDrive 目录索引。</p>
+<h1 id="安装-Nginx-服务"><a href="#安装-Nginx-服务" class="headerlink" title="安装 Nginx 服务"></a>安装 Nginx 服务</h1><p>使用脚本进行安装</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">export NGINX_VERSION&#x3D;1.18.0
+curl https:&#x2F;&#x2F;hellolisihui.com&#x2F;code&#x2F;nginx_install.sh | bash</code></pre>
 
+
+
+<h1 id="安装-PHP-环境"><a href="#安装-PHP-环境" class="headerlink" title="安装 PHP 环境"></a>安装 PHP 环境</h1><p>解决依赖环境</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install gcc gcc-c++ libxml2 libxml2-devel curl curl-devel wget sqlite-devel</code></pre>
+
+<p>下载 PHP 源码</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;www.php.net&#x2F;distributions&#x2F;php-7.4.21.tar.gz</code></pre>
+
+<p>解压缩 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf php-7.4.21.tar.gz -C &#x2F;usr&#x2F;local&#x2F;src&#x2F;</code></pre>
+
+<p>源码编译 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 开启php-fpm模块, 添加curl支持
+cd &#x2F;usr&#x2F;local&#x2F;src&#x2F;php-7.4.21&#x2F;
+.&#x2F;configure --enable-fpm --with-curl
+# 若内存不足 1024MB, 添加 &quot;--disable-fileinfo&quot; 参数</code></pre>
+
+<p>编译安装 PHP</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">make
+make install</code></pre>
+
+
+
+<p>调整 PHP 配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp php.ini-development &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini
+cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;www.conf
+cp sapi&#x2F;fpm&#x2F;php-fpm &#x2F;usr&#x2F;local&#x2F;bin</code></pre>
+
+
+
+<p>如果文件不存在，则阻止 Nginx 将请求发送到后端的 PHP-FPM 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;php&#x2F;php.ini</code></pre>
+
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">cgi.fix_pathinfo&#x3D;0</code></pre>
+
+
+
+<p>修改 PHP 配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf.default &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf
+vim &#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.conf</code></pre>
+
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini">#最后一行
+include&#x3D;&#x2F;usr&#x2F;local&#x2F;etc&#x2F;php-fpm.d&#x2F;*.conf</code></pre>
+
+
+
+<p>启动 php-fpm 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;bin&#x2F;php-fpm</code></pre>
+
+
+
+<h1 id="下载所需文件"><a href="#下载所需文件" class="headerlink" title="下载所需文件"></a>下载所需文件</h1><p>下载 OneIndex 文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cd &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html
+yum -y install git
+git clone https:&#x2F;&#x2F;github.com&#x2F;hellolisihui&#x2F;oneindex.git</code></pre>
+
+<p>修改目录权限</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;config
+chmod 777 &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;html&#x2F;oneindex&#x2F;cache</code></pre>
+
+
+
+<h1 id="修改-Nginx-配置"><a href="#修改-Nginx-配置" class="headerlink" title="修改 Nginx 配置"></a>修改 Nginx 配置</h1><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim &#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</code></pre>
+
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx">server &#123;
+    listen       80;
+    server_name  localhost;
+
+    root   html&#x2F;oneindex;
+    index  index.php index.html index.htm;
+
+    access_log  logs&#x2F;index.access.log;
+
+    location ~ \.php$ &#123;
+        root           html&#x2F;oneindex;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    &#125;
+
+    # Nginx 伪静态
+    if (!-f $request_filename)&#123;
+        set $rule_0 1$rule_0;
+    &#125;
+    if (!-d $request_filename)&#123;
+        set $rule_0 2$rule_0;
+    &#125;
+    if ($rule_0 &#x3D; &quot;21&quot;)&#123;
+        rewrite ^&#x2F;(.*) &#x2F;?&#x2F;$1 last;
+    &#125;
+
+&#125;</code></pre>
+
+<p>启动 Nginx 服务</p>
+<pre class="line-numbers language-none"><code class="language-none">systemctl start nginx</code></pre>
+
+
+
+<h1 id="安装-OneIndex"><a href="#安装-OneIndex" class="headerlink" title="安装 OneIndex"></a>安装 OneIndex</h1><p>访问服务器地址。</p>
 ]]></content>
       <categories>
-        <category>Video</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>KVM笔记</title>
-    <url>/page/Virtual/KVM%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[<p><a class="link"   href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/virtualization_getting_started_guide/index" >虚拟化入门指南<i class="fas fa-external-link-alt"></i></a></p>
-<h1 id="一、KVM的简介"><a href="#一、KVM的简介" class="headerlink" title="一、KVM的简介"></a>一、KVM的简介</h1><h2 id="KVM是什么意思？"><a href="#KVM是什么意思？" class="headerlink" title="KVM是什么意思？"></a>KVM是什么意思？</h2><p>基于内核的虚拟机 Kernel-based Virtual Machine（KVM）是一种内建于 Linux® 中的开源<a class="link"   href="https://www.redhat.com/zh/topics/virtualization/what-is-virtualization" >虚拟化<i class="fas fa-external-link-alt"></i></a>技术。具体而言，KVM 可帮助您将 Linux 转变为<a class="link"   href="https://zh.wikipedia.org/wiki/Hypervisor" >虚拟机监控程序<i class="fas fa-external-link-alt"></i></a>，使主机计算机能够运行多个隔离的虚拟环境，即虚拟客户机或虚拟机（VM）。</p>
-<p>KVM 是 Linux 的一部分。Linux 2.6.20 或更新版本包括 KVM。KVM 于 2006 年首次公布，并在一年后合并到主流 Linux 内核版本中。由于 KVM 属于现有的 Linux 代码，因此它能立即享受每一项新的 Linux 功能、修复和发展，无需进行额外工程。</p>
-<h2 id="KVM是如何运行的？"><a href="#KVM是如何运行的？" class="headerlink" title="KVM是如何运行的？"></a>KVM是如何运行的？</h2><p>KVM 将 Linux 转变为 1 类（裸机恢复）虚拟机监控程序。所有虚拟机监控程序都需要一些操作系统层面的组件才能运行虚拟机，如内存管理器、进程调度程序、输入/输出（I/O）堆栈、设备驱动程序、安全管理器以及网络堆栈等。由于 KVM 是 Linux 内核的一部分，因此所有这些组件它都有。每个虚拟机都像普通的 Linux 进程一样实施，由标准的 Linux 调度程序进行调度，并且使用专门的虚拟硬件，如网卡、图形适配器、CPU、内存和磁盘等。</p>
-<h2 id="为什么要迁移到基于-KVM-的虚拟基础架构？"><a href="#为什么要迁移到基于-KVM-的虚拟基础架构？" class="headerlink" title="为什么要迁移到基于 KVM 的虚拟基础架构？"></a>为什么要迁移到基于 KVM 的虚拟基础架构？</h2><p>在受合同制约的平台上构建虚拟基础架构，可能会限制您对源代码的访问。它意味着您的 IT 开发可能会沦为”姑息疗法”，而不是充满生机的创新工作，而合同的约束，也可能会妨碍您对云、容器和自动化的投资。迁移到基于 KVM 的虚拟化平台则意味着您可以检查、修改和完善虚拟机监控程序背后的源代码。而且，这里面不牵涉企业许可协议，因为没有要保护的源代码。它完全属于您。</p>
-<h2 id="Linux-KVM-的优势"><a href="#Linux-KVM-的优势" class="headerlink" title="Linux KVM 的优势"></a>Linux KVM 的优势</h2><table>
-<thead>
-<tr>
-<th>安全性</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 利用<a class="link"   href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/rhlcommon-appendix-0005" >安全增强型 Linux（SELinux）<i class="fas fa-external-link-alt"></i></a> 和<a class="link"   href="https://www.redhat.com/zh/resources/secure-virtualization-with-svirt" >安全虚拟化（sVirt）<i class="fas fa-external-link-alt"></i></a> 组合来加强虚拟机的安全性和隔离性。SELinux 在虚拟机周围建立安全边界。sVirt 则扩展 SELinux 的功能，使强制访问控制 （MAC）安全机制应用到客户虚拟机，并且预防手动标记错误。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>存储</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 能够使用 Linux 支持的任何存储，包括某些本地磁盘和<a class="link"   href="https://www.redhat.com/zh/topics/data-storage/network-attached-storage" >网络附加存储（NAS）<i class="fas fa-external-link-alt"></i></a>。还可以利用多路径 I/O 来增强存储并提供冗余能力。KVM 还支持共享文件系统，因此虚拟机镜像可以由多个主机共享。磁盘镜像支持精简置备，可以按需分配存储，不必预先备妥一切。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>硬件支持</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 可以使用多种多样的认证 Linux 兼容硬件平台。由于硬件供应商经常助力内核开发，所以 Linux 内核中通常能快速采用最新的硬件功能。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>内存管理</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 继承了 Linux 的内存管理功能，包括非统一内存访问和内核同页合并。虚拟机的内存可以交换，也可通过大型宗卷支持来提高性能，还可由磁盘文件共享或支持。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>实时迁移</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 支持实时迁移，也就是能够在物理主机之间移动运行中的虚拟机，而不会造成服务中断。虚拟机保持开机状态，网络连接保持活跃，各个应用也会在虚拟机重新定位期间正常运行。KVM 也会保存虚拟机的当前状态，从而存储下来供日后恢复。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>性能和扩展性</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>KVM 继承了 Linux 的性能，针对客户机和请求数量的增长进行扩展，满足负载的需求。KVM 可让要求最苛刻的应用工作负载实现虚拟化，而这也是许多企业虚拟化设置的基础，如数据中心和私有云等（通过 <a class="link"   href="https://www.redhat.com/zh/topics/openstack" >OpenStack®<i class="fas fa-external-link-alt"></i></a>）。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>调度和资源控制</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>在 KVM 模型中，虚拟机是一种 Linux 进程，由内核进行调度和管理。通过 Linux 调度程序，可对分配给 Linux 进程的资源进行精细的控制，并且保障特定进程的服务质量。在 KVM 中，这包括完全公平的调度程序、控制组、网络命名空间和实时扩展。</td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>更低延迟，更高优先级</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Linux 内核提供实时扩展，允许基于虚拟机的应用以更低的延迟、更高的优先级来运行（相对于裸机恢复）。内核也将需要长时间计算的进程划分为更小的组件，再进行相应的调度和处理。</td>
-</tr>
-</tbody></table>
-<h1 id="二、KVM的安装"><a href="#二、KVM的安装" class="headerlink" title="二、KVM的安装"></a>二、KVM的安装</h1><p>如果是物理服务器，需要在BIOS中打开虚拟化功能（Virtualization Technology）</p>
-<h2 id="1-部署和安装KVM"><a href="#1-部署和安装KVM" class="headerlink" title="1. 部署和安装KVM"></a>1. 部署和安装KVM</h2><h3 id="创建新的虚拟机"><a href="#创建新的虚拟机" class="headerlink" title="创建新的虚拟机"></a>创建新的虚拟机</h3><ul>
-<li>硬件兼容性：Workstation 15.x</li>
-<li>客户机操作系统：CentOS 7 64 位</li>
-<li>处理器配置：处理器数量 [2]，内核数量 [2]</li>
-<li>虚拟机内存：4096MB</li>
-<li>网络类型：使用网络地址转换 (NAT)</li>
-<li>I/O 控制器类型：LSI Logic (推荐)</li>
-<li>磁盘类型：SCSI (推荐)</li>
-<li>选择磁盘：创建新虚拟磁盘 (40GB，单个文件)</li>
-</ul>
-<h3 id="开启此虚拟机"><a href="#开启此虚拟机" class="headerlink" title="开启此虚拟机"></a>开启此虚拟机</h3><p>编辑虚拟机设置——使用ISO映像文件——开启此虚拟机</p>
-<p>语言默认使用英文，时区设置为 Asia/Shanghai，软件选择SOFTWARE SELECTION：Server with GUI (勾选Virtualization Client、Virtualization Hypervisor、Virtualization Tools)，设置Root密码。</p>
-<h2 id="2-创建KVM虚拟机"><a href="#2-创建KVM虚拟机" class="headerlink" title="2. 创建KVM虚拟机"></a>2. 创建KVM虚拟机</h2><h3 id="前期准备工作"><a href="#前期准备工作" class="headerlink" title="前期准备工作"></a>前期准备工作</h3><p>创建一个<code>iso</code>文件夹，将CentOS系统光盘上传到文件夹中</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">du -h &#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso
-4.1G	&#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso</code></pre>
-
-<p>创建一个<code>kvm-vm</code>文件夹，用来存储KVM磁盘</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkdir &#x2F;kvm-vm</code></pre>
-
-<p>打开<code>Virtual Machine Manager</code>，双击<code>QEMU/KVM</code>，点击<code>Storage</code>创建存储池，分别添加<code>iso</code>和<code>kvm-vm</code>文件夹</p>
-<pre class="line-numbers language-none"><code class="language-none">virt-manager    #打开Virtual Machine Manager</code></pre>
-
-<h3 id="创建新的虚拟机-1"><a href="#创建新的虚拟机-1" class="headerlink" title="创建新的虚拟机"></a>创建新的虚拟机</h3><p><strong>图形化创建KVM虚拟机</strong></p>
-<p>打开<code>Virtual Machine Manager</code>——<code>File</code>菜单——选择<code>New Virtual Machine</code>——弹出<code>New VM</code>窗口</p>
-<ul>
-<li>选择想要安装操作系统的方式：Local install media (ISO image or CDROM)</li>
-<li>使用安装介质——Use ISO image：/iso/CentOS-7-x86_64-DVD-1611.iso</li>
-<li>内存和CPU设置——Memory(RAM)：1024，CPUs：1</li>
-<li>创建自定义存储管理——/kvm-vm/centos7.0.qcow2</li>
-</ul>
-<p>点击Finish创建完成</p>
-<p><strong>命令行创建KVM虚拟机</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virt-install --os-type&#x3D;linux --os-variant centos7.0 --name CentOS --ram 1024 --vcpus 1 --disk&#x3D;&#x2F;kvm-vm&#x2F;CentOS.raw,format&#x3D;raw,size&#x3D;10 --location &#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso --network network&#x3D;default --graphics vnc,listen&#x3D;0.0.0.0 --noautoconsole</code></pre>
-
-<p>使用virt-install命令创建虚拟机 </p>
-<p>virt-install --name vm002 \ 指定虚拟机的名字 </p>
-<p>–vcpus 1 –ram 1024 \ 指定vcpu数量和内存大小 </p>
-<p>–disk /kvm-vm/centos7-vm002.qcow2,format=qcow2 \ 指定虚拟磁盘及格式 </p>
-<p>–network network=default \ 指定虚拟机采用的网络为默认，默认为NAT </p>
-<p>–graphics vnc,listen=0.0.0.0 –noautoconsole \ 指定虚拟机显示协议为VNC </p>
-<p>–os-type=linux –os-variant=centos7.0 \ 指定操作系统类型及版本 </p>
-<p>–location=/iso/CentOS-7-x86_64-DVD-1611.iso 指定安装介质</p>
-<h1 id="三、基本操作命令"><a href="#三、基本操作命令" class="headerlink" title="三、基本操作命令"></a>三、基本操作命令</h1><p>查看虚拟机列表</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh list --all
-#不加--all，则仅显示正在运行的虚拟机</code></pre>
-
-<p>查看虚拟机详细信息</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dominfo &quot;DomainName&quot;
-#DomainName为虚拟机域名称</code></pre>
-
-<p>开启虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh start &quot;DomainName&quot;</code></pre>
-
-<p>关闭虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh shutdown &quot;DomainName&quot;		#优雅的关机
-virsh destroy &quot;DomainName&quot;		#强制关机</code></pre>
-
-<p>导出配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dumpxml &quot;DomainName&quot; &gt; &quot;BakDomainName&quot;.xml
-#虚拟机的配置文件，默认在&#x2F;etc&#x2F;libvrit&#x2F;qemu下，xml格式</code></pre>
-
-<p>删除虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh undefine &quot;DomainName&quot;
-#执行命令后，虚拟机XML配置文件会被删除，但是磁盘文件不会</code></pre>
-
-<p>根据配置文件恢复虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define &quot;BakDomainName&quot;.xml</code></pre>
-
-<p>修改配置文件 (自带语法检查)</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh edit &quot;DomainName&quot;</code></pre>
-
-<p>虚拟机的重命名</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh domrename &quot;DomainName&quot; &quot;New_DomainName&quot;</code></pre>
-
-<p>查看虚拟机的VNC端口</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh vncdisplay &quot;DomainName&quot;
-#:0表示端口5900，:1表示端口5901，以此类推</code></pre>
-
-<p>挂起虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh suspend &quot;DomainName&quot;
-virsh resume &quot;DomainName&quot;		#恢复被挂起的虚拟机</code></pre>
-
-<p>设置开机自启</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh autostart &quot;DomainName&quot;
-virsh autostart --disable &quot;DomainName&quot;		#取消开机自启</code></pre>
-
-<p>Console登录KVM虚拟机域</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#在KVM域里添加
-grubby --update-kernel&#x3D;ALL --args&#x3D;&quot;console&#x3D;ttyS0&quot;
-reboot
-#在命令行使用console命令登录
-virsh console &quot;DomainName&quot;
-#不推荐使用这种方式登录</code></pre>
-
-<h1 id="四、KVM磁盘格式"><a href="#四、KVM磁盘格式" class="headerlink" title="四、KVM磁盘格式"></a>四、KVM磁盘格式</h1><p>Raw格式 (裸格式)：占用空间较大，性能较好，但不支持虚拟机快照功能。</p>
-<p>Qcow2格式 (Copy on Write)：占用空间较小，支持快照，性能比Raw格式稍差一些。</p>
-<p>创建磁盘文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create &quot;DiskName&quot;.raw &quot;DiskSize&quot;</code></pre>
-
-<p>查看磁盘信息</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img info &quot;DiskName&quot;</code></pre>
-
-<p>创建指定格式磁盘</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create -f qcow2 &quot;DiskName&quot;.qcow2 &quot;DiskSize&quot;</code></pre>
-
-<p>转换磁盘格式</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img convert -f raw -O qcow2 &quot;DiskName&quot;.raw &quot;NewDiskName&quot;.qcow2</code></pre>
-
-<p>虚拟机快照</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#拍摄快照
-virsh snapshot-create &quot;DomainName&quot;
-#查看快照
-virsh snapshot-list &quot;DomainName&quot;
-#恢复快照
-virsh snapshot-revert &quot;DomainName&quot; &quot;时间戳&quot;
-#删除快照
-virsh snapshot-delete &quot;DomainName&quot; &quot;时间戳&quot;</code></pre>
-
-<h1 id="五、虚拟机的克隆"><a href="#五、虚拟机的克隆" class="headerlink" title="五、虚拟机的克隆"></a>五、虚拟机的克隆</h1><table>
-<thead>
-<tr>
-<th>目标虚拟机</th>
-<th>克隆虚拟机</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CentOS7.3-1</td>
-<td>CentOS7.3-clone</td>
-</tr>
-</tbody></table>
-<h2 id="完整克隆-手动"><a href="#完整克隆-手动" class="headerlink" title="完整克隆(手动)"></a>完整克隆(手动)</h2><p>复制XML配置文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dumpxml CentOS7.3-1 &gt; CentOS7.3-clone.xml</code></pre>
-
-<p>复制磁盘文件</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;kvm-vm&#x2F;CentOS7.3-1.qcow2 &#x2F;kvm-vm&#x2F;CentOS7.3-clone.qcow2</code></pre>
-
-<p>修改配置文件并重新定义一个虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim CentOS7.3-clone.xml</code></pre>
-
-<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml">&lt;name&gt;CentOS7.3-clone&lt;&#x2F;name&gt;		#修改虚拟机名称
-&lt;uuid&gt;331e0dba-ac64-4b04-bd54-9cca7b4e0b3f&lt;&#x2F;uuid&gt;		#删除UUID
-&lt;source file&#x3D;&#39;&#x2F;kvm-vm&#x2F;CentOS7.3-clone.qcow2&#39;&#x2F;&gt;		#修改磁盘文件位置
-&lt;mac address&#x3D;&#39;52:54:00:38:76:4c&#39;&#x2F;&gt;		#删除Mac地址</code></pre>
-
-<p>定义一个新的虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define CentOS7.3-clone.xml</code></pre>
-
-<h2 id="完整克隆-自动"><a href="#完整克隆-自动" class="headerlink" title="完整克隆(自动)"></a>完整克隆(自动)</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virt-clone --auto-clone -o CentOS7.3-1 -n CentOS7.3-clone</code></pre>
-
-<h2 id="链接克隆"><a href="#链接克隆" class="headerlink" title="链接克隆"></a>链接克隆</h2><p>克隆前确定模板的磁盘文件是否为qcow2格式，如果不是需要转换</p>
-<p>创建链接磁盘</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create -f qcow2 -b CentOS7.3-1.qcow2 CentOS7.3-clone.qcow2</code></pre>
-
-<p>同样修改XML配置文件，指向对应的磁盘文件，修改完成后定义克隆虚拟机</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define CentOS7.3-clone.xml</code></pre>
-
-<h1 id="六、管理虚拟网络"><a href="#六、管理虚拟网络" class="headerlink" title="六、管理虚拟网络"></a>六、管理虚拟网络</h1><h2 id="Nat模式"><a href="#Nat模式" class="headerlink" title="Nat模式"></a>Nat模式</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh net-edit default</code></pre>
-
-<h2 id="桥接网络"><a href="#桥接网络" class="headerlink" title="桥接网络"></a>桥接网络</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop NetworkManager
-virsh iface-bridge ens33 br0</code></pre>
-
-<p>修改配置文件</p>
-<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml">&lt;interface type&#x3D;&#39;bridge&#39;&gt; 
-&lt;source bridge&#x3D;&#39;br0&#39;&#x2F;&gt;</code></pre>
-
-<h1 id="七、虚拟机的迁移"><a href="#七、虚拟机的迁移" class="headerlink" title="七、虚拟机的迁移"></a>七、虚拟机的迁移</h1><h2 id="冷迁移-静态迁移"><a href="#冷迁移-静态迁移" class="headerlink" title="冷迁移 (静态迁移)"></a>冷迁移 (静态迁移)</h2><p>复制XML配置文件和磁盘文件，重新定义虚拟机，需要虚拟机在关闭状态。</p>
-<h2 id="热迁移-动态迁移"><a href="#热迁移-动态迁移" class="headerlink" title="热迁移 (动态迁移)"></a>热迁移 (动态迁移)</h2><p>通过NFS服务器，创建虚拟机时将磁盘文件放到NFS服务器中，图形化迁移。</p>
-<h1 id="八、KVM补充"><a href="#八、KVM补充" class="headerlink" title="八、KVM补充"></a>八、KVM补充</h1><pre class="line-numbers language-none"><code class="language-none">echo net.ipv4.ip_forward &#x3D; 1 &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-sysctl-p
-[root@localhost ~]# yum groupinstall -y &quot;GNOME Desktop&quot;
-[root@localhost ~]# yum -y install qemu-kvm qemu-kvm-tools virt-install qemu-img bridge-utils libvirt virt-manager
-[root@localhost ~]# ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;graphical.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target
-[root@localhost ~]# cat &#x2F;proc&#x2F;cpuinfo | grep vmx
-flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon nopl xtopology tsc_reliable nonstop_tsc eagerfpu pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single ssbd ibrs ibpb stibp tpr_shadow vnmi ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec arat md_clear spec_ctrl intel_stibp flush_l1d arch_capabilities
-[root@localhost ~]# lsmod | grep kvm
-kvm_intel             188688  0 
-kvm                   636965  1 kvm_intel
-irqbypass              13503  1 kvm
-[root@localhost ~]# systemctl start libvirtd
-[root@localhost ~]# systemctl enable libvirtd
-[root@localhost ~]# virt-manager</code></pre>]]></content>
-      <categories>
-        <category>Linux</category>
+        <category>Tools</category>
       </categories>
       <tags>
-        <tag>KVM</tag>
+        <tag>OneDrive</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Speedtest 测速网站</title>
+    <url>/page/Tools/Speedtest%E6%B5%8B%E9%80%9F%E7%BD%91%E7%AB%99/</url>
+    <content><![CDATA[<p>官方网址：<a class="link"   href="https://account.speedtestcustom.com/" >https://account.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
+<p>Demo：<a class="link"   href="https://hellolisihui.speedtestcustom.com/" >https://hellolisihui.speedtestcustom.com/<i class="fas fa-external-link-alt"></i></a></p>
+<iframe width="100%" height="650px" frameborder="0" src="https://hellolisihui.speedtestcustom.com"></iframe>
+]]></content>
+      <categories>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>Speedtest</tag>
       </tags>
   </entry>
   <entry>
@@ -3447,6 +3160,293 @@ pause</code></pre>
       </tags>
   </entry>
   <entry>
+    <title>KVM笔记</title>
+    <url>/page/Virtual/KVM%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<p><a class="link"   href="https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/virtualization_getting_started_guide/index" >虚拟化入门指南<i class="fas fa-external-link-alt"></i></a></p>
+<h1 id="一、KVM的简介"><a href="#一、KVM的简介" class="headerlink" title="一、KVM的简介"></a>一、KVM的简介</h1><h2 id="KVM是什么意思？"><a href="#KVM是什么意思？" class="headerlink" title="KVM是什么意思？"></a>KVM是什么意思？</h2><p>基于内核的虚拟机 Kernel-based Virtual Machine（KVM）是一种内建于 Linux® 中的开源<a class="link"   href="https://www.redhat.com/zh/topics/virtualization/what-is-virtualization" >虚拟化<i class="fas fa-external-link-alt"></i></a>技术。具体而言，KVM 可帮助您将 Linux 转变为<a class="link"   href="https://zh.wikipedia.org/wiki/Hypervisor" >虚拟机监控程序<i class="fas fa-external-link-alt"></i></a>，使主机计算机能够运行多个隔离的虚拟环境，即虚拟客户机或虚拟机（VM）。</p>
+<p>KVM 是 Linux 的一部分。Linux 2.6.20 或更新版本包括 KVM。KVM 于 2006 年首次公布，并在一年后合并到主流 Linux 内核版本中。由于 KVM 属于现有的 Linux 代码，因此它能立即享受每一项新的 Linux 功能、修复和发展，无需进行额外工程。</p>
+<h2 id="KVM是如何运行的？"><a href="#KVM是如何运行的？" class="headerlink" title="KVM是如何运行的？"></a>KVM是如何运行的？</h2><p>KVM 将 Linux 转变为 1 类（裸机恢复）虚拟机监控程序。所有虚拟机监控程序都需要一些操作系统层面的组件才能运行虚拟机，如内存管理器、进程调度程序、输入/输出（I/O）堆栈、设备驱动程序、安全管理器以及网络堆栈等。由于 KVM 是 Linux 内核的一部分，因此所有这些组件它都有。每个虚拟机都像普通的 Linux 进程一样实施，由标准的 Linux 调度程序进行调度，并且使用专门的虚拟硬件，如网卡、图形适配器、CPU、内存和磁盘等。</p>
+<h2 id="为什么要迁移到基于-KVM-的虚拟基础架构？"><a href="#为什么要迁移到基于-KVM-的虚拟基础架构？" class="headerlink" title="为什么要迁移到基于 KVM 的虚拟基础架构？"></a>为什么要迁移到基于 KVM 的虚拟基础架构？</h2><p>在受合同制约的平台上构建虚拟基础架构，可能会限制您对源代码的访问。它意味着您的 IT 开发可能会沦为”姑息疗法”，而不是充满生机的创新工作，而合同的约束，也可能会妨碍您对云、容器和自动化的投资。迁移到基于 KVM 的虚拟化平台则意味着您可以检查、修改和完善虚拟机监控程序背后的源代码。而且，这里面不牵涉企业许可协议，因为没有要保护的源代码。它完全属于您。</p>
+<h2 id="Linux-KVM-的优势"><a href="#Linux-KVM-的优势" class="headerlink" title="Linux KVM 的优势"></a>Linux KVM 的优势</h2><table>
+<thead>
+<tr>
+<th>安全性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 利用<a class="link"   href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/5/html/deployment_guide/rhlcommon-appendix-0005" >安全增强型 Linux（SELinux）<i class="fas fa-external-link-alt"></i></a> 和<a class="link"   href="https://www.redhat.com/zh/resources/secure-virtualization-with-svirt" >安全虚拟化（sVirt）<i class="fas fa-external-link-alt"></i></a> 组合来加强虚拟机的安全性和隔离性。SELinux 在虚拟机周围建立安全边界。sVirt 则扩展 SELinux 的功能，使强制访问控制 （MAC）安全机制应用到客户虚拟机，并且预防手动标记错误。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>存储</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 能够使用 Linux 支持的任何存储，包括某些本地磁盘和<a class="link"   href="https://www.redhat.com/zh/topics/data-storage/network-attached-storage" >网络附加存储（NAS）<i class="fas fa-external-link-alt"></i></a>。还可以利用多路径 I/O 来增强存储并提供冗余能力。KVM 还支持共享文件系统，因此虚拟机镜像可以由多个主机共享。磁盘镜像支持精简置备，可以按需分配存储，不必预先备妥一切。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>硬件支持</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 可以使用多种多样的认证 Linux 兼容硬件平台。由于硬件供应商经常助力内核开发，所以 Linux 内核中通常能快速采用最新的硬件功能。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>内存管理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 继承了 Linux 的内存管理功能，包括非统一内存访问和内核同页合并。虚拟机的内存可以交换，也可通过大型宗卷支持来提高性能，还可由磁盘文件共享或支持。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>实时迁移</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 支持实时迁移，也就是能够在物理主机之间移动运行中的虚拟机，而不会造成服务中断。虚拟机保持开机状态，网络连接保持活跃，各个应用也会在虚拟机重新定位期间正常运行。KVM 也会保存虚拟机的当前状态，从而存储下来供日后恢复。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>性能和扩展性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>KVM 继承了 Linux 的性能，针对客户机和请求数量的增长进行扩展，满足负载的需求。KVM 可让要求最苛刻的应用工作负载实现虚拟化，而这也是许多企业虚拟化设置的基础，如数据中心和私有云等（通过 <a class="link"   href="https://www.redhat.com/zh/topics/openstack" >OpenStack®<i class="fas fa-external-link-alt"></i></a>）。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>调度和资源控制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>在 KVM 模型中，虚拟机是一种 Linux 进程，由内核进行调度和管理。通过 Linux 调度程序，可对分配给 Linux 进程的资源进行精细的控制，并且保障特定进程的服务质量。在 KVM 中，这包括完全公平的调度程序、控制组、网络命名空间和实时扩展。</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>更低延迟，更高优先级</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Linux 内核提供实时扩展，允许基于虚拟机的应用以更低的延迟、更高的优先级来运行（相对于裸机恢复）。内核也将需要长时间计算的进程划分为更小的组件，再进行相应的调度和处理。</td>
+</tr>
+</tbody></table>
+<h1 id="二、KVM的安装"><a href="#二、KVM的安装" class="headerlink" title="二、KVM的安装"></a>二、KVM的安装</h1><p>如果是物理服务器，需要在BIOS中打开虚拟化功能（Virtualization Technology）</p>
+<h2 id="1-部署和安装KVM"><a href="#1-部署和安装KVM" class="headerlink" title="1. 部署和安装KVM"></a>1. 部署和安装KVM</h2><h3 id="创建新的虚拟机"><a href="#创建新的虚拟机" class="headerlink" title="创建新的虚拟机"></a>创建新的虚拟机</h3><ul>
+<li>硬件兼容性：Workstation 15.x</li>
+<li>客户机操作系统：CentOS 7 64 位</li>
+<li>处理器配置：处理器数量 [2]，内核数量 [2]</li>
+<li>虚拟机内存：4096MB</li>
+<li>网络类型：使用网络地址转换 (NAT)</li>
+<li>I/O 控制器类型：LSI Logic (推荐)</li>
+<li>磁盘类型：SCSI (推荐)</li>
+<li>选择磁盘：创建新虚拟磁盘 (40GB，单个文件)</li>
+</ul>
+<h3 id="开启此虚拟机"><a href="#开启此虚拟机" class="headerlink" title="开启此虚拟机"></a>开启此虚拟机</h3><p>编辑虚拟机设置——使用ISO映像文件——开启此虚拟机</p>
+<p>语言默认使用英文，时区设置为 Asia/Shanghai，软件选择SOFTWARE SELECTION：Server with GUI (勾选Virtualization Client、Virtualization Hypervisor、Virtualization Tools)，设置Root密码。</p>
+<h2 id="2-创建KVM虚拟机"><a href="#2-创建KVM虚拟机" class="headerlink" title="2. 创建KVM虚拟机"></a>2. 创建KVM虚拟机</h2><h3 id="前期准备工作"><a href="#前期准备工作" class="headerlink" title="前期准备工作"></a>前期准备工作</h3><p>创建一个<code>iso</code>文件夹，将CentOS系统光盘上传到文件夹中</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">du -h &#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso
+4.1G	&#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso</code></pre>
+
+<p>创建一个<code>kvm-vm</code>文件夹，用来存储KVM磁盘</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">mkdir &#x2F;kvm-vm</code></pre>
+
+<p>打开<code>Virtual Machine Manager</code>，双击<code>QEMU/KVM</code>，点击<code>Storage</code>创建存储池，分别添加<code>iso</code>和<code>kvm-vm</code>文件夹</p>
+<pre class="line-numbers language-none"><code class="language-none">virt-manager    #打开Virtual Machine Manager</code></pre>
+
+<h3 id="创建新的虚拟机-1"><a href="#创建新的虚拟机-1" class="headerlink" title="创建新的虚拟机"></a>创建新的虚拟机</h3><p><strong>图形化创建KVM虚拟机</strong></p>
+<p>打开<code>Virtual Machine Manager</code>——<code>File</code>菜单——选择<code>New Virtual Machine</code>——弹出<code>New VM</code>窗口</p>
+<ul>
+<li>选择想要安装操作系统的方式：Local install media (ISO image or CDROM)</li>
+<li>使用安装介质——Use ISO image：/iso/CentOS-7-x86_64-DVD-1611.iso</li>
+<li>内存和CPU设置——Memory(RAM)：1024，CPUs：1</li>
+<li>创建自定义存储管理——/kvm-vm/centos7.0.qcow2</li>
+</ul>
+<p>点击Finish创建完成</p>
+<p><strong>命令行创建KVM虚拟机</strong></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virt-install --os-type&#x3D;linux --os-variant centos7.0 --name CentOS --ram 1024 --vcpus 1 --disk&#x3D;&#x2F;kvm-vm&#x2F;CentOS.raw,format&#x3D;raw,size&#x3D;10 --location &#x2F;iso&#x2F;CentOS-7-x86_64-DVD-1611.iso --network network&#x3D;default --graphics vnc,listen&#x3D;0.0.0.0 --noautoconsole</code></pre>
+
+<p>使用virt-install命令创建虚拟机 </p>
+<p>virt-install --name vm002 \ 指定虚拟机的名字 </p>
+<p>–vcpus 1 –ram 1024 \ 指定vcpu数量和内存大小 </p>
+<p>–disk /kvm-vm/centos7-vm002.qcow2,format=qcow2 \ 指定虚拟磁盘及格式 </p>
+<p>–network network=default \ 指定虚拟机采用的网络为默认，默认为NAT </p>
+<p>–graphics vnc,listen=0.0.0.0 –noautoconsole \ 指定虚拟机显示协议为VNC </p>
+<p>–os-type=linux –os-variant=centos7.0 \ 指定操作系统类型及版本 </p>
+<p>–location=/iso/CentOS-7-x86_64-DVD-1611.iso 指定安装介质</p>
+<h1 id="三、基本操作命令"><a href="#三、基本操作命令" class="headerlink" title="三、基本操作命令"></a>三、基本操作命令</h1><p>查看虚拟机列表</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh list --all
+#不加--all，则仅显示正在运行的虚拟机</code></pre>
+
+<p>查看虚拟机详细信息</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dominfo &quot;DomainName&quot;
+#DomainName为虚拟机域名称</code></pre>
+
+<p>开启虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh start &quot;DomainName&quot;</code></pre>
+
+<p>关闭虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh shutdown &quot;DomainName&quot;		#优雅的关机
+virsh destroy &quot;DomainName&quot;		#强制关机</code></pre>
+
+<p>导出配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dumpxml &quot;DomainName&quot; &gt; &quot;BakDomainName&quot;.xml
+#虚拟机的配置文件，默认在&#x2F;etc&#x2F;libvrit&#x2F;qemu下，xml格式</code></pre>
+
+<p>删除虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh undefine &quot;DomainName&quot;
+#执行命令后，虚拟机XML配置文件会被删除，但是磁盘文件不会</code></pre>
+
+<p>根据配置文件恢复虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define &quot;BakDomainName&quot;.xml</code></pre>
+
+<p>修改配置文件 (自带语法检查)</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh edit &quot;DomainName&quot;</code></pre>
+
+<p>虚拟机的重命名</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh domrename &quot;DomainName&quot; &quot;New_DomainName&quot;</code></pre>
+
+<p>查看虚拟机的VNC端口</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh vncdisplay &quot;DomainName&quot;
+#:0表示端口5900，:1表示端口5901，以此类推</code></pre>
+
+<p>挂起虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh suspend &quot;DomainName&quot;
+virsh resume &quot;DomainName&quot;		#恢复被挂起的虚拟机</code></pre>
+
+<p>设置开机自启</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh autostart &quot;DomainName&quot;
+virsh autostart --disable &quot;DomainName&quot;		#取消开机自启</code></pre>
+
+<p>Console登录KVM虚拟机域</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#在KVM域里添加
+grubby --update-kernel&#x3D;ALL --args&#x3D;&quot;console&#x3D;ttyS0&quot;
+reboot
+#在命令行使用console命令登录
+virsh console &quot;DomainName&quot;
+#不推荐使用这种方式登录</code></pre>
+
+<h1 id="四、KVM磁盘格式"><a href="#四、KVM磁盘格式" class="headerlink" title="四、KVM磁盘格式"></a>四、KVM磁盘格式</h1><p>Raw格式 (裸格式)：占用空间较大，性能较好，但不支持虚拟机快照功能。</p>
+<p>Qcow2格式 (Copy on Write)：占用空间较小，支持快照，性能比Raw格式稍差一些。</p>
+<p>创建磁盘文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create &quot;DiskName&quot;.raw &quot;DiskSize&quot;</code></pre>
+
+<p>查看磁盘信息</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img info &quot;DiskName&quot;</code></pre>
+
+<p>创建指定格式磁盘</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create -f qcow2 &quot;DiskName&quot;.qcow2 &quot;DiskSize&quot;</code></pre>
+
+<p>转换磁盘格式</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img convert -f raw -O qcow2 &quot;DiskName&quot;.raw &quot;NewDiskName&quot;.qcow2</code></pre>
+
+<p>虚拟机快照</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">#拍摄快照
+virsh snapshot-create &quot;DomainName&quot;
+#查看快照
+virsh snapshot-list &quot;DomainName&quot;
+#恢复快照
+virsh snapshot-revert &quot;DomainName&quot; &quot;时间戳&quot;
+#删除快照
+virsh snapshot-delete &quot;DomainName&quot; &quot;时间戳&quot;</code></pre>
+
+<h1 id="五、虚拟机的克隆"><a href="#五、虚拟机的克隆" class="headerlink" title="五、虚拟机的克隆"></a>五、虚拟机的克隆</h1><table>
+<thead>
+<tr>
+<th>目标虚拟机</th>
+<th>克隆虚拟机</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CentOS7.3-1</td>
+<td>CentOS7.3-clone</td>
+</tr>
+</tbody></table>
+<h2 id="完整克隆-手动"><a href="#完整克隆-手动" class="headerlink" title="完整克隆(手动)"></a>完整克隆(手动)</h2><p>复制XML配置文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh dumpxml CentOS7.3-1 &gt; CentOS7.3-clone.xml</code></pre>
+
+<p>复制磁盘文件</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cp &#x2F;kvm-vm&#x2F;CentOS7.3-1.qcow2 &#x2F;kvm-vm&#x2F;CentOS7.3-clone.qcow2</code></pre>
+
+<p>修改配置文件并重新定义一个虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">vim CentOS7.3-clone.xml</code></pre>
+
+<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml">&lt;name&gt;CentOS7.3-clone&lt;&#x2F;name&gt;		#修改虚拟机名称
+&lt;uuid&gt;331e0dba-ac64-4b04-bd54-9cca7b4e0b3f&lt;&#x2F;uuid&gt;		#删除UUID
+&lt;source file&#x3D;&#39;&#x2F;kvm-vm&#x2F;CentOS7.3-clone.qcow2&#39;&#x2F;&gt;		#修改磁盘文件位置
+&lt;mac address&#x3D;&#39;52:54:00:38:76:4c&#39;&#x2F;&gt;		#删除Mac地址</code></pre>
+
+<p>定义一个新的虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define CentOS7.3-clone.xml</code></pre>
+
+<h2 id="完整克隆-自动"><a href="#完整克隆-自动" class="headerlink" title="完整克隆(自动)"></a>完整克隆(自动)</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virt-clone --auto-clone -o CentOS7.3-1 -n CentOS7.3-clone</code></pre>
+
+<h2 id="链接克隆"><a href="#链接克隆" class="headerlink" title="链接克隆"></a>链接克隆</h2><p>克隆前确定模板的磁盘文件是否为qcow2格式，如果不是需要转换</p>
+<p>创建链接磁盘</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">qemu-img create -f qcow2 -b CentOS7.3-1.qcow2 CentOS7.3-clone.qcow2</code></pre>
+
+<p>同样修改XML配置文件，指向对应的磁盘文件，修改完成后定义克隆虚拟机</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh define CentOS7.3-clone.xml</code></pre>
+
+<h1 id="六、管理虚拟网络"><a href="#六、管理虚拟网络" class="headerlink" title="六、管理虚拟网络"></a>六、管理虚拟网络</h1><h2 id="Nat模式"><a href="#Nat模式" class="headerlink" title="Nat模式"></a>Nat模式</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">virsh net-edit default</code></pre>
+
+<h2 id="桥接网络"><a href="#桥接网络" class="headerlink" title="桥接网络"></a>桥接网络</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop NetworkManager
+virsh iface-bridge ens33 br0</code></pre>
+
+<p>修改配置文件</p>
+<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml">&lt;interface type&#x3D;&#39;bridge&#39;&gt; 
+&lt;source bridge&#x3D;&#39;br0&#39;&#x2F;&gt;</code></pre>
+
+<h1 id="七、虚拟机的迁移"><a href="#七、虚拟机的迁移" class="headerlink" title="七、虚拟机的迁移"></a>七、虚拟机的迁移</h1><h2 id="冷迁移-静态迁移"><a href="#冷迁移-静态迁移" class="headerlink" title="冷迁移 (静态迁移)"></a>冷迁移 (静态迁移)</h2><p>复制XML配置文件和磁盘文件，重新定义虚拟机，需要虚拟机在关闭状态。</p>
+<h2 id="热迁移-动态迁移"><a href="#热迁移-动态迁移" class="headerlink" title="热迁移 (动态迁移)"></a>热迁移 (动态迁移)</h2><p>通过NFS服务器，创建虚拟机时将磁盘文件放到NFS服务器中，图形化迁移。</p>
+<h1 id="八、KVM补充"><a href="#八、KVM补充" class="headerlink" title="八、KVM补充"></a>八、KVM补充</h1><pre class="line-numbers language-none"><code class="language-none">echo net.ipv4.ip_forward &#x3D; 1 &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+sysctl-p
+[root@localhost ~]# yum groupinstall -y &quot;GNOME Desktop&quot;
+[root@localhost ~]# yum -y install qemu-kvm qemu-kvm-tools virt-install qemu-img bridge-utils libvirt virt-manager
+[root@localhost ~]# ln -sf &#x2F;lib&#x2F;systemd&#x2F;system&#x2F;graphical.target &#x2F;etc&#x2F;systemd&#x2F;system&#x2F;default.target
+[root@localhost ~]# cat &#x2F;proc&#x2F;cpuinfo | grep vmx
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon nopl xtopology tsc_reliable nonstop_tsc eagerfpu pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single ssbd ibrs ibpb stibp tpr_shadow vnmi ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 invpcid mpx rdseed adx smap clflushopt xsaveopt xsavec arat md_clear spec_ctrl intel_stibp flush_l1d arch_capabilities
+[root@localhost ~]# lsmod | grep kvm
+kvm_intel             188688  0 
+kvm                   636965  1 kvm_intel
+irqbypass              13503  1 kvm
+[root@localhost ~]# systemctl start libvirtd
+[root@localhost ~]# systemctl enable libvirtd
+[root@localhost ~]# virt-manager</code></pre>]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>KVM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>你的名字</title>
+    <url>/page/Video/YourName/</url>
+    <content><![CDATA[<div id="dplayer0" class="dplayer hexo-tag-dplayer-mark" style="margin-bottom: 20px;"></div><script>(function(){var player = new DPlayer({"container":document.getElementById("dplayer0"),"loop":false,"screenshot":false,"video":{"url":"https://index.hellolisihui.com/video/Your_Name.mp4"}});window.dplayers||(window.dplayers=[]);window.dplayers.push(player);})()</script>
+
+]]></content>
+      <categories>
+        <category>Video</category>
+      </categories>
+  </entry>
+  <entry>
     <title>部署Zabbix监控系统</title>
     <url>/page/Zabbix/%E9%83%A8%E7%BD%B2Zabbix%E7%9B%91%E6%8E%A7%E7%B3%BB%E7%BB%9F/</url>
     <content><![CDATA[<p>Zabbix中文官网：<a class="link"   href="https://www.zabbix.com/cn/" >https://www.zabbix.com/cn/<i class="fas fa-external-link-alt"></i></a></p>
@@ -3519,349 +3519,6 @@ cp &#x2F;usr&#x2F;share&#x2F;fonts&#x2F;wqy-microhei&#x2F;wqy-microhei.ttc &#x2F
       </categories>
       <tags>
         <tag>Zabbix</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>LVS虚拟服务器</title>
-    <url>/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/LVS%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
-    <content><![CDATA[<p>官方网站 ：<a class="link"   href="http://www.linuxvirtualserver.org/" >http://www.linuxvirtualserver.org<i class="fas fa-external-link-alt"></i></a></p>
-<h1 id="一、LVS-是什么？"><a href="#一、LVS-是什么？" class="headerlink" title="一、LVS 是什么？"></a>一、LVS 是什么？</h1><p>LVS 是 Linux Virtual Server 的简写，也就是 Linux 虚拟服务器，是一个虚拟的服务器集群系统，该项目在1998年5月由章文嵩博士成立，是中国国内最早出现的自由软件项目之一。LVS 实际上相当于基于 IP 地址的虚拟化应用，为基于 IP 地址和内容请求分发的负载均衡提出了高效的解决方法，现在 LVS 已经是 Linux 内核标准的一部分。</p>
-<p>使用 LVS 可以达到的技术目标是：通过 LVS 达到的负载均衡技术和 Linux 操作系统实现一个高性能高可用的 Linux 服务器集群，具有良好的可靠性、可扩展性和可操作性。从而以低廉的成本实现最优的性能。LVS 是一个实现负载均衡集群的开源软件项目，LVS 架构从逻辑上可分为调度层、Server 集群层和共享存储层。</p>
-<h1 id="二、LVS-的优点"><a href="#二、LVS-的优点" class="headerlink" title="二、LVS 的优点"></a>二、LVS 的优点</h1><ul>
-<li><p>LVS 具有更强的抗负载能力，性能高，对内存和 CPU 资源消耗较低；</p>
-</li>
-<li><p>LVS 工作在网络层，具体流量由操作系统内核进行处理；</p>
-</li>
-<li><p>LVS 适用的协议范围广；</p>
-</li>
-<li><p>LVS 安装配置较复杂，网络依赖性大，但是稳定性高；</p>
-</li>
-</ul>
-<blockquote>
-<p>缺点：LVS 不支持正则匹配处理，无法实现动静分离效果。</p>
-</blockquote>
-<p><strong>LVS 负载均衡集群的类型</strong></p>
-<p><strong>负载均衡群集：</strong>Load Balance Cluster，以提高应用系统的响应能力，尽可能处理更多的访问请求、减少延迟为目标，从而获得高并发、高负载的整体性能。</p>
-<p><strong>高可用群集：</strong>High Availability Cluster，以提高应用系统的可靠性，尽可能的减少终端时间为目标、确保服务的连续性，达到高可用的容错效果。</p>
-<p><strong>高性能运算群集：</strong>High Performance Computer Cluster，以提高应用系统的 CPU 运算速度、扩展硬件资源和分析能力为目标、从而获得相当于大型、超级计算机的高性能计算能力</p>
-<h1 id="三、LVS-的构成"><a href="#三、LVS-的构成" class="headerlink" title="三、LVS 的构成"></a>三、LVS 的构成</h1><p>LVS 现在已成为 Linux 内核的一部分，默认编译为 ip_vs 模块，必要时能够自动调用。</p>
-<p>加载 ip_vs 模块</p>
-<pre class="line-numbers language-none"><code class="language-none">modprobe ip_vs</code></pre>
-
-<p>查看 ip_vs 模块版本</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &#x2F;proc&#x2F;net&#x2F;ip_vs</code></pre>
-
-
-
-<h1 id="四、负载调度算法"><a href="#四、负载调度算法" class="headerlink" title="四、负载调度算法"></a>四、负载调度算法</h1><ul>
-<li>轮询（Round Robin）</li>
-<li>加权轮询（Weighted Round Robin）</li>
-<li>最少连接（Least Connections）</li>
-<li>加权最少连接（Weighted Least Connections）</li>
-</ul>
-<h1 id="五、ipvsadm"><a href="#五、ipvsadm" class="headerlink" title="五、ipvsadm"></a>五、ipvsadm</h1><p>ipvsadm 是在负载调度器上使用的 LVS 集群管理工具。</p>
-<p>1、安装 ipvsadm 管理工具</p>
-<pre class="line-numbers language-none"><code class="language-none">yum -y install ipvsadm</code></pre>
-
-
-
-<p>2、使用 ipvsadm 管理工具</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 创建虚拟服务器
-ipvsadm -A -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -s rr
-
-# 添加RS真实服务器
-ipvsadm -a -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt; -m -w 1
-
-# 查看节点状态
-ipvsadm -ln
-
-# 删除RS真实服务器
-ipvsadm -d -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt;
-
-# 保存策略
-ipvsadm-save &gt; ipvsadm.txt
-
-# 清除策略
-ipvsadm -C
-
-# 导入策略
-ipvsadm-restore &lt; ipvsadm.txt</code></pre>
-
-
-
-<h1 id="六、LVS-负载均衡"><a href="#六、LVS-负载均衡" class="headerlink" title="六、LVS 负载均衡"></a>六、LVS 负载均衡</h1><h2 id="地址转换模式（LVS-NAT）"><a href="#地址转换模式（LVS-NAT）" class="headerlink" title="地址转换模式（LVS-NAT）"></a>地址转换模式（LVS-NAT）</h2><table>
-<thead>
-<tr>
-<th>OS</th>
-<th>IP</th>
-<th>hostname</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CentOS</td>
-<td>192.168.10.10;172.16.10.128</td>
-<td>LVS</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.20</td>
-<td>RS-1</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.30</td>
-<td>RS-2</td>
-</tr>
-</tbody></table>
-<h3 id="配置负载调度器"><a href="#配置负载调度器" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
-
-
-
-<p>2、开启路由转发规则</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;net.ipv4.ip_forward &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-sysctl -p</code></pre>
-
-<p>验证配置，正常会输出<code>OK</code></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">if [ &#96;cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_forward&#96; -eq 1 ]; then echo OK; fi</code></pre>
-
-
-
-<p>3、安装 ipvsadm</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
-ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
-
-
-
-<p>4、配置分配策略</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
-ipvsadm -A -t 172.16.10.128:80 -s rr
-ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.20 -m -w 1
-ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.30 -m -w 1
-ipvsadm-save</code></pre>
-
-<ul>
-<li>-A：添加带有选项的虚拟服务</li>
-<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
-<li>-t：TCP 服务地址，host[:port]</li>
-<li>-a：添加 RS 服务器地址</li>
-<li>-r：指定 RS 服务器地址</li>
-<li>-m：地址伪装（NAT）</li>
-<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
-</ul>
-<h3 id="配置节点服务器"><a href="#配置节点服务器" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>安装 httpd 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
-yum -y install httpd
-echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-route add default gw 192.168.10.10
-
-# RS-2(192.168.10.30)
-yum -y install httpd
-echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-route add default gw 192.168.10.10</code></pre>
-
-
-
-<h2 id="直接路由模式（LVS-DR）"><a href="#直接路由模式（LVS-DR）" class="headerlink" title="直接路由模式（LVS-DR）"></a>直接路由模式（LVS-DR）</h2><table>
-<thead>
-<tr>
-<th>OS</th>
-<th>IP</th>
-<th>hostname</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CentOS</td>
-<td>192.168.10.10</td>
-<td>LVS</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.20</td>
-<td>RS-1</td>
-</tr>
-<tr>
-<td>CentOS</td>
-<td>192.168.10.30</td>
-<td>RS-2</td>
-</tr>
-</tbody></table>
-<p>各个节点配置虚拟 IP 地址(VIP)：192.168.10.254</p>
-<h3 id="配置负载调度器-1"><a href="#配置负载调度器-1" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
-
-
-
-<p>2、配置虚拟 IP 地址</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-ens33:0 &lt;&lt;EOF
-TYPE&#x3D;Ethernet
-BOOTPROTO&#x3D;static
-DEFROUTE&#x3D;yes
-NAME&#x3D;ens33:0
-DEVICE&#x3D;ens33:0
-ONBOOT&#x3D;yes
-IPADDR&#x3D;192.168.10.254
-NETMASK&#x3D;255.255.255.0
-EOF
-
-systemctl restart network</code></pre>
-
-
-
-<p>3、调整内核参数</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ICMP重定向
-echo &quot;net.ipv4.conf.all.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.ens33.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-sysctl -p</code></pre>
-
-
-
-<p>4、安装 ipvsadm</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
-ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
-
-
-
-<p>5、配置分配策略</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
-ipvsadm -A -t 192.168.10.254:80 -s rr
-ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.20 -g -w 1
-ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.30 -g -w 1
-ipvsadm-save</code></pre>
-
-<ul>
-<li>-A：添加带有选项的虚拟服务</li>
-<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
-<li>-t：TCP ，host[:port]</li>
-<li>-a：添加 RS 服务器地址</li>
-<li>-r：指定 RS 服务器地址</li>
-<li>-m：地址伪装（NAT）</li>
-<li>-g：默认，直接路由（DR）</li>
-<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
-</ul>
-<h3 id="配置节点服务器-1"><a href="#配置节点服务器-1" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>1、配置虚拟 IP 地址</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-lo:0 &lt;&lt;EOF
-DEVICE&#x3D;lo:0
-IPADDR&#x3D;192.168.10.254
-NETMASK&#x3D;255.255.255.255
-ONBOOT&#x3D;yes
-EOF
-
-systemctl restart network</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 添加VIP本地访问路由
-echo &quot;&#x2F;sbin&#x2F;route add -host 192.168.10.254 dev lo:0&quot; &gt;&gt; &#x2F;etc&#x2F;rc.local
-route add -host 192.168.10.254 dev lo:0</code></pre>
-
-
-
-<p>2、调整内核参数</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ARP应答
-echo &quot;net.ipv4.conf.all.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.all.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.default.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.lo.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-echo &quot;net.ipv4.conf.lo.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
-
-sysctl -p</code></pre>
-
-
-
-<p>3、安装 httpd 服务</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
-yum -y install httpd
-echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd
-
-# RS-2(192.168.10.30)
-yum -y install httpd
-echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-systemctl start httpd</code></pre>
-
-
-
-<hr>
-<p>ipvsadm –help</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)
-Usage:
-  ipvsadm -A|E -t|u|f service-address [-s scheduler] [-p [timeout]] [-M netmask] [--pe persistence_engine] [-b sched-flags]
-  ipvsadm -D -t|u|f service-address
-  ipvsadm -C
-  ipvsadm -R
-  ipvsadm -S [-n]
-  ipvsadm -a|e -t|u|f service-address -r server-address [options]
-  ipvsadm -d -t|u|f service-address -r server-address
-  ipvsadm -L|l [options]
-  ipvsadm -Z [-t|u|f service-address]
-  ipvsadm --set tcp tcpfin udp
-  ipvsadm --start-daemon state [--mcast-interface interface] [--syncid sid]
-  ipvsadm --stop-daemon state
-  ipvsadm -h
-
-Commands:
-Either long or short options are allowed.
-  --add-service     -A        add virtual service with options
-  --edit-service    -E        edit virtual service with options
-  --delete-service  -D        delete virtual service
-  --clear           -C        clear the whole table
-  --restore         -R        restore rules from stdin
-  --save            -S        save rules to stdout
-  --add-server      -a        add real server with options
-  --edit-server     -e        edit real server with options
-  --delete-server   -d        delete real server
-  --list            -L|-l     list the table
-  --zero            -Z        zero counters in a service or all services
-  --set tcp tcpfin udp        set connection timeout values
-  --start-daemon              start connection sync daemon
-  --stop-daemon               stop connection sync daemon
-  --help            -h        display this help message
-
-Options:
-  --tcp-service  -t service-address   service-address is host[:port]
-  --udp-service  -u service-address   service-address is host[:port]
-  --fwmark-service  -f fwmark         fwmark is an integer greater than zero
-  --ipv6         -6                   fwmark entry uses IPv6
-  --scheduler    -s scheduler         one of rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq,
-                                      the default scheduler is wlc.
-  --pe            engine              alternate persistence engine may be sip,
-                                      not set by default.
-  --persistent   -p [timeout]         persistent service
-  --netmask      -M netmask           persistent granularity mask
-  --real-server  -r server-address    server-address is host (and port)
-  --gatewaying   -g                   gatewaying (direct routing) (default)
-  --ipip         -i                   ipip encapsulation (tunneling)
-  --masquerading -m                   伪装（NAT）
-  --weight       -w weight            capacity of real server
-  --u-threshold  -x uthreshold        upper threshold of connections
-  --l-threshold  -y lthreshold        lower threshold of connections
-  --mcast-interface interface         multicast interface for connection sync
-  --syncid sid                        syncid for connection sync (default&#x3D;255)
-  --connection   -c                   output of current IPVS connections
-  --timeout                           output of timeout (tcp tcpfin udp)
-  --daemon                            output of daemon information
-  --stats                             output of statistics information
-  --rate                              output of rate information
-  --exact                             expand numbers (display exact values)
-  --thresholds                        output of thresholds information
-  --persistent-conn                   output of persistent connection info
-  --nosort                            disable sorting output of service&#x2F;server entries
-  --sort                              does nothing, for backwards compatibility
-  --ops          -o                   one-packet scheduling
-  --numeric      -n                   numeric output of addresses and ports
-  --sched-flags  -b flags             scheduler flags (comma-separated)</code></pre>]]></content>
-      <categories>
-        <category>负载均衡</category>
-      </categories>
-      <tags>
-        <tag>LVS</tag>
       </tags>
   </entry>
   <entry>
@@ -4324,8 +3981,351 @@ virtual_server 10.10.10.3 1358 &#123;
         <category>负载均衡</category>
       </categories>
       <tags>
-        <tag>LVS</tag>
         <tag>Keepalived</tag>
+        <tag>LVS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>LVS虚拟服务器</title>
+    <url>/page/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/LVS%E8%99%9A%E6%8B%9F%E6%9C%8D%E5%8A%A1%E5%99%A8/</url>
+    <content><![CDATA[<p>官方网站 ：<a class="link"   href="http://www.linuxvirtualserver.org/" >http://www.linuxvirtualserver.org<i class="fas fa-external-link-alt"></i></a></p>
+<h1 id="一、LVS-是什么？"><a href="#一、LVS-是什么？" class="headerlink" title="一、LVS 是什么？"></a>一、LVS 是什么？</h1><p>LVS 是 Linux Virtual Server 的简写，也就是 Linux 虚拟服务器，是一个虚拟的服务器集群系统，该项目在1998年5月由章文嵩博士成立，是中国国内最早出现的自由软件项目之一。LVS 实际上相当于基于 IP 地址的虚拟化应用，为基于 IP 地址和内容请求分发的负载均衡提出了高效的解决方法，现在 LVS 已经是 Linux 内核标准的一部分。</p>
+<p>使用 LVS 可以达到的技术目标是：通过 LVS 达到的负载均衡技术和 Linux 操作系统实现一个高性能高可用的 Linux 服务器集群，具有良好的可靠性、可扩展性和可操作性。从而以低廉的成本实现最优的性能。LVS 是一个实现负载均衡集群的开源软件项目，LVS 架构从逻辑上可分为调度层、Server 集群层和共享存储层。</p>
+<h1 id="二、LVS-的优点"><a href="#二、LVS-的优点" class="headerlink" title="二、LVS 的优点"></a>二、LVS 的优点</h1><ul>
+<li><p>LVS 具有更强的抗负载能力，性能高，对内存和 CPU 资源消耗较低；</p>
+</li>
+<li><p>LVS 工作在网络层，具体流量由操作系统内核进行处理；</p>
+</li>
+<li><p>LVS 适用的协议范围广；</p>
+</li>
+<li><p>LVS 安装配置较复杂，网络依赖性大，但是稳定性高；</p>
+</li>
+</ul>
+<blockquote>
+<p>缺点：LVS 不支持正则匹配处理，无法实现动静分离效果。</p>
+</blockquote>
+<p><strong>LVS 负载均衡集群的类型</strong></p>
+<p><strong>负载均衡群集：</strong>Load Balance Cluster，以提高应用系统的响应能力，尽可能处理更多的访问请求、减少延迟为目标，从而获得高并发、高负载的整体性能。</p>
+<p><strong>高可用群集：</strong>High Availability Cluster，以提高应用系统的可靠性，尽可能的减少终端时间为目标、确保服务的连续性，达到高可用的容错效果。</p>
+<p><strong>高性能运算群集：</strong>High Performance Computer Cluster，以提高应用系统的 CPU 运算速度、扩展硬件资源和分析能力为目标、从而获得相当于大型、超级计算机的高性能计算能力</p>
+<h1 id="三、LVS-的构成"><a href="#三、LVS-的构成" class="headerlink" title="三、LVS 的构成"></a>三、LVS 的构成</h1><p>LVS 现在已成为 Linux 内核的一部分，默认编译为 ip_vs 模块，必要时能够自动调用。</p>
+<p>加载 ip_vs 模块</p>
+<pre class="line-numbers language-none"><code class="language-none">modprobe ip_vs</code></pre>
+
+<p>查看 ip_vs 模块版本</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &#x2F;proc&#x2F;net&#x2F;ip_vs</code></pre>
+
+
+
+<h1 id="四、负载调度算法"><a href="#四、负载调度算法" class="headerlink" title="四、负载调度算法"></a>四、负载调度算法</h1><ul>
+<li>轮询（Round Robin）</li>
+<li>加权轮询（Weighted Round Robin）</li>
+<li>最少连接（Least Connections）</li>
+<li>加权最少连接（Weighted Least Connections）</li>
+</ul>
+<h1 id="五、ipvsadm"><a href="#五、ipvsadm" class="headerlink" title="五、ipvsadm"></a>五、ipvsadm</h1><p>ipvsadm 是在负载调度器上使用的 LVS 集群管理工具。</p>
+<p>1、安装 ipvsadm 管理工具</p>
+<pre class="line-numbers language-none"><code class="language-none">yum -y install ipvsadm</code></pre>
+
+
+
+<p>2、使用 ipvsadm 管理工具</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 创建虚拟服务器
+ipvsadm -A -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -s rr
+
+# 添加RS真实服务器
+ipvsadm -a -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt; -m -w 1
+
+# 查看节点状态
+ipvsadm -ln
+
+# 删除RS真实服务器
+ipvsadm -d -t &lt;IP ADDRESS&gt;:&lt;PORT&gt; -r &lt;IP ADDRESS&gt;:&lt;PORT&gt;
+
+# 保存策略
+ipvsadm-save &gt; ipvsadm.txt
+
+# 清除策略
+ipvsadm -C
+
+# 导入策略
+ipvsadm-restore &lt; ipvsadm.txt</code></pre>
+
+
+
+<h1 id="六、LVS-负载均衡"><a href="#六、LVS-负载均衡" class="headerlink" title="六、LVS 负载均衡"></a>六、LVS 负载均衡</h1><h2 id="地址转换模式（LVS-NAT）"><a href="#地址转换模式（LVS-NAT）" class="headerlink" title="地址转换模式（LVS-NAT）"></a>地址转换模式（LVS-NAT）</h2><table>
+<thead>
+<tr>
+<th>OS</th>
+<th>IP</th>
+<th>hostname</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CentOS</td>
+<td>192.168.10.10;172.16.10.128</td>
+<td>LVS</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.20</td>
+<td>RS-1</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.30</td>
+<td>RS-2</td>
+</tr>
+</tbody></table>
+<h3 id="配置负载调度器"><a href="#配置负载调度器" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
+
+
+
+<p>2、开启路由转发规则</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">echo &quot;net.ipv4.ip_forward &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+sysctl -p</code></pre>
+
+<p>验证配置，正常会输出<code>OK</code></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">if [ &#96;cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;ipv4&#x2F;ip_forward&#96; -eq 1 ]; then echo OK; fi</code></pre>
+
+
+
+<p>3、安装 ipvsadm</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
+ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
+
+
+
+<p>4、配置分配策略</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
+ipvsadm -A -t 172.16.10.128:80 -s rr
+ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.20 -m -w 1
+ipvsadm -a -t 172.16.10.128:80 -r 192.168.10.30 -m -w 1
+ipvsadm-save</code></pre>
+
+<ul>
+<li>-A：添加带有选项的虚拟服务</li>
+<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
+<li>-t：TCP 服务地址，host[:port]</li>
+<li>-a：添加 RS 服务器地址</li>
+<li>-r：指定 RS 服务器地址</li>
+<li>-m：地址伪装（NAT）</li>
+<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
+</ul>
+<h3 id="配置节点服务器"><a href="#配置节点服务器" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>安装 httpd 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
+yum -y install httpd
+echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+route add default gw 192.168.10.10
+
+# RS-2(192.168.10.30)
+yum -y install httpd
+echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+route add default gw 192.168.10.10</code></pre>
+
+
+
+<h2 id="直接路由模式（LVS-DR）"><a href="#直接路由模式（LVS-DR）" class="headerlink" title="直接路由模式（LVS-DR）"></a>直接路由模式（LVS-DR）</h2><table>
+<thead>
+<tr>
+<th>OS</th>
+<th>IP</th>
+<th>hostname</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CentOS</td>
+<td>192.168.10.10</td>
+<td>LVS</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.20</td>
+<td>RS-1</td>
+</tr>
+<tr>
+<td>CentOS</td>
+<td>192.168.10.30</td>
+<td>RS-2</td>
+</tr>
+</tbody></table>
+<p>各个节点配置虚拟 IP 地址(VIP)：192.168.10.254</p>
+<h3 id="配置负载调度器-1"><a href="#配置负载调度器-1" class="headerlink" title="配置负载调度器"></a>配置负载调度器</h3><p>1、内核加载 ip_vs 模块</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">modprobe ip_vs</code></pre>
+
+
+
+<p>2、配置虚拟 IP 地址</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-ens33:0 &lt;&lt;EOF
+TYPE&#x3D;Ethernet
+BOOTPROTO&#x3D;static
+DEFROUTE&#x3D;yes
+NAME&#x3D;ens33:0
+DEVICE&#x3D;ens33:0
+ONBOOT&#x3D;yes
+IPADDR&#x3D;192.168.10.254
+NETMASK&#x3D;255.255.255.0
+EOF
+
+systemctl restart network</code></pre>
+
+
+
+<p>3、调整内核参数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ICMP重定向
+echo &quot;net.ipv4.conf.all.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.ens33.send_redirects &#x3D; 0&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+sysctl -p</code></pre>
+
+
+
+<p>4、安装 ipvsadm</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ipvsadm</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ipvsadm -v
+ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)</code></pre>
+
+
+
+<p>5、配置分配策略</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm -C
+ipvsadm -A -t 192.168.10.254:80 -s rr
+ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.20 -g -w 1
+ipvsadm -a -t 192.168.10.254:80 -r 192.168.10.30 -g -w 1
+ipvsadm-save</code></pre>
+
+<ul>
+<li>-A：添加带有选项的虚拟服务</li>
+<li>-s：调度算法，默认是 wlc。<code>rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq</code></li>
+<li>-t：TCP ，host[:port]</li>
+<li>-a：添加 RS 服务器地址</li>
+<li>-r：指定 RS 服务器地址</li>
+<li>-m：地址伪装（NAT）</li>
+<li>-g：默认，直接路由（DR）</li>
+<li>-w：RS 服务器权重（默认为1。数字越大，权重越大）</li>
+</ul>
+<h3 id="配置节点服务器-1"><a href="#配置节点服务器-1" class="headerlink" title="配置节点服务器"></a>配置节点服务器</h3><p>1、配置虚拟 IP 地址</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">cat &gt; &#x2F;etc&#x2F;sysconfig&#x2F;network-scripts&#x2F;ifcfg-lo:0 &lt;&lt;EOF
+DEVICE&#x3D;lo:0
+IPADDR&#x3D;192.168.10.254
+NETMASK&#x3D;255.255.255.255
+ONBOOT&#x3D;yes
+EOF
+
+systemctl restart network</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 添加VIP本地访问路由
+echo &quot;&#x2F;sbin&#x2F;route add -host 192.168.10.254 dev lo:0&quot; &gt;&gt; &#x2F;etc&#x2F;rc.local
+route add -host 192.168.10.254 dev lo:0</code></pre>
+
+
+
+<p>2、调整内核参数</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># 关闭ARP应答
+echo &quot;net.ipv4.conf.all.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.all.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.default.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_ignore &#x3D; 1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+echo &quot;net.ipv4.conf.lo.arp_announce &#x3D; 2&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf
+
+sysctl -p</code></pre>
+
+
+
+<p>3、安装 httpd 服务</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># RS-1(192.168.10.20)
+yum -y install httpd
+echo RS-1 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd
+
+# RS-2(192.168.10.30)
+yum -y install httpd
+echo RS-2 &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+systemctl start httpd</code></pre>
+
+
+
+<hr>
+<p>ipvsadm –help</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ipvsadm v1.27 2008&#x2F;5&#x2F;15 (compiled with popt and IPVS v1.2.1)
+Usage:
+  ipvsadm -A|E -t|u|f service-address [-s scheduler] [-p [timeout]] [-M netmask] [--pe persistence_engine] [-b sched-flags]
+  ipvsadm -D -t|u|f service-address
+  ipvsadm -C
+  ipvsadm -R
+  ipvsadm -S [-n]
+  ipvsadm -a|e -t|u|f service-address -r server-address [options]
+  ipvsadm -d -t|u|f service-address -r server-address
+  ipvsadm -L|l [options]
+  ipvsadm -Z [-t|u|f service-address]
+  ipvsadm --set tcp tcpfin udp
+  ipvsadm --start-daemon state [--mcast-interface interface] [--syncid sid]
+  ipvsadm --stop-daemon state
+  ipvsadm -h
+
+Commands:
+Either long or short options are allowed.
+  --add-service     -A        add virtual service with options
+  --edit-service    -E        edit virtual service with options
+  --delete-service  -D        delete virtual service
+  --clear           -C        clear the whole table
+  --restore         -R        restore rules from stdin
+  --save            -S        save rules to stdout
+  --add-server      -a        add real server with options
+  --edit-server     -e        edit real server with options
+  --delete-server   -d        delete real server
+  --list            -L|-l     list the table
+  --zero            -Z        zero counters in a service or all services
+  --set tcp tcpfin udp        set connection timeout values
+  --start-daemon              start connection sync daemon
+  --stop-daemon               stop connection sync daemon
+  --help            -h        display this help message
+
+Options:
+  --tcp-service  -t service-address   service-address is host[:port]
+  --udp-service  -u service-address   service-address is host[:port]
+  --fwmark-service  -f fwmark         fwmark is an integer greater than zero
+  --ipv6         -6                   fwmark entry uses IPv6
+  --scheduler    -s scheduler         one of rr|wrr|lc|wlc|lblc|lblcr|dh|sh|sed|nq,
+                                      the default scheduler is wlc.
+  --pe            engine              alternate persistence engine may be sip,
+                                      not set by default.
+  --persistent   -p [timeout]         persistent service
+  --netmask      -M netmask           persistent granularity mask
+  --real-server  -r server-address    server-address is host (and port)
+  --gatewaying   -g                   gatewaying (direct routing) (default)
+  --ipip         -i                   ipip encapsulation (tunneling)
+  --masquerading -m                   伪装（NAT）
+  --weight       -w weight            capacity of real server
+  --u-threshold  -x uthreshold        upper threshold of connections
+  --l-threshold  -y lthreshold        lower threshold of connections
+  --mcast-interface interface         multicast interface for connection sync
+  --syncid sid                        syncid for connection sync (default&#x3D;255)
+  --connection   -c                   output of current IPVS connections
+  --timeout                           output of timeout (tcp tcpfin udp)
+  --daemon                            output of daemon information
+  --stats                             output of statistics information
+  --rate                              output of rate information
+  --exact                             expand numbers (display exact values)
+  --thresholds                        output of thresholds information
+  --persistent-conn                   output of persistent connection info
+  --nosort                            disable sorting output of service&#x2F;server entries
+  --sort                              does nothing, for backwards compatibility
+  --ops          -o                   one-packet scheduling
+  --numeric      -n                   numeric output of addresses and ports
+  --sched-flags  -b flags             scheduler flags (comma-separated)</code></pre>]]></content>
+      <categories>
+        <category>负载均衡</category>
+      </categories>
+      <tags>
+        <tag>LVS</tag>
       </tags>
   </entry>
   <entry>
@@ -4695,26 +4695,64 @@ include &quot;&#x2F;etc&#x2F;named.root.key&quot;;</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>FTP服务</title>
-    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/FTP%E6%9C%8D%E5%8A%A1/</url>
-    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
-  <script id="hbeData" type="hbeData" data-hmacdigest="f1d07d65e2099a6f0fd72a138575f283b1f27f95cec1f9f8425db83093141ea1">de86fb06e44af904e369a2ad99b30a797e129416360a11f2861abb9df2f214fcb6c2071d9bd2f9726f77d44ce971c17c508286f7cc644c99ad30f9c74fc76055bf44cbada0e49d1dc0116c916697ccb054a7b88355460ea63b7dc76681ad5dbbe063da5ce58529bcd2878bdafdf5581c8cf9f7792f4825be105a6650217fbb88</script>
-  <div class="hbe hbe-content">
-    <div class="hbe hbe-input hbe-input-default">
-      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
-      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
-        <span class="hbe hbe-input-label-content hbe-input-label-content-default">输入密码, 查看内容.</span>
-      </label>
-    </div>
-  </div>
-</div>
-<script data-pjax src="/js/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
+    <title>NTP 时间同步服务</title>
+    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/NTP%E6%9C%8D%E5%8A%A1/</url>
+    <content><![CDATA[<h1 id="一、什么是-NTP？"><a href="#一、什么是-NTP？" class="headerlink" title="一、什么是 NTP？"></a>一、什么是 NTP？</h1><p>NTP 全名“Network TimeProtocol”，即网络时间协议，是由 RFC 1305 定义的时间同步协议，用来在分布式时间服务器和客户端之间进行时间同步。</p>
+<p>NTP 基于 UDP 报文进行传输，使用的 UDP 端口号为 123。使用NTP的目的是对网络内所有具有时钟的设备进行时钟同步，使网络内所有设备的时钟保持一致，从而使设备能够提供基于统一时间的多种应用。对于运行 NTP 的本地系统，既可以接收来自其他时钟源的同步，又可以作为时钟源同步其他的时钟，并且可以和其他设备互相同步。</p>
+<h1 id="二、安装-NTP-服务"><a href="#二、安装-NTP-服务" class="headerlink" title="二、安装 NTP 服务"></a>二、安装 NTP 服务</h1><h2 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h2><p>关闭防火墙</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop firewalld.service
+# 服务端关闭防火墙，或者开放 UDP 123 端口。
+firewall-cmd --permanent --zone&#x3D;public --add-port&#x3D;123&#x2F;udp
+firewall-cmd --reload</code></pre>
+
+<p>安装 NTP 服务：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntp</code></pre>
+
+<p>编辑配置文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># NTP 配置文件为 &#x2F;etc&#x2F;ntp.conf
+
+# server 0.centos.pool.ntp.org iburst
+# server 1.centos.pool.ntp.org iburst
+# server 2.centos.pool.ntp.org iburst
+# server 3.centos.pool.ntp.org iburst
+server 127.127.1.0
+fugde 127.127.1.0 stratum 10</code></pre>
+
+<p>启动 NTP 服务：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start ntpd
+systemctl enable ntpd</code></pre>
+
+
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ~]# ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+*LOCAL(0)        .LOCL.           5 l   21   64    7    0.000    0.000   0.000</code></pre>
+
+
+
+<h2 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h2><p>安装 NTP 同步命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntpdate</code></pre>
+
+<p>同步服务器时间：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ntpdate 192.168.10.10 # NTP服务器IP地址</code></pre>
+
+
+
+<p>可能用到的其他命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">date              #查看当前时间
+hwclock -w        #保存当前时间到硬件
+hwclock -r        #查看硬件时间</code></pre>
+
+
+
+]]></content>
       <categories>
         <category>Linux基础服务</category>
       </categories>
       <tags>
         <tag>Linux</tag>
-        <tag>FTP</tag>
+        <tag>NTP</tag>
       </tags>
   </entry>
   <entry>
@@ -4794,64 +4832,26 @@ mount -t nfs 192.168.10.10:&#x2F;data &#x2F;data</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>NTP 时间同步服务</title>
-    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/NTP%E6%9C%8D%E5%8A%A1/</url>
-    <content><![CDATA[<h1 id="一、什么是-NTP？"><a href="#一、什么是-NTP？" class="headerlink" title="一、什么是 NTP？"></a>一、什么是 NTP？</h1><p>NTP 全名“Network TimeProtocol”，即网络时间协议，是由 RFC 1305 定义的时间同步协议，用来在分布式时间服务器和客户端之间进行时间同步。</p>
-<p>NTP 基于 UDP 报文进行传输，使用的 UDP 端口号为 123。使用NTP的目的是对网络内所有具有时钟的设备进行时钟同步，使网络内所有设备的时钟保持一致，从而使设备能够提供基于统一时间的多种应用。对于运行 NTP 的本地系统，既可以接收来自其他时钟源的同步，又可以作为时钟源同步其他的时钟，并且可以和其他设备互相同步。</p>
-<h1 id="二、安装-NTP-服务"><a href="#二、安装-NTP-服务" class="headerlink" title="二、安装 NTP 服务"></a>二、安装 NTP 服务</h1><h2 id="服务端配置"><a href="#服务端配置" class="headerlink" title="服务端配置"></a>服务端配置</h2><p>关闭防火墙</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl stop firewalld.service
-# 服务端关闭防火墙，或者开放 UDP 123 端口。
-firewall-cmd --permanent --zone&#x3D;public --add-port&#x3D;123&#x2F;udp
-firewall-cmd --reload</code></pre>
-
-<p>安装 NTP 服务：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntp</code></pre>
-
-<p>编辑配置文件：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"># NTP 配置文件为 &#x2F;etc&#x2F;ntp.conf
-
-# server 0.centos.pool.ntp.org iburst
-# server 1.centos.pool.ntp.org iburst
-# server 2.centos.pool.ntp.org iburst
-# server 3.centos.pool.ntp.org iburst
-server 127.127.1.0
-fugde 127.127.1.0 stratum 10</code></pre>
-
-<p>启动 NTP 服务：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl start ntpd
-systemctl enable ntpd</code></pre>
-
-
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ~]# ntpq -p
-     remote           refid      st t when poll reach   delay   offset  jitter
-&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
-*LOCAL(0)        .LOCL.           5 l   21   64    7    0.000    0.000   0.000</code></pre>
-
-
-
-<h2 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h2><p>安装 NTP 同步命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">yum -y install ntpdate</code></pre>
-
-<p>同步服务器时间：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">ntpdate 192.168.10.10 # NTP服务器IP地址</code></pre>
-
-
-
-<p>可能用到的其他命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">date              #查看当前时间
-hwclock -w        #保存当前时间到硬件
-hwclock -r        #查看硬件时间</code></pre>
-
-
-
-]]></content>
+    <title>FTP服务</title>
+    <url>/page/Linux/Linux%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1/FTP%E6%9C%8D%E5%8A%A1/</url>
+    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="f1d07d65e2099a6f0fd72a138575f283b1f27f95cec1f9f8425db83093141ea1">de86fb06e44af904e369a2ad99b30a797e129416360a11f2861abb9df2f214fcb6c2071d9bd2f9726f77d44ce971c17c508286f7cc644c99ad30f9c74fc76055bf44cbada0e49d1dc0116c916697ccb054a7b88355460ea63b7dc76681ad5dbbe063da5ce58529bcd2878bdafdf5581c8cf9f7792f4825be105a6650217fbb88</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">输入密码, 查看内容.</span>
+      </label>
+    </div>
+  </div>
+</div>
+<script data-pjax src="/js/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
       <categories>
         <category>Linux基础服务</category>
       </categories>
       <tags>
         <tag>Linux</tag>
-        <tag>NTP</tag>
+        <tag>FTP</tag>
       </tags>
   </entry>
   <entry>
@@ -7031,577 +7031,6 @@ UserParameter&#x3D;nginx_status[*],&#x2F;bin&#x2F;bash &#x2F;etc&#x2F;zabbix&#x2
       </tags>
   </entry>
   <entry>
-    <title>Docker笔记</title>
-    <url>/page/Virtual/Docker/Docker%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[<h1 id="Docker的底层原理"><a href="#Docker的底层原理" class="headerlink" title="Docker的底层原理"></a>Docker的底层原理</h1><h2 id="什么是Docker？"><a href="#什么是Docker？" class="headerlink" title="什么是Docker？"></a>什么是Docker？</h2><p>Docker是供开发人员和系统管理员 使用容器<strong>构建，运行和共享</strong>应用程序的平台。使用容器来部署应用程序称为<em>容器化</em>。容器并不是新事物，但用于轻松部署应用程序的容器却是新事物。</p>
-<h2 id="Docker的底层原理-1"><a href="#Docker的底层原理-1" class="headerlink" title="Docker的底层原理"></a>Docker的底层原理</h2><p>Busybox：欺骗层(模拟不同系统的根目录)<br>解耦：解除耦合、冲突。    耦合：冲突现象。<br>普通虚拟化：完全型解耦。    Docker：半解耦。</p>
-<h3 id="Linux中的NameSpace"><a href="#Linux中的NameSpace" class="headerlink" title="Linux中的NameSpace"></a>Linux中的NameSpace</h3><p><strong>NameSpace 是 Linux 内核用来隔离内核资源的方式。</strong>通过 NameSpace 可以让一些进程只能看到与自己相关的一部分资源，而另外一些进程也只能看到与它们自己相关的资源，这两拨进程根本就感觉不到对方的存在。具体的实现方式是把一个或多个进程的相关资源指定在同一个 NameSpace 中。</p>
-<p>Linux NameSpaces 是对全局系统资源的一种封装隔离，使得处于不同 NameSpace 的进程拥有独立的全局系统资源，改变一个 NameSpace 中的系统资源只会影响当前 NameSpace 里的进程，对其他 NameSpace 中的进程没有影响。</p>
-<p>实际上，Linux 内核实现 NameSpace 的一个主要目的就是实现轻量级虚拟化(容器)服务。Linux 内核提供的 NameSpace 技术为 Docker 等容器技术的出现和发展提供了基础条件。</p>
-<p>Linux 内核的 NameSpace 特性提供了六项隔离</p>
-<table>
-<thead>
-<tr>
-<th>名称</th>
-<th>宏定义</th>
-<th>隔离的资源</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>IPC</td>
-<td>CLONE_NEWIPC</td>
-<td>System V IPC(信号量、消息队列和共享内存) 和 POSIX message queues。</td>
-</tr>
-<tr>
-<td>Network</td>
-<td>CLONE_NEWNET</td>
-<td>Network devices, stacks, ports, etc(网络设备、网络栈、端口等)。</td>
-</tr>
-<tr>
-<td>Mount</td>
-<td>CLONE_NEWNS</td>
-<td>Mount points(文件系统挂载点)。</td>
-</tr>
-<tr>
-<td>PID</td>
-<td>CLONE_NEWPID</td>
-<td>Process IDs(进程编号)。</td>
-</tr>
-<tr>
-<td>User</td>
-<td>CLONE_NEWUSER</td>
-<td>User and group IDs(用户和用户组)。</td>
-</tr>
-<tr>
-<td>UTS</td>
-<td>CLONE_NEWUTS</td>
-<td>Hostname and NIS domain name(主机名与 NIS 域名)。</td>
-</tr>
-<tr>
-<td>Cgroup</td>
-<td>CLONE_NEWCGROUP</td>
-<td>Cgroup root directory(Cgroup的根目录)。</td>
-</tr>
-</tbody></table>
-<p>从版本号为 3.8 的内核开始，<code>/proc/[PID]/ns</code> 目录下会包含进程所属的 NameSpace 信息</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ns]# ll
-total 0
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 ipc -&gt; ipc:[4026531839]
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 mnt -&gt; mnt:[4026531840]
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 net -&gt; net:[4026531956]
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 pid -&gt; pid:[4026531836]
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 user -&gt; user:[4026531837]
-lrwxrwxrwx. 1 root root 0 Sep  9 10:26 uts -&gt; uts:[4026531838]</code></pre>
-
-<p>NameSpace六项隔离，实现了容器与宿主机、容器与容器之间的隔离。</p>
-<p>NameSpace 是 Linux 内核提供的特性，为虚拟化而生。随着 Docker 的诞生引爆了容器技术，也把长期在后台默默奉献的 NameSpace 技术推到了大家的面前。</p>
-<h3 id="Linux中的Cgroup"><a href="#Linux中的Cgroup" class="headerlink" title="Linux中的Cgroup"></a>Linux中的Cgroup</h3><p>Cgroup(控制组)作用：限制Docker容器对宿主机资源的使用。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;sys&#x2F;fs&#x2F;cgroup</code></pre>
-
-<h2 id="Docker容器的限制"><a href="#Docker容器的限制" class="headerlink" title="Docker容器的限制"></a>Docker容器的限制</h2><p>内存限制</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">通过-m或者--memory设置内存的使用限额,通过--memory-swap设置内存+SWAP的使用.
-$ docker run -itd --name container1 -m 200MB --memory-swap 300MB centos:7
-
-cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;memory&#x2F;docker&#x2F;[容器ID]&#x2F;memory.limit_in_bytes
-cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;memory&#x2F;docker&#x2F;[容器ID]&#x2F;memory.memsw.limit_in_bytes</code></pre>
-
-<p>CPU限制</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">通过-c或者--cpu-shares设置CPU的权重,默认1024.
-$ docker run -itd --name container2 -c 512 centos:7
-
-cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpu&#x2F;docker&#x2F;[容器ID]&#x2F;cpu.shares</code></pre>
-
-<p>容器的Block IO</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">容器的Block IO 磁盘的读写。
-docker中可以通过设置权重，限制bps和iops的方式控制容器读写磁盘的IO.
-bps: 每秒读写的数据量 byte per second
-iops: 每秒IO的次数 io per second。
-默认情况下，所有容器都能够平等的读写磁盘，也可以通过--blkio-weight参数改变容器的blockIO 的优先级。
-
---device-read-bps: 显示读取某个设备的bps。
---device-write-bps: 显示写入某个设备的bps。
---device-read-iops: 显示读取某个设备的iops。
---device-write-iops: 显示写入某个设备的iops。
-
-&#x2F;&#x2F;限制testA这个容器，写入&#x2F;dev&#x2F;sda这块磁盘的bps为30MB.
-$ docker run -it --name testA --device-write-bps &#x2F;dev&#x2F;sda:30MB centos:7
-&#x2F;&#x2F;从&#x2F;dev&#x2F;zero输入，然后输出到test.out文件中，每次大小为1M，总共800次,oflag&#x3D;direct 用来指定directIO方式写文件，这样才会使--device-write-bps生效。
-
-$ docker exec -it testA &#x2F;bin&#x2F;bash 
-# time dd if&#x3D;&#x2F;dev&#x2F;zero of&#x3D;test.out bs&#x3D;1M count&#x3D;800 oflag&#x3D;direct 
-800+0 records in 
-800+0 records out 
-838860800 bytes (839 MB) copied, 26.6228 s, 31.5 MB&#x2F;s 
-real 0m26.629s 
-user 0m0.005s 
-sys 0m1.902s</code></pre>
-
-<h1 id="Docker常用命令"><a href="#Docker常用命令" class="headerlink" title="Docker常用命令"></a>Docker常用命令</h1><p>查找镜像</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker search centos</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查找镜像
-$ docker search centos
-拉取镜像
-$ docker pull centos:7
-$ docker pull busybox:latest
-查看本地镜像
-$ docker images
-镜像导出到本地
-$ docker save -o centos.tar centos:7
-$ docker save &gt; centos.tar centos:7
-删除镜像
-$ docker rmi centos:7
-本地镜像包导入镜像
-$ docker load -i centos.tar
-$ docker load &lt; centos.tar
-查看容器
-$ docker ps [-a]
-删除容器
-$ docker rm 容器名称
-创建容器
-$ docker create -it --name 容器名称 镜像名称
-启动容器
-$ docker start 容器名称
-停止容器
-$ docker stop 容器名称
-重启容器
-$ docker restart 容器名称
-挂起容器
-$ docker pause 容器名称
-恢复容器
-$ docker unpause 容器名称
-强制删除所有容器(生产环境禁用)
-$ docker ps -a -q | xargs docker rm -f
-强制启动所有容器
-$ docker ps -a -q | xargs docker start
-运行一个容器
-$ docker run -itd --name 容器名称 镜像名称
-	-i:可交互
-	-t:伪终端
-	-d:后台运行
-	--name:容器名称
-	--restart&#x3D;always:始终保持运行(随着Docker开启运行)
-	-rm:会随着容器的操作而删除容器
-进入容器
-$ docker exec -it 容器名称 &#x2F;bin&#x2F;bash
-$ docker attach 容器名称
-exec 进入的方式： 如果执行exit退出，容器仍然保持运行。
-attach : 如果执行exit退出，容器会被关闭。如果想要保持容器不被关闭，可以使用键盘: Ctrl + p Ctrl + q 可以实现。
-
-宿主机和容器之间传输文件
-$ docker cp 文件名称 容器名称:&#x2F;目录
-容器制作成镜像
-$ docker commit 容器名称 镜像名称</code></pre>
-
-<h1 id="Docker-Dockerfile"><a href="#Docker-Dockerfile" class="headerlink" title="Docker Dockerfile"></a>Docker Dockerfile</h1><h2 id="什么是-Dockerfile？"><a href="#什么是-Dockerfile？" class="headerlink" title="什么是 Dockerfile？"></a>什么是 Dockerfile？</h2><p>Dockerfile 是一个用来构建镜像的文本文件，文本内容包含了一条条构建镜像所需的指令和说明。</p>
-<h2 id="编写-Dockerfile-文件"><a href="#编写-Dockerfile-文件" class="headerlink" title="编写 Dockerfile 文件"></a>编写 Dockerfile 文件</h2><p>下面以定制Nginx镜像为例，编写一个Dockerfile文件。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ mkdir nginx
-$ cd nginx
-$ touch Dockerfile</code></pre>
-
-<p>其内容为：</p>
-<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM nginx
-RUN echo &#39;&lt;h1&gt;Hello, Docker!&lt;&#x2F;h1&gt;&#39; &gt; &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html&#x2F;index.html</code></pre>
-
-<p>此时一个Dockerfile文件就编写完成了。</p>
-<h2 id="Dockerfile-指令详解"><a href="#Dockerfile-指令详解" class="headerlink" title="Dockerfile 指令详解"></a>Dockerfile 指令详解</h2><h3 id="1-FROM-指定基础镜像"><a href="#1-FROM-指定基础镜像" class="headerlink" title="1. FROM 指定基础镜像"></a>1. FROM 指定基础镜像</h3><p>FROM 指令用于指定构建新镜像所使用的基础镜像。</p>
-<p>语法格式：</p>
-<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM &lt;image&gt;
-或
-FROM &lt;image&gt;:&lt;tag&gt;
-#tag是可选的。不使用这个参数则会用latest版本的基础镜像。</code></pre>
-
-<h3 id="2-RUN-执行命令"><a href="#2-RUN-执行命令" class="headerlink" title="2. RUN 执行命令"></a>2. RUN 执行命令</h3><p>在镜像的构建过程中执行特定的命令，并生成一个中间镜像。</p>
-<p>语法格式：</p>
-<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">#shell格式
-RUN &lt;command&gt;
-#exec格式
-RUN [&quot;executable&quot;,&quot;param1&quot;,&quot;param2&quot;]</code></pre>
-
-<ul>
-<li>RUN 命令将在当前 image 中执行任意合法命令并提交执行结果。命令执行提交后，就会自动执行 Dockerfile 中的下一个指令。</li>
-<li>层级 RUN 指令和生成提交是符合 Docker 核心理念的做法。它允许像版本控制那样，在任意一个点，对 image 镜像进行定制化构建。</li>
-<li>RUN 指令创建的中间镜像会被缓存，并会在下次构建中使用。如果不想使用这些缓存镜像，可以在构建时指定 <code>--no-cache</code> 参数，如：<code>docker build --no-cache</code>。</li>
-</ul>
-<h3 id="3-COPY-复制文件"><a href="#3-COPY-复制文件" class="headerlink" title="3. COPY 复制文件"></a>3. COPY 复制文件</h3><p>语法格式：</p>
-<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">COPY &lt;源路径&gt;... &lt;目标路径&gt;
-COPY [&quot;&lt;源路径1&gt;&quot;,... &quot;&lt;目标路径&gt;&quot;]</code></pre>
-
-<p>和 RUN 指令一样，也有两种格式，一种类似于命令行，一种类似于函数调用。COPY 指令将从构建上下文目录中 &lt;源路径&gt; 的文件/目录复制到新的一层的镜像内的<code>&lt;目标路径&gt;</code>位置。比如：</p>
-<pre class="line-numbers language-none"><code class="language-none">COPY package.json &#x2F;usr&#x2F;src&#x2F;app&#x2F;</code></pre>
-
-<p><code>&lt;源路径&gt;</code>可以是多个，甚至可以是通配符，其通配符规则要满足 Go 的 filepath.Match 规则，如：</p>
-<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">COPY hom* &#x2F;mydir&#x2F;
-COPY hom?.txt &#x2F;mydir&#x2F;</code></pre>
-
-<p><code>&lt;目标路径&gt;</code>可以是容器内的绝对路径，也可以是相对于工作目录的相对路径（工作目录可以用 WORKDIR 指令来指定）。目标路径不需要事先创建，如果目录不存在会在复制文件前先行创建缺失目录。</p>
-<p>此外，还需要注意一点，使用 COPY 指令，源文件的各种元数据都会保留。比如读、写、执行权限、文件变更时间等。这个特性对于镜像定制很有用。特别是构建相关文件都在使用 Git 进行管理的时候。</p>
-<h3 id="4-ADD-更高级的复制文件"><a href="#4-ADD-更高级的复制文件" class="headerlink" title="4. ADD 更高级的复制文件"></a>4. ADD 更高级的复制文件</h3><p>ADD 指令和 COPY 的格式和性质基本一致。但是在 COPY 基础上增加了一些功能。比如<code>&lt;源路径&gt;</code>可以是一个 URL，这种情况下，Docker 引擎会试图去下载这个链接的文件放到<code>&lt;目标路径&gt;</code>去。</p>
-<p>在构建镜像时，复制上下文中的文件到镜像内，格式：</p>
-<pre class="line-numbers language-none"><code class="language-none">ADD &lt;源路径&gt;... &lt;目标路径&gt;
-ADD [&quot;&lt;源路径&gt;&quot;,... &quot;&lt;目标路径&gt;&quot;]</code></pre>
-
-<p><strong>注意</strong><br>如果 docker 发现文件内容被改变，则接下来的指令都不会再使用缓存。关于复制文件时需要处理的/，基本跟正常的 copy 一致。</p>
-<h3 id="5-ENV-设置环境变量"><a href="#5-ENV-设置环境变量" class="headerlink" title="5. ENV 设置环境变量"></a>5. ENV 设置环境变量</h3><p>格式有两种：</p>
-<pre class="line-numbers language-none"><code class="language-none">ENV &lt;key&gt; &lt;value&gt;
-ENV &lt;key1&gt;&#x3D;&lt;value1&gt; &lt;key2&gt;&#x3D;&lt;value2&gt;...</code></pre>
-
-<p>这个指令很简单，就是设置环境变量而已，无论是后面的其它指令，如 RUN，还是运行时的应用，都可以直接使用这里定义的环境变量。</p>
-<pre class="line-numbers language-none"><code class="language-none">ENV VERSION&#x3D;1.0 DEBUG&#x3D;on \
-    NAME&#x3D;&quot;Happy Feet&quot;</code></pre>
-
-<p>这个例子中演示了如何换行，以及对含有空格的值用双引号括起来的办法，这和 Shell 下的行为是一致的。</p>
-<h3 id="6-EXPOSE"><a href="#6-EXPOSE" class="headerlink" title="6. EXPOSE"></a>6. EXPOSE</h3><p>为构建的镜像设置监听端口，使容器在运行时监听。格式：</p>
-<pre class="line-numbers language-none"><code class="language-none">EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></pre>
-
-<p>EXPOSE 指令并不会让容器监听 host 的端口，如果需要，需要在 docker run 时使用 <code>-p</code>、<code>-P</code> 参数来发布容器端口到 host 的某个端口上。</p>
-<h3 id="7-VOLUME-定义匿名卷"><a href="#7-VOLUME-定义匿名卷" class="headerlink" title="7. VOLUME 定义匿名卷"></a>7. VOLUME 定义匿名卷</h3><p>VOLUME用于创建挂载点，即向基于所构建镜像创始的容器添加卷：</p>
-<pre class="line-numbers language-none"><code class="language-none">VOLUME [&quot;&#x2F;data&quot;]</code></pre>
-
-<p>一个卷可以存在于一个或多个容器的指定目录，该目录可以绕过联合文件系统，并具有以下功能：</p>
-<ul>
-<li>卷可以容器间共享和重用</li>
-<li>容器并不一定要和其它容器共享卷</li>
-<li>修改卷后会立即生效</li>
-<li>对卷的修改不会对镜像产生影响</li>
-<li>卷会一直存在，直到没有任何容器在使用它</li>
-</ul>
-<p>VOLUME 让我们可以将源代码、数据或其它内容添加到镜像中，而又不并提交到镜像中，并使我们可以多个容器间共享这些内容。</p>
-<h3 id="8-WORKDIR-指定工作目录"><a href="#8-WORKDIR-指定工作目录" class="headerlink" title="8 WORKDIR 指定工作目录"></a>8 WORKDIR 指定工作目录</h3><p>WORKDIR用于在容器内设置一个工作目录：</p>
-<pre class="line-numbers language-none"><code class="language-none">WORKDIR &#x2F;path&#x2F;to&#x2F;workdir</code></pre>
-
-<p>通过WORKDIR设置工作目录后，Dockerfile 中其后的命令 RUN、CMD、ENTRYPOINT、ADD、COPY 等命令都会在该目录下执行。 如，使用WORKDIR设置工作目录：</p>
-<pre class="line-numbers language-none"><code class="language-none">WORKDIR &#x2F;a
-WORKDIR b
-WORKDIR c
-RUN pwd</code></pre>
-
-<p>在以上示例中，pwd 最终将会在 <code>/a/b/c</code> 目录中执行。在使用 docker run 运行容器时，可以通过<code>-w</code>参数覆盖构建时所设置的工作目录。</p>
-<h3 id="9-USER-指定当前用户"><a href="#9-USER-指定当前用户" class="headerlink" title="9 USER 指定当前用户"></a>9 USER 指定当前用户</h3><p>USER 用于指定运行镜像所使用的用户：</p>
-<pre class="line-numbers language-none"><code class="language-none">USER daemon</code></pre>
-
-<p>使用USER指定用户时，可以使用用户名、UID 或 GID，或是两者的组合。以下都是合法的指定试：</p>
-<pre class="line-numbers language-none"><code class="language-none">USER user
-USER user:group
-USER uid
-USER uid:gid
-USER user:gid
-USER uid:group</code></pre>
-
-<p>使用USER指定用户后，Dockerfile 中其后的命令 RUN、CMD、ENTRYPOINT 都将使用该用户。镜像构建完成后，通过 docker run 运行容器时，可以通过 <code>-u</code> 参数来覆盖所指定的用户。</p>
-<h3 id="10-CMD"><a href="#10-CMD" class="headerlink" title="10 CMD"></a>10 CMD</h3><p>CMD用于指定在容器启动时所要执行的命令。CMD 有以下三种格式：</p>
-<pre class="line-numbers language-none"><code class="language-none">CMD [&quot;executable&quot;,&quot;param1&quot;,&quot;param2&quot;]
-CMD [&quot;param1&quot;,&quot;param2&quot;]
-CMD command param1 param2</code></pre>
-
-<p>省略可执行文件的 exec 格式，这种写法使 CMD 中的参数当做 ENTRYPOINT 的默认参数，此时 ENTRYPOINT 也应该是 exec 格式，具体与 ENTRYPOINT 的组合使用，参考 ENTRYPOINT。</p>
-<p><strong>注意</strong><br>与 RUN 指令的区别：RUN 在构建的时候执行，并生成一个新的镜像，CMD 在容器运行的时候执行，在构建时不进行任何操作。</p>
-<h3 id="11-ENTRYPOINT"><a href="#11-ENTRYPOINT" class="headerlink" title="11 ENTRYPOINT"></a>11 ENTRYPOINT</h3><p>ENTRYPOINT 用于给容器配置一个可执行程序。也就是说，每次使用镜像创建容器时，通过 ENTRYPOINT 指定的程序都会被设置为默认程序。ENTRYPOINT 有以下两种形式：</p>
-<pre class="line-numbers language-none"><code class="language-none">ENTRYPOINT [&quot;executable&quot;, &quot;param1&quot;, &quot;param2&quot;]
-ENTRYPOINT command param1 param2</code></pre>
-
-<p>ENTRYPOINT 与 CMD 非常类似，不同的是通过<code>docker run</code>执行的命令不会覆盖 ENTRYPOINT，而<code>docker run</code>命令中指定的任何参数，都会被当做参数再次传递给 ENTRYPOINT。Dockerfile 中只允许有一个 ENTRYPOINT 命令，多指定时会覆盖前面的设置，而只执行最后的 ENTRYPOINT 指令。</p>
-<p><code>docker run</code>运行容器时指定的参数都会被传递给 ENTRYPOINT ，且会覆盖 CMD 命令指定的参数。如，执行<code>docker run &lt;image&gt; -d</code>时，-d 参数将被传递给入口点。</p>
-<p>也可以通过<code>docker run --entrypoint</code>重写 ENTRYPOINT 入口点。如：可以像下面这样指定一个容器执行程序：</p>
-<pre class="line-numbers language-none"><code class="language-none">ENTRYPOINT [&quot;&#x2F;usr&#x2F;bin&#x2F;nginx&quot;]</code></pre>
-
-<p>完整构建代码：</p>
-<pre class="line-numbers language-none"><code class="language-none"># Version: 0.0.3
-FROM ubuntu:16.04
-MAINTAINER 何民三 &quot;cn.liuht@gmail.com&quot;
-RUN apt-get update
-RUN apt-get install -y nginx
-RUN echo &#39;Hello World, 我是个容器&#39; \ 
-   &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
-ENTRYPOINT [&quot;&#x2F;usr&#x2F;sbin&#x2F;nginx&quot;]
-EXPOSE 80</code></pre>
-
-<p>使用docker build构建镜像，并将镜像指定为 itbilu/test：</p>
-<pre class="line-numbers language-none"><code class="language-none">docker build -t&#x3D;&quot;itbilu&#x2F;test&quot; .</code></pre>
-
-<p>构建完成后，使用itbilu/test启动一个容器：</p>
-<pre class="line-numbers language-none"><code class="language-none">docker run -i -t  itbilu&#x2F;test -g &quot;daemon off;&quot;</code></pre>
-
-<p>在运行容器时，我们使用了 <code>-g &quot;daemon off;&quot;</code>，这个参数将会被传递给 ENTRYPOINT，最终在容器中执行的命令为 <code>/usr/sbin/nginx -g &quot;daemon off;&quot;</code>。</p>
-<h3 id="12-LABEL"><a href="#12-LABEL" class="headerlink" title="12 LABEL"></a>12 LABEL</h3><p>LABEL用于为镜像添加元数据，元数以键值对的形式指定：</p>
-<pre class="line-numbers language-none"><code class="language-none">LABEL &lt;key&gt;&#x3D;&lt;value&gt; &lt;key&gt;&#x3D;&lt;value&gt; &lt;key&gt;&#x3D;&lt;value&gt; ...</code></pre>
-
-<p>使用LABEL指定元数据时，一条LABEL指定可以指定一或多条元数据，指定多条元数据时不同元数据之间通过空格分隔。推荐将所有的元数据通过一条LABEL指令指定，以免生成过多的中间镜像。 如，通过LABEL指定一些元数据：</p>
-<pre class="line-numbers language-none"><code class="language-none">LABEL version&#x3D;&quot;1.0&quot; description&#x3D;&quot;这是一个Web服务器&quot; by&#x3D;&quot;IT笔录&quot;</code></pre>
-
-<p>指定后可以通过docker inspect查看：</p>
-<pre class="line-numbers language-none"><code class="language-none">docker inspect itbilu&#x2F;test
-&quot;Labels&quot;: &#123;
-    &quot;version&quot;: &quot;1.0&quot;,
-    &quot;description&quot;: &quot;这是一个Web服务器&quot;,
-    &quot;by&quot;: &quot;IT笔录&quot;
-&#125;,</code></pre>
-
-<h3 id="13-ARG"><a href="#13-ARG" class="headerlink" title="13 ARG"></a>13 ARG</h3><p>ARG用于指定传递给构建运行时的变量：</p>
-<pre class="line-numbers language-none"><code class="language-none">ARG &lt;name&gt;[&#x3D;&lt;default value&gt;]</code></pre>
-
-<p>如，通过ARG指定两个变量：</p>
-<pre class="line-numbers language-none"><code class="language-none">ARG site
-ARG build_user&#x3D;IT笔录</code></pre>
-
-<p>以上我们指定了 site 和 build_user 两个变量，其中 build_user 指定了默认值。在使用 docker build 构建镜像时，可以通过 <code>--build-arg &lt;varname&gt;=&lt;value&gt;</code> 参数来指定或重设置这些变量的值。</p>
-<pre class="line-numbers language-none"><code class="language-none">docker build --build-arg site&#x3D;itiblu.com -t itbilu&#x2F;test .</code></pre>
-
-<p>这样我们构建了 itbilu/test 镜像，其中site会被设置为 itbilu.com，由于没有指定 build_user，其值将是默认值 IT 笔录。</p>
-<h3 id="14-ONBUILD"><a href="#14-ONBUILD" class="headerlink" title="14 ONBUILD"></a>14 ONBUILD</h3><p>ONBUILD用于设置镜像触发器：</p>
-<pre class="line-numbers language-none"><code class="language-none">ONBUILD [INSTRUCTION]</code></pre>
-
-<p>当所构建的镜像被用做其它镜像的基础镜像，该镜像中的触发器将会被钥触发。 如，当镜像被使用时，可能需要做一些处理：</p>
-<pre class="line-numbers language-none"><code class="language-none">[...]
-ONBUILD ADD . &#x2F;app&#x2F;src
-ONBUILD RUN &#x2F;usr&#x2F;local&#x2F;bin&#x2F;python-build --dir &#x2F;app&#x2F;src
-[...]</code></pre>
-
-<h3 id="15-STOPSIGNAL"><a href="#15-STOPSIGNAL" class="headerlink" title="15 STOPSIGNAL"></a>15 STOPSIGNAL</h3><p>STOPSIGNAL用于设置停止容器所要发送的系统调用信号：</p>
-<pre class="line-numbers language-none"><code class="language-none">STOPSIGNAL signal</code></pre>
-
-<p>所使用的信号必须是内核系统调用表中的合法的值，如：SIGKILL。</p>
-<h3 id="16-SHELL"><a href="#16-SHELL" class="headerlink" title="16 SHELL"></a>16 SHELL</h3><p>SHELL用于设置执行命令（shell式）所使用的的默认 shell 类型：</p>
-<pre class="line-numbers language-none"><code class="language-none">SHELL [&quot;executable&quot;, &quot;parameters&quot;]</code></pre>
-
-<p>SHELL在Windows环境下比较有用，Windows 下通常会有 cmd 和 powershell 两种 shell，可能还会有 sh。这时就可以通过 SHELL 来指定所使用的 shell 类型：</p>
-<pre class="line-numbers language-none"><code class="language-none">FROM microsoft&#x2F;windowsservercore
-
-# Executed as cmd &#x2F;S &#x2F;C echo default
-RUN echo default
-
-# Executed as cmd &#x2F;S &#x2F;C powershell -command Write-Host default
-RUN powershell -command Write-Host default
-
-# Executed as powershell -command Write-Host hello
-SHELL [&quot;powershell&quot;, &quot;-command&quot;]
-RUN Write-Host hello
-
-# Executed as cmd &#x2F;S &#x2F;C echo hello
-SHELL [&quot;cmd&quot;, &quot;&#x2F;S&quot;&quot;, &quot;&#x2F;C&quot;]
-RUN echo hello</code></pre>
-
-<h1 id="Registry私有仓库"><a href="#Registry私有仓库" class="headerlink" title="Registry私有仓库"></a>Registry私有仓库</h1><p>获取Registry镜像</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker pull registry</code></pre>
-
-<p>运行Registry容器</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker run -itd --name registry --restart&#x3D;always -p 5000:5000 -v &#x2F;registry:&#x2F;var&#x2F;lib&#x2F;registry registry:latest</code></pre>
-
-<blockquote>
-<p>-p：端口映射。宿主机端口:容器端口。</p>
-<p>-v：挂载目录。宿主机的目录:容器内的目录。</p>
-</blockquote>
-<p>这样创建了一个容器，占用了宿主机的5000端口，将容器内的<code>/var/lib/registry</code>目录挂载到了宿主机<code>/registry</code>的目录下。</p>
-<p>打开浏览器输入<a class="link"   href="http://127.0.0.1:5000/v2%EF%BC%8C%E6%98%BE%E7%A4%BA%E4%B8%80%E4%B8%AA%60%7B%7D%60%E5%88%99%E8%AF%B4%E6%98%8E%E6%9C%8D%E5%8A%A1%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C%E3%80%82" >http://127.0.0.1:5000/v2，显示一个`{}`则说明服务正常运行。<i class="fas fa-external-link-alt"></i></a></p>
-<p>关于镜像的上传和下载。下面以centos:7为例。</p>
-<p>镜像重命名，因为是私有仓库，所以需要更改镜像的名称。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker images
-REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-centos              7                   7e6257c9f8d8        6 weeks ago         203MB
-
-$ docker tag centos:7 192.168.10.10:5000&#x2F;centos:7
-$ docker images
-REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
-192.168.10.10:5000&#x2F;centos   7                   7e6257c9f8d8        6 weeks ago         203MB
-centos                      7                   7e6257c9f8d8        6 weeks ago         203MB</code></pre>
-
-<blockquote>
-<p>镜像名称为<code>[IP地址]:[端口号]/名称:[tag]</code>。</p>
-</blockquote>
-<p>编辑Docker配置文件。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ vim &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;docker.service
-ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd --insecure-registry 192.168.10.10:5000
-$ systemctl daemon-reload
-$ systemctl restart docker</code></pre>
-
-<blockquote>
-<p>因为Docker默认是从DockeHub上下载镜像的，需要在本地指定一下私有仓库的IP加端口， 这是因为 Docker 默认不允许非 HTTPS 方式推送镜像。 如果没做这一步，会报HTTPS的错误。</p>
-<p>既然是私有仓库，就要考虑多台DockerHost共用的情况，如果想使用私有仓库，只需要修改Docker的配置文件，指定私有仓库的IP地址和端口即可。</p>
-</blockquote>
-<p>上传镜像到私有仓库</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker push 192.168.10.10:5000&#x2F;centos:7</code></pre>
-
-<p>查看私有仓库的镜像</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ curl -XGET http:&#x2F;&#x2F;192.168.10.10:5000&#x2F;v2&#x2F;_catalog
-&#123;&quot;repositories&quot;:[&quot;centos&quot;]&#125;
-$ curl http:&#x2F;&#x2F;192.168.10.10:5000&#x2F;v2&#x2F;centos&#x2F;tags&#x2F;list
-&#123;&quot;name&quot;:&quot;centos&quot;,&quot;tags&quot;:[&quot;7&quot;]&#125;
-PS:centos为上一条命令查看到的结果</code></pre>
-
-<blockquote>
-<p>X/–request 指定什么命令</p>
-<p>-G/–get 以get的方式来发送数据</p>
-<p>-E/–cert cert[:passwd] 客户端证书文件和密码 (SSL)</p>
-<p>-T/–upload-file 上传文件</p>
-</blockquote>
-<h1 id="Harbor私有仓库"><a href="#Harbor私有仓库" class="headerlink" title="Harbor私有仓库"></a>Harbor私有仓库</h1><h2 id="Harbor介绍"><a href="#Harbor介绍" class="headerlink" title="Harbor介绍"></a>Harbor介绍</h2><p>Docker容器应用的开发和运行离不开可靠的镜像管理，虽然Docker官方也提供了公共的镜像仓库，但是从安全和效率等方面考虑，部署我们私有环境内的Registry也是非常必要的。Harbor是由VMware公司开源的企业级的Docker Registry管理项目，它包括权限管理(RBAC)、LDAP、日志审核、管理界面、自我注册、镜像复制和中文支持等功能。</p>
-<h2 id="Docker-compose"><a href="#Docker-compose" class="headerlink" title="Docker-compose"></a>Docker-compose</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在CentOS系统上安装
-curl -L &quot;https:&#x2F;&#x2F;github.com&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.27.1&#x2F;docker-compose-$(uname -s)-$(uname -m)&quot; -o &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose
-chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</code></pre>
-
-<h2 id="安装Harbor仓库"><a href="#安装Harbor仓库" class="headerlink" title="安装Harbor仓库"></a>安装Harbor仓库</h2><p>软件下载地址：<a class="link"   href="https://github.com/goharbor/harbor/releases" >https://github.com/goharbor/harbor/releases<i class="fas fa-external-link-alt"></i></a></p>
-<p>Harbor安装方法分为在线安装和离线安装。下面使用离线安装方法。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;github.com&#x2F;goharbor&#x2F;harbor&#x2F;releases&#x2F;download&#x2F;v2.1.0&#x2F;harbor-offline-installer-v2.1.0.tgz</code></pre>
-
-<p>下载完成后，将软件包解压到一个指定目录。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf harbor-offline-installer-v2.1.0.tgz -C &#x2F;usr&#x2F;local&#x2F;</code></pre>
-
-<p>修改Harbor配置文件。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sed -i &#39;&#x2F;^hostname&#x2F; c\hostname: 192.168.10.10&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-sed -i &#39;&#x2F;^https&#x2F; c\# https&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-sed -i &#39;&#x2F;port: 443&#x2F; c\  #port: 443&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml</code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ls &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;
-common.sh  harbor.v2.1.0.tar.gz  harbor.yml  harbor.yml.tmpl  install.sh  LICENSE  prepare
-$ cp &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml.tmpl &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-sed -i &#39;&#x2F;^hostname&#x2F; c\hostname: 192.168.10.10&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-sed -i &#39;&#x2F;^https&#x2F; c\# https&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-sed -i &#39;&#x2F;port: 443&#x2F; c\  #port: 443&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml</code></pre>
-
-<p>PS：将hostname修改为Harbor私有仓库的IP地址，注释掉https。</p>
-<p>执行安装脚本。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;harbor&#x2F;.&#x2F;install.sh
-···
-[Step 5]: starting Harbor ...
-Creating network &quot;harbor_harbor&quot; with the default driver
-Creating harbor-log ... done
-Creating redis         ... done
-Creating harbor-portal ... done
-Creating registry      ... done
-Creating registryctl   ... done
-Creating harbor-db     ... done
-Creating harbor-core   ... done
-Creating harbor-jobservice ... done
-Creating nginx             ... done
-✔ ----Harbor has been installed and started successfully.----</code></pre>
-
-<p>Harbor依赖的镜像以及启动的服务。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker images
-REPOSITORY                      TAG                 IMAGE ID            CREATED             SIZE
-goharbor&#x2F;chartmuseum-photon     v2.1.0              5bad3dce5fd5        11 days ago         172MB
-goharbor&#x2F;redis-photon           v2.1.0              45fa455a8eeb        11 days ago         68.7MB
-goharbor&#x2F;trivy-adapter-photon   v2.1.0              9b443d147b3d        11 days ago         106MB
-goharbor&#x2F;clair-adapter-photon   v2.1.0              cee42542dfb2        11 days ago         57.9MB
-goharbor&#x2F;clair-photon           v2.1.0              9741a40b433c        11 days ago         167MB
-goharbor&#x2F;notary-server-photon   v2.1.0              e20ff73edec7        11 days ago         139MB
-goharbor&#x2F;notary-signer-photon   v2.1.0              2b783b793805        11 days ago         136MB
-goharbor&#x2F;harbor-registryctl     v2.1.0              98f466a61ebb        11 days ago         132MB
-goharbor&#x2F;registry-photon        v2.1.0              09c818fabdd3        11 days ago         80.1MB
-goharbor&#x2F;nginx-photon           v2.1.0              470ffa4a837e        11 days ago         40.1MB
-goharbor&#x2F;harbor-log             v2.1.0              402802990707        11 days ago         82.1MB
-goharbor&#x2F;harbor-jobservice      v2.1.0              ff65bef832b4        11 days ago         165MB
-goharbor&#x2F;harbor-core            v2.1.0              26047bcb9ff5        11 days ago         147MB
-goharbor&#x2F;harbor-portal          v2.1.0              5e97d5e230b9        11 days ago         49.5MB
-goharbor&#x2F;harbor-db              v2.1.0              44c0be92f223        11 days ago         164MB
-goharbor&#x2F;prepare                v2.1.0              58d0e7cee8cf        11 days ago         160MB
-$ docker ps
-CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS                    PORTS                       NAMES
-170c17e720a4        goharbor&#x2F;nginx-photon:v2.1.0         &quot;nginx -g &#39;daemon of…&quot;   15 minutes ago      Up 15 minutes (healthy)   0.0.0.0:80-&gt;8080&#x2F;tcp        nginx
-8831967ac956        goharbor&#x2F;harbor-jobservice:v2.1.0    &quot;&#x2F;harbor&#x2F;entrypoint.…&quot;   15 minutes ago      Up 15 minutes (healthy)                               harbor-jobservice
-7b0e3725a58c        goharbor&#x2F;harbor-core:v2.1.0          &quot;&#x2F;harbor&#x2F;entrypoint.…&quot;   15 minutes ago      Up 15 minutes (healthy)                               harbor-core
-566137c52384        goharbor&#x2F;harbor-db:v2.1.0            &quot;&#x2F;docker-entrypoint.…&quot;   16 minutes ago      Up 15 minutes (healthy)                               harbor-db
-b9bb6128d1f7        goharbor&#x2F;harbor-portal:v2.1.0        &quot;nginx -g &#39;daemon of…&quot;   16 minutes ago      Up 15 minutes (healthy)                               harbor-portal
-92a1c1107985        goharbor&#x2F;harbor-registryctl:v2.1.0   &quot;&#x2F;home&#x2F;harbor&#x2F;start.…&quot;   16 minutes ago      Up 15 minutes (healthy)                               registryctl
-f6dd31e19b58        goharbor&#x2F;registry-photon:v2.1.0      &quot;&#x2F;home&#x2F;harbor&#x2F;entryp…&quot;   16 minutes ago      Up 16 minutes (healthy)                               registry
-0976b1e0a01c        goharbor&#x2F;redis-photon:v2.1.0         &quot;redis-server &#x2F;etc&#x2F;r…&quot;   16 minutes ago      Up 16 minutes (healthy)                               redis
-bd1b6a56e95b        goharbor&#x2F;harbor-log:v2.1.0           &quot;&#x2F;bin&#x2F;sh -c &#x2F;usr&#x2F;loc…&quot;   16 minutes ago      Up 16 minutes (healthy)   127.0.0.1:1514-&gt;10514&#x2F;tcp   harbor-log</code></pre>
-
-<p>访问Harbor仓库地址。</p>
-<p>用户名：admin        密码：Harbor12345</p>
-<p>默认密码为Harbor12345，如需修改密码，修改主配置文件。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ vim &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
-harbor_admin_password: Harbor12345</code></pre>
-
-<p>修改Docker服务配置文件。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sed -i &quot;s#^ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd.*#ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd -H fd:&#x2F;&#x2F; --containerd&#x3D;&#x2F;run&#x2F;containerd&#x2F;containerd.sock --insecure-registry 192.168.10.10#g&quot; &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;docker.service
-systemctl daemon-reload &amp;&amp; systemctl restart docker</code></pre>
-
-<p>上传和下载镜像。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">docker tag centos:7 192.168.10.10&#x2F;library&#x2F;centos:7
-docker login -u admin -p Harbor12345 192.168.10.10
-docker push 192.168.10.10&#x2F;library&#x2F;centos:7
-docker pull 192.168.10.10&#x2F;library&#x2F;centos:7</code></pre>
-
-<h1 id="Docker的网络"><a href="#Docker的网络" class="headerlink" title="Docker的网络"></a>Docker的网络</h1><p> 查看 Docker 的原生网络</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network ls
-NETWORK ID          NAME                DRIVER              SCOPE
-c2472fabc854        bridge              bridge              local
-d69487ce8caa        host                host                local
-0b549a5cbf16        none                null                local</code></pre>
-
-<ul>
-<li>bridge：</li>
-<li>host：</li>
-<li>none：</li>
-</ul>
-<p>None 网络</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">没有任何网络
-$ docker run -itd --name [容器名称] --network none [镜像名称]</code></pre>
-
-<p>Host 网络</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">与宿主机共用一个网卡
-$ docker run -itd --name [容器名称] --network host [镜像名称]</code></pre>
-
-<p>Bridge网络</p>
-<pre class="line-numbers language-none"><code class="language-none">桥接网络，默认创建容器时使用.</code></pre>
-
-<p>创建一个Bridge网络</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network create -d bridge [网络名称]</code></pre>
-
-<p>创建网络时指定网关和网段</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network create -d bridge --subnet 172.16.10.0&#x2F;24 --gateway 172.16.10.1 [网络名称]</code></pre>
-
-<p>容器运行指定IP</p>
-<pre class="line-numbers language-none"><code class="language-none"></code></pre>
-
-<p>不同网段容器通信</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network connect 网卡名称 容器名称
-在容器中添加网卡，实现通信。</code></pre>
-
-<p>Join容器：container(共享网络协议栈)</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker run -itd --name 容器A 镜像名称
-$ docker run -itd --name 容器B --network container:容器A 镜像名称
-容器A和容器B共用一个网络IP</code></pre>
-
-<h1 id="Docker数据存储"><a href="#Docker数据存储" class="headerlink" title="Docker数据存储"></a>Docker数据存储</h1><p>Docker提供的存储方式<br>volumes - 在宿主的文件系统上的docker工作路径下创建一个文件夹（/var/lib/docker/volumes）来存储数据，其他非docker进程是不能修改该路径下的文件，完全由docker来管理<br>bind mounts - 可以存储在宿主机器任何一个地方，但是会依赖宿主机器的目录结构，不能通过docker CLI 去直接管理，并且非docker进程和docker进程都可以修改该路径下的文件<br>tmpfs - 无论是在Docker主机上还是在容器内，tmpfs挂载都不会持久保存在磁盘上，它会将信息存储在宿主机器内存里。 容器在其生存期内可以使用它来存储非持久状态或敏感信息。 例如，在内部，swarm services 使用tmpfs挂载将机密挂载到服务的容器中 或者 我们一些不需要持久化数据的开发测试环境，可以使用tmpfs</p>
-<p>Volumes 是Docker推荐的挂载方式，与把数据存储在容器的可写层相比，使用Volume可以避免增加容器的容量大小，还可以使存储的数据与容器的生命周期独立。</p>
-<p>与bind mounts相比，volumes更易于备份或迁移。<br>您可以使用Docker CLI命令或Docker API管理Volumes。<br>volumes在Linux和Windows容器上均可工作。<br>可以在多个容器之间更安全地共享volumes。<br>volumes驱动程序使您可以将volumes存储在远程主机或云提供程序上，以加密volumes内容或添加其他功能。</p>
-<h1 id="项目：搭建LAMP环境"><a href="#项目：搭建LAMP环境" class="headerlink" title="项目：搭建LAMP环境"></a>项目：搭建LAMP环境</h1><h1 id="Docker-Compose"><a href="#Docker-Compose" class="headerlink" title="Docker-Compose"></a>Docker-Compose</h1><p>Compose 是用于定义和运行多容器 Docker 应用程序的工具。通过 Compose，可以使用 YML 文件来配置应用程序需要的所有服务。然后，使用一个命令，就可以从 YML 文件配置中创建并启动所有服务。</p>
-<p>Compose 使用的三个步骤：</p>
-<ul>
-<li>使用 Dockerfile 定义应用程序的环境。</li>
-<li>使用 docker-compose.yml 定义构成应用程序的服务，这样它们可以在隔离环境中一起运行。</li>
-<li>最后，执行 docker-compose up 命令来启动并运行整个应用程序。</li>
-</ul>
-<p><strong>安装Docker Compose</strong></p>
-<p>官方文档：<a class="link"   href="https://docs.docker.com/compose" >https://docs.docker.com/compose<i class="fas fa-external-link-alt"></i></a></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在CentOS系统上安装
-$ curl -L &quot;https:&#x2F;&#x2F;github.com&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.27.1&#x2F;docker-compose-$(uname -s)-$(uname -m)&quot; -o &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose
-$ chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</code></pre>
-
-<blockquote>
-<p>要安装其他版本的Compose，请替换<code>1.27.1</code> 为要使用的Compose版本。</p>
-</blockquote>
-<p>测试安装</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker-compose --version
-docker-compose version 1.27.1, build 1110ad01</code></pre>
-
-<p>Compose has commands for managing the whole lifecycle of your application:</p>
-<ul>
-<li>Start, stop and rebuild services</li>
-<li>View the status of running services</li>
-<li>Stream the log output of running services</li>
-<li>Run a one-off command on a service</li>
-</ul>
-<h1 id="Docker-的监控"><a href="#Docker-的监控" class="headerlink" title="Docker 的监控"></a>Docker 的监控</h1><h2 id="Prometheus-普罗米修斯"><a href="#Prometheus-普罗米修斯" class="headerlink" title="Prometheus(普罗米修斯)"></a>Prometheus(普罗米修斯)</h2><h1 id="Docker服务发现"><a href="#Docker服务发现" class="headerlink" title="Docker服务发现"></a>Docker服务发现</h1><h1 id="Docker-Swarm"><a href="#Docker-Swarm" class="headerlink" title="Docker Swarm"></a>Docker Swarm</h1>]]></content>
-      <categories>
-        <category>Docker</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>K8s集群安装Ingress</title>
     <url>/page/Virtual/Kubernetes/K8s%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85Ingress/</url>
     <content><![CDATA[<h1 id="K8s集群安装Ingress"><a href="#K8s集群安装Ingress" class="headerlink" title="K8s集群安装Ingress"></a>K8s集群安装Ingress</h1><h2 id="Nginxinc-Ingress"><a href="#Nginxinc-Ingress" class="headerlink" title="Nginxinc-Ingress"></a>Nginxinc-Ingress</h2><p>GitHub项目地址：<a class="link"   href="https://github.com/nginxinc/kubernetes-ingress" >Nginxinc/kubernetes-ingress<i class="fas fa-external-link-alt"></i></a></p>
@@ -8275,6 +7704,577 @@ NGINX Ingress controller
       <tags>
         <tag>K8s</tag>
         <tag>Ingress</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker笔记</title>
+    <url>/page/Virtual/Docker/Docker%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<h1 id="Docker的底层原理"><a href="#Docker的底层原理" class="headerlink" title="Docker的底层原理"></a>Docker的底层原理</h1><h2 id="什么是Docker？"><a href="#什么是Docker？" class="headerlink" title="什么是Docker？"></a>什么是Docker？</h2><p>Docker是供开发人员和系统管理员 使用容器<strong>构建，运行和共享</strong>应用程序的平台。使用容器来部署应用程序称为<em>容器化</em>。容器并不是新事物，但用于轻松部署应用程序的容器却是新事物。</p>
+<h2 id="Docker的底层原理-1"><a href="#Docker的底层原理-1" class="headerlink" title="Docker的底层原理"></a>Docker的底层原理</h2><p>Busybox：欺骗层(模拟不同系统的根目录)<br>解耦：解除耦合、冲突。    耦合：冲突现象。<br>普通虚拟化：完全型解耦。    Docker：半解耦。</p>
+<h3 id="Linux中的NameSpace"><a href="#Linux中的NameSpace" class="headerlink" title="Linux中的NameSpace"></a>Linux中的NameSpace</h3><p><strong>NameSpace 是 Linux 内核用来隔离内核资源的方式。</strong>通过 NameSpace 可以让一些进程只能看到与自己相关的一部分资源，而另外一些进程也只能看到与它们自己相关的资源，这两拨进程根本就感觉不到对方的存在。具体的实现方式是把一个或多个进程的相关资源指定在同一个 NameSpace 中。</p>
+<p>Linux NameSpaces 是对全局系统资源的一种封装隔离，使得处于不同 NameSpace 的进程拥有独立的全局系统资源，改变一个 NameSpace 中的系统资源只会影响当前 NameSpace 里的进程，对其他 NameSpace 中的进程没有影响。</p>
+<p>实际上，Linux 内核实现 NameSpace 的一个主要目的就是实现轻量级虚拟化(容器)服务。Linux 内核提供的 NameSpace 技术为 Docker 等容器技术的出现和发展提供了基础条件。</p>
+<p>Linux 内核的 NameSpace 特性提供了六项隔离</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>宏定义</th>
+<th>隔离的资源</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IPC</td>
+<td>CLONE_NEWIPC</td>
+<td>System V IPC(信号量、消息队列和共享内存) 和 POSIX message queues。</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>CLONE_NEWNET</td>
+<td>Network devices, stacks, ports, etc(网络设备、网络栈、端口等)。</td>
+</tr>
+<tr>
+<td>Mount</td>
+<td>CLONE_NEWNS</td>
+<td>Mount points(文件系统挂载点)。</td>
+</tr>
+<tr>
+<td>PID</td>
+<td>CLONE_NEWPID</td>
+<td>Process IDs(进程编号)。</td>
+</tr>
+<tr>
+<td>User</td>
+<td>CLONE_NEWUSER</td>
+<td>User and group IDs(用户和用户组)。</td>
+</tr>
+<tr>
+<td>UTS</td>
+<td>CLONE_NEWUTS</td>
+<td>Hostname and NIS domain name(主机名与 NIS 域名)。</td>
+</tr>
+<tr>
+<td>Cgroup</td>
+<td>CLONE_NEWCGROUP</td>
+<td>Cgroup root directory(Cgroup的根目录)。</td>
+</tr>
+</tbody></table>
+<p>从版本号为 3.8 的内核开始，<code>/proc/[PID]/ns</code> 目录下会包含进程所属的 NameSpace 信息</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">[root@localhost ns]# ll
+total 0
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 ipc -&gt; ipc:[4026531839]
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 mnt -&gt; mnt:[4026531840]
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 net -&gt; net:[4026531956]
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 pid -&gt; pid:[4026531836]
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 user -&gt; user:[4026531837]
+lrwxrwxrwx. 1 root root 0 Sep  9 10:26 uts -&gt; uts:[4026531838]</code></pre>
+
+<p>NameSpace六项隔离，实现了容器与宿主机、容器与容器之间的隔离。</p>
+<p>NameSpace 是 Linux 内核提供的特性，为虚拟化而生。随着 Docker 的诞生引爆了容器技术，也把长期在后台默默奉献的 NameSpace 技术推到了大家的面前。</p>
+<h3 id="Linux中的Cgroup"><a href="#Linux中的Cgroup" class="headerlink" title="Linux中的Cgroup"></a>Linux中的Cgroup</h3><p>Cgroup(控制组)作用：限制Docker容器对宿主机资源的使用。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;sys&#x2F;fs&#x2F;cgroup</code></pre>
+
+<h2 id="Docker容器的限制"><a href="#Docker容器的限制" class="headerlink" title="Docker容器的限制"></a>Docker容器的限制</h2><p>内存限制</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">通过-m或者--memory设置内存的使用限额,通过--memory-swap设置内存+SWAP的使用.
+$ docker run -itd --name container1 -m 200MB --memory-swap 300MB centos:7
+
+cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;memory&#x2F;docker&#x2F;[容器ID]&#x2F;memory.limit_in_bytes
+cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;memory&#x2F;docker&#x2F;[容器ID]&#x2F;memory.memsw.limit_in_bytes</code></pre>
+
+<p>CPU限制</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">通过-c或者--cpu-shares设置CPU的权重,默认1024.
+$ docker run -itd --name container2 -c 512 centos:7
+
+cat &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpu&#x2F;docker&#x2F;[容器ID]&#x2F;cpu.shares</code></pre>
+
+<p>容器的Block IO</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">容器的Block IO 磁盘的读写。
+docker中可以通过设置权重，限制bps和iops的方式控制容器读写磁盘的IO.
+bps: 每秒读写的数据量 byte per second
+iops: 每秒IO的次数 io per second。
+默认情况下，所有容器都能够平等的读写磁盘，也可以通过--blkio-weight参数改变容器的blockIO 的优先级。
+
+--device-read-bps: 显示读取某个设备的bps。
+--device-write-bps: 显示写入某个设备的bps。
+--device-read-iops: 显示读取某个设备的iops。
+--device-write-iops: 显示写入某个设备的iops。
+
+&#x2F;&#x2F;限制testA这个容器，写入&#x2F;dev&#x2F;sda这块磁盘的bps为30MB.
+$ docker run -it --name testA --device-write-bps &#x2F;dev&#x2F;sda:30MB centos:7
+&#x2F;&#x2F;从&#x2F;dev&#x2F;zero输入，然后输出到test.out文件中，每次大小为1M，总共800次,oflag&#x3D;direct 用来指定directIO方式写文件，这样才会使--device-write-bps生效。
+
+$ docker exec -it testA &#x2F;bin&#x2F;bash 
+# time dd if&#x3D;&#x2F;dev&#x2F;zero of&#x3D;test.out bs&#x3D;1M count&#x3D;800 oflag&#x3D;direct 
+800+0 records in 
+800+0 records out 
+838860800 bytes (839 MB) copied, 26.6228 s, 31.5 MB&#x2F;s 
+real 0m26.629s 
+user 0m0.005s 
+sys 0m1.902s</code></pre>
+
+<h1 id="Docker常用命令"><a href="#Docker常用命令" class="headerlink" title="Docker常用命令"></a>Docker常用命令</h1><p>查找镜像</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker search centos</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">查找镜像
+$ docker search centos
+拉取镜像
+$ docker pull centos:7
+$ docker pull busybox:latest
+查看本地镜像
+$ docker images
+镜像导出到本地
+$ docker save -o centos.tar centos:7
+$ docker save &gt; centos.tar centos:7
+删除镜像
+$ docker rmi centos:7
+本地镜像包导入镜像
+$ docker load -i centos.tar
+$ docker load &lt; centos.tar
+查看容器
+$ docker ps [-a]
+删除容器
+$ docker rm 容器名称
+创建容器
+$ docker create -it --name 容器名称 镜像名称
+启动容器
+$ docker start 容器名称
+停止容器
+$ docker stop 容器名称
+重启容器
+$ docker restart 容器名称
+挂起容器
+$ docker pause 容器名称
+恢复容器
+$ docker unpause 容器名称
+强制删除所有容器(生产环境禁用)
+$ docker ps -a -q | xargs docker rm -f
+强制启动所有容器
+$ docker ps -a -q | xargs docker start
+运行一个容器
+$ docker run -itd --name 容器名称 镜像名称
+	-i:可交互
+	-t:伪终端
+	-d:后台运行
+	--name:容器名称
+	--restart&#x3D;always:始终保持运行(随着Docker开启运行)
+	-rm:会随着容器的操作而删除容器
+进入容器
+$ docker exec -it 容器名称 &#x2F;bin&#x2F;bash
+$ docker attach 容器名称
+exec 进入的方式： 如果执行exit退出，容器仍然保持运行。
+attach : 如果执行exit退出，容器会被关闭。如果想要保持容器不被关闭，可以使用键盘: Ctrl + p Ctrl + q 可以实现。
+
+宿主机和容器之间传输文件
+$ docker cp 文件名称 容器名称:&#x2F;目录
+容器制作成镜像
+$ docker commit 容器名称 镜像名称</code></pre>
+
+<h1 id="Docker-Dockerfile"><a href="#Docker-Dockerfile" class="headerlink" title="Docker Dockerfile"></a>Docker Dockerfile</h1><h2 id="什么是-Dockerfile？"><a href="#什么是-Dockerfile？" class="headerlink" title="什么是 Dockerfile？"></a>什么是 Dockerfile？</h2><p>Dockerfile 是一个用来构建镜像的文本文件，文本内容包含了一条条构建镜像所需的指令和说明。</p>
+<h2 id="编写-Dockerfile-文件"><a href="#编写-Dockerfile-文件" class="headerlink" title="编写 Dockerfile 文件"></a>编写 Dockerfile 文件</h2><p>下面以定制Nginx镜像为例，编写一个Dockerfile文件。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ mkdir nginx
+$ cd nginx
+$ touch Dockerfile</code></pre>
+
+<p>其内容为：</p>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM nginx
+RUN echo &#39;&lt;h1&gt;Hello, Docker!&lt;&#x2F;h1&gt;&#39; &gt; &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html&#x2F;index.html</code></pre>
+
+<p>此时一个Dockerfile文件就编写完成了。</p>
+<h2 id="Dockerfile-指令详解"><a href="#Dockerfile-指令详解" class="headerlink" title="Dockerfile 指令详解"></a>Dockerfile 指令详解</h2><h3 id="1-FROM-指定基础镜像"><a href="#1-FROM-指定基础镜像" class="headerlink" title="1. FROM 指定基础镜像"></a>1. FROM 指定基础镜像</h3><p>FROM 指令用于指定构建新镜像所使用的基础镜像。</p>
+<p>语法格式：</p>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM &lt;image&gt;
+或
+FROM &lt;image&gt;:&lt;tag&gt;
+#tag是可选的。不使用这个参数则会用latest版本的基础镜像。</code></pre>
+
+<h3 id="2-RUN-执行命令"><a href="#2-RUN-执行命令" class="headerlink" title="2. RUN 执行命令"></a>2. RUN 执行命令</h3><p>在镜像的构建过程中执行特定的命令，并生成一个中间镜像。</p>
+<p>语法格式：</p>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">#shell格式
+RUN &lt;command&gt;
+#exec格式
+RUN [&quot;executable&quot;,&quot;param1&quot;,&quot;param2&quot;]</code></pre>
+
+<ul>
+<li>RUN 命令将在当前 image 中执行任意合法命令并提交执行结果。命令执行提交后，就会自动执行 Dockerfile 中的下一个指令。</li>
+<li>层级 RUN 指令和生成提交是符合 Docker 核心理念的做法。它允许像版本控制那样，在任意一个点，对 image 镜像进行定制化构建。</li>
+<li>RUN 指令创建的中间镜像会被缓存，并会在下次构建中使用。如果不想使用这些缓存镜像，可以在构建时指定 <code>--no-cache</code> 参数，如：<code>docker build --no-cache</code>。</li>
+</ul>
+<h3 id="3-COPY-复制文件"><a href="#3-COPY-复制文件" class="headerlink" title="3. COPY 复制文件"></a>3. COPY 复制文件</h3><p>语法格式：</p>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">COPY &lt;源路径&gt;... &lt;目标路径&gt;
+COPY [&quot;&lt;源路径1&gt;&quot;,... &quot;&lt;目标路径&gt;&quot;]</code></pre>
+
+<p>和 RUN 指令一样，也有两种格式，一种类似于命令行，一种类似于函数调用。COPY 指令将从构建上下文目录中 &lt;源路径&gt; 的文件/目录复制到新的一层的镜像内的<code>&lt;目标路径&gt;</code>位置。比如：</p>
+<pre class="line-numbers language-none"><code class="language-none">COPY package.json &#x2F;usr&#x2F;src&#x2F;app&#x2F;</code></pre>
+
+<p><code>&lt;源路径&gt;</code>可以是多个，甚至可以是通配符，其通配符规则要满足 Go 的 filepath.Match 规则，如：</p>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">COPY hom* &#x2F;mydir&#x2F;
+COPY hom?.txt &#x2F;mydir&#x2F;</code></pre>
+
+<p><code>&lt;目标路径&gt;</code>可以是容器内的绝对路径，也可以是相对于工作目录的相对路径（工作目录可以用 WORKDIR 指令来指定）。目标路径不需要事先创建，如果目录不存在会在复制文件前先行创建缺失目录。</p>
+<p>此外，还需要注意一点，使用 COPY 指令，源文件的各种元数据都会保留。比如读、写、执行权限、文件变更时间等。这个特性对于镜像定制很有用。特别是构建相关文件都在使用 Git 进行管理的时候。</p>
+<h3 id="4-ADD-更高级的复制文件"><a href="#4-ADD-更高级的复制文件" class="headerlink" title="4. ADD 更高级的复制文件"></a>4. ADD 更高级的复制文件</h3><p>ADD 指令和 COPY 的格式和性质基本一致。但是在 COPY 基础上增加了一些功能。比如<code>&lt;源路径&gt;</code>可以是一个 URL，这种情况下，Docker 引擎会试图去下载这个链接的文件放到<code>&lt;目标路径&gt;</code>去。</p>
+<p>在构建镜像时，复制上下文中的文件到镜像内，格式：</p>
+<pre class="line-numbers language-none"><code class="language-none">ADD &lt;源路径&gt;... &lt;目标路径&gt;
+ADD [&quot;&lt;源路径&gt;&quot;,... &quot;&lt;目标路径&gt;&quot;]</code></pre>
+
+<p><strong>注意</strong><br>如果 docker 发现文件内容被改变，则接下来的指令都不会再使用缓存。关于复制文件时需要处理的/，基本跟正常的 copy 一致。</p>
+<h3 id="5-ENV-设置环境变量"><a href="#5-ENV-设置环境变量" class="headerlink" title="5. ENV 设置环境变量"></a>5. ENV 设置环境变量</h3><p>格式有两种：</p>
+<pre class="line-numbers language-none"><code class="language-none">ENV &lt;key&gt; &lt;value&gt;
+ENV &lt;key1&gt;&#x3D;&lt;value1&gt; &lt;key2&gt;&#x3D;&lt;value2&gt;...</code></pre>
+
+<p>这个指令很简单，就是设置环境变量而已，无论是后面的其它指令，如 RUN，还是运行时的应用，都可以直接使用这里定义的环境变量。</p>
+<pre class="line-numbers language-none"><code class="language-none">ENV VERSION&#x3D;1.0 DEBUG&#x3D;on \
+    NAME&#x3D;&quot;Happy Feet&quot;</code></pre>
+
+<p>这个例子中演示了如何换行，以及对含有空格的值用双引号括起来的办法，这和 Shell 下的行为是一致的。</p>
+<h3 id="6-EXPOSE"><a href="#6-EXPOSE" class="headerlink" title="6. EXPOSE"></a>6. EXPOSE</h3><p>为构建的镜像设置监听端口，使容器在运行时监听。格式：</p>
+<pre class="line-numbers language-none"><code class="language-none">EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></pre>
+
+<p>EXPOSE 指令并不会让容器监听 host 的端口，如果需要，需要在 docker run 时使用 <code>-p</code>、<code>-P</code> 参数来发布容器端口到 host 的某个端口上。</p>
+<h3 id="7-VOLUME-定义匿名卷"><a href="#7-VOLUME-定义匿名卷" class="headerlink" title="7. VOLUME 定义匿名卷"></a>7. VOLUME 定义匿名卷</h3><p>VOLUME用于创建挂载点，即向基于所构建镜像创始的容器添加卷：</p>
+<pre class="line-numbers language-none"><code class="language-none">VOLUME [&quot;&#x2F;data&quot;]</code></pre>
+
+<p>一个卷可以存在于一个或多个容器的指定目录，该目录可以绕过联合文件系统，并具有以下功能：</p>
+<ul>
+<li>卷可以容器间共享和重用</li>
+<li>容器并不一定要和其它容器共享卷</li>
+<li>修改卷后会立即生效</li>
+<li>对卷的修改不会对镜像产生影响</li>
+<li>卷会一直存在，直到没有任何容器在使用它</li>
+</ul>
+<p>VOLUME 让我们可以将源代码、数据或其它内容添加到镜像中，而又不并提交到镜像中，并使我们可以多个容器间共享这些内容。</p>
+<h3 id="8-WORKDIR-指定工作目录"><a href="#8-WORKDIR-指定工作目录" class="headerlink" title="8 WORKDIR 指定工作目录"></a>8 WORKDIR 指定工作目录</h3><p>WORKDIR用于在容器内设置一个工作目录：</p>
+<pre class="line-numbers language-none"><code class="language-none">WORKDIR &#x2F;path&#x2F;to&#x2F;workdir</code></pre>
+
+<p>通过WORKDIR设置工作目录后，Dockerfile 中其后的命令 RUN、CMD、ENTRYPOINT、ADD、COPY 等命令都会在该目录下执行。 如，使用WORKDIR设置工作目录：</p>
+<pre class="line-numbers language-none"><code class="language-none">WORKDIR &#x2F;a
+WORKDIR b
+WORKDIR c
+RUN pwd</code></pre>
+
+<p>在以上示例中，pwd 最终将会在 <code>/a/b/c</code> 目录中执行。在使用 docker run 运行容器时，可以通过<code>-w</code>参数覆盖构建时所设置的工作目录。</p>
+<h3 id="9-USER-指定当前用户"><a href="#9-USER-指定当前用户" class="headerlink" title="9 USER 指定当前用户"></a>9 USER 指定当前用户</h3><p>USER 用于指定运行镜像所使用的用户：</p>
+<pre class="line-numbers language-none"><code class="language-none">USER daemon</code></pre>
+
+<p>使用USER指定用户时，可以使用用户名、UID 或 GID，或是两者的组合。以下都是合法的指定试：</p>
+<pre class="line-numbers language-none"><code class="language-none">USER user
+USER user:group
+USER uid
+USER uid:gid
+USER user:gid
+USER uid:group</code></pre>
+
+<p>使用USER指定用户后，Dockerfile 中其后的命令 RUN、CMD、ENTRYPOINT 都将使用该用户。镜像构建完成后，通过 docker run 运行容器时，可以通过 <code>-u</code> 参数来覆盖所指定的用户。</p>
+<h3 id="10-CMD"><a href="#10-CMD" class="headerlink" title="10 CMD"></a>10 CMD</h3><p>CMD用于指定在容器启动时所要执行的命令。CMD 有以下三种格式：</p>
+<pre class="line-numbers language-none"><code class="language-none">CMD [&quot;executable&quot;,&quot;param1&quot;,&quot;param2&quot;]
+CMD [&quot;param1&quot;,&quot;param2&quot;]
+CMD command param1 param2</code></pre>
+
+<p>省略可执行文件的 exec 格式，这种写法使 CMD 中的参数当做 ENTRYPOINT 的默认参数，此时 ENTRYPOINT 也应该是 exec 格式，具体与 ENTRYPOINT 的组合使用，参考 ENTRYPOINT。</p>
+<p><strong>注意</strong><br>与 RUN 指令的区别：RUN 在构建的时候执行，并生成一个新的镜像，CMD 在容器运行的时候执行，在构建时不进行任何操作。</p>
+<h3 id="11-ENTRYPOINT"><a href="#11-ENTRYPOINT" class="headerlink" title="11 ENTRYPOINT"></a>11 ENTRYPOINT</h3><p>ENTRYPOINT 用于给容器配置一个可执行程序。也就是说，每次使用镜像创建容器时，通过 ENTRYPOINT 指定的程序都会被设置为默认程序。ENTRYPOINT 有以下两种形式：</p>
+<pre class="line-numbers language-none"><code class="language-none">ENTRYPOINT [&quot;executable&quot;, &quot;param1&quot;, &quot;param2&quot;]
+ENTRYPOINT command param1 param2</code></pre>
+
+<p>ENTRYPOINT 与 CMD 非常类似，不同的是通过<code>docker run</code>执行的命令不会覆盖 ENTRYPOINT，而<code>docker run</code>命令中指定的任何参数，都会被当做参数再次传递给 ENTRYPOINT。Dockerfile 中只允许有一个 ENTRYPOINT 命令，多指定时会覆盖前面的设置，而只执行最后的 ENTRYPOINT 指令。</p>
+<p><code>docker run</code>运行容器时指定的参数都会被传递给 ENTRYPOINT ，且会覆盖 CMD 命令指定的参数。如，执行<code>docker run &lt;image&gt; -d</code>时，-d 参数将被传递给入口点。</p>
+<p>也可以通过<code>docker run --entrypoint</code>重写 ENTRYPOINT 入口点。如：可以像下面这样指定一个容器执行程序：</p>
+<pre class="line-numbers language-none"><code class="language-none">ENTRYPOINT [&quot;&#x2F;usr&#x2F;bin&#x2F;nginx&quot;]</code></pre>
+
+<p>完整构建代码：</p>
+<pre class="line-numbers language-none"><code class="language-none"># Version: 0.0.3
+FROM ubuntu:16.04
+MAINTAINER 何民三 &quot;cn.liuht@gmail.com&quot;
+RUN apt-get update
+RUN apt-get install -y nginx
+RUN echo &#39;Hello World, 我是个容器&#39; \ 
+   &gt; &#x2F;var&#x2F;www&#x2F;html&#x2F;index.html
+ENTRYPOINT [&quot;&#x2F;usr&#x2F;sbin&#x2F;nginx&quot;]
+EXPOSE 80</code></pre>
+
+<p>使用docker build构建镜像，并将镜像指定为 itbilu/test：</p>
+<pre class="line-numbers language-none"><code class="language-none">docker build -t&#x3D;&quot;itbilu&#x2F;test&quot; .</code></pre>
+
+<p>构建完成后，使用itbilu/test启动一个容器：</p>
+<pre class="line-numbers language-none"><code class="language-none">docker run -i -t  itbilu&#x2F;test -g &quot;daemon off;&quot;</code></pre>
+
+<p>在运行容器时，我们使用了 <code>-g &quot;daemon off;&quot;</code>，这个参数将会被传递给 ENTRYPOINT，最终在容器中执行的命令为 <code>/usr/sbin/nginx -g &quot;daemon off;&quot;</code>。</p>
+<h3 id="12-LABEL"><a href="#12-LABEL" class="headerlink" title="12 LABEL"></a>12 LABEL</h3><p>LABEL用于为镜像添加元数据，元数以键值对的形式指定：</p>
+<pre class="line-numbers language-none"><code class="language-none">LABEL &lt;key&gt;&#x3D;&lt;value&gt; &lt;key&gt;&#x3D;&lt;value&gt; &lt;key&gt;&#x3D;&lt;value&gt; ...</code></pre>
+
+<p>使用LABEL指定元数据时，一条LABEL指定可以指定一或多条元数据，指定多条元数据时不同元数据之间通过空格分隔。推荐将所有的元数据通过一条LABEL指令指定，以免生成过多的中间镜像。 如，通过LABEL指定一些元数据：</p>
+<pre class="line-numbers language-none"><code class="language-none">LABEL version&#x3D;&quot;1.0&quot; description&#x3D;&quot;这是一个Web服务器&quot; by&#x3D;&quot;IT笔录&quot;</code></pre>
+
+<p>指定后可以通过docker inspect查看：</p>
+<pre class="line-numbers language-none"><code class="language-none">docker inspect itbilu&#x2F;test
+&quot;Labels&quot;: &#123;
+    &quot;version&quot;: &quot;1.0&quot;,
+    &quot;description&quot;: &quot;这是一个Web服务器&quot;,
+    &quot;by&quot;: &quot;IT笔录&quot;
+&#125;,</code></pre>
+
+<h3 id="13-ARG"><a href="#13-ARG" class="headerlink" title="13 ARG"></a>13 ARG</h3><p>ARG用于指定传递给构建运行时的变量：</p>
+<pre class="line-numbers language-none"><code class="language-none">ARG &lt;name&gt;[&#x3D;&lt;default value&gt;]</code></pre>
+
+<p>如，通过ARG指定两个变量：</p>
+<pre class="line-numbers language-none"><code class="language-none">ARG site
+ARG build_user&#x3D;IT笔录</code></pre>
+
+<p>以上我们指定了 site 和 build_user 两个变量，其中 build_user 指定了默认值。在使用 docker build 构建镜像时，可以通过 <code>--build-arg &lt;varname&gt;=&lt;value&gt;</code> 参数来指定或重设置这些变量的值。</p>
+<pre class="line-numbers language-none"><code class="language-none">docker build --build-arg site&#x3D;itiblu.com -t itbilu&#x2F;test .</code></pre>
+
+<p>这样我们构建了 itbilu/test 镜像，其中site会被设置为 itbilu.com，由于没有指定 build_user，其值将是默认值 IT 笔录。</p>
+<h3 id="14-ONBUILD"><a href="#14-ONBUILD" class="headerlink" title="14 ONBUILD"></a>14 ONBUILD</h3><p>ONBUILD用于设置镜像触发器：</p>
+<pre class="line-numbers language-none"><code class="language-none">ONBUILD [INSTRUCTION]</code></pre>
+
+<p>当所构建的镜像被用做其它镜像的基础镜像，该镜像中的触发器将会被钥触发。 如，当镜像被使用时，可能需要做一些处理：</p>
+<pre class="line-numbers language-none"><code class="language-none">[...]
+ONBUILD ADD . &#x2F;app&#x2F;src
+ONBUILD RUN &#x2F;usr&#x2F;local&#x2F;bin&#x2F;python-build --dir &#x2F;app&#x2F;src
+[...]</code></pre>
+
+<h3 id="15-STOPSIGNAL"><a href="#15-STOPSIGNAL" class="headerlink" title="15 STOPSIGNAL"></a>15 STOPSIGNAL</h3><p>STOPSIGNAL用于设置停止容器所要发送的系统调用信号：</p>
+<pre class="line-numbers language-none"><code class="language-none">STOPSIGNAL signal</code></pre>
+
+<p>所使用的信号必须是内核系统调用表中的合法的值，如：SIGKILL。</p>
+<h3 id="16-SHELL"><a href="#16-SHELL" class="headerlink" title="16 SHELL"></a>16 SHELL</h3><p>SHELL用于设置执行命令（shell式）所使用的的默认 shell 类型：</p>
+<pre class="line-numbers language-none"><code class="language-none">SHELL [&quot;executable&quot;, &quot;parameters&quot;]</code></pre>
+
+<p>SHELL在Windows环境下比较有用，Windows 下通常会有 cmd 和 powershell 两种 shell，可能还会有 sh。这时就可以通过 SHELL 来指定所使用的 shell 类型：</p>
+<pre class="line-numbers language-none"><code class="language-none">FROM microsoft&#x2F;windowsservercore
+
+# Executed as cmd &#x2F;S &#x2F;C echo default
+RUN echo default
+
+# Executed as cmd &#x2F;S &#x2F;C powershell -command Write-Host default
+RUN powershell -command Write-Host default
+
+# Executed as powershell -command Write-Host hello
+SHELL [&quot;powershell&quot;, &quot;-command&quot;]
+RUN Write-Host hello
+
+# Executed as cmd &#x2F;S &#x2F;C echo hello
+SHELL [&quot;cmd&quot;, &quot;&#x2F;S&quot;&quot;, &quot;&#x2F;C&quot;]
+RUN echo hello</code></pre>
+
+<h1 id="Registry私有仓库"><a href="#Registry私有仓库" class="headerlink" title="Registry私有仓库"></a>Registry私有仓库</h1><p>获取Registry镜像</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker pull registry</code></pre>
+
+<p>运行Registry容器</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker run -itd --name registry --restart&#x3D;always -p 5000:5000 -v &#x2F;registry:&#x2F;var&#x2F;lib&#x2F;registry registry:latest</code></pre>
+
+<blockquote>
+<p>-p：端口映射。宿主机端口:容器端口。</p>
+<p>-v：挂载目录。宿主机的目录:容器内的目录。</p>
+</blockquote>
+<p>这样创建了一个容器，占用了宿主机的5000端口，将容器内的<code>/var/lib/registry</code>目录挂载到了宿主机<code>/registry</code>的目录下。</p>
+<p>打开浏览器输入<a class="link"   href="http://127.0.0.1:5000/v2%EF%BC%8C%E6%98%BE%E7%A4%BA%E4%B8%80%E4%B8%AA%60%7B%7D%60%E5%88%99%E8%AF%B4%E6%98%8E%E6%9C%8D%E5%8A%A1%E6%AD%A3%E5%B8%B8%E8%BF%90%E8%A1%8C%E3%80%82" >http://127.0.0.1:5000/v2，显示一个`{}`则说明服务正常运行。<i class="fas fa-external-link-alt"></i></a></p>
+<p>关于镜像的上传和下载。下面以centos:7为例。</p>
+<p>镜像重命名，因为是私有仓库，所以需要更改镜像的名称。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+centos              7                   7e6257c9f8d8        6 weeks ago         203MB
+
+$ docker tag centos:7 192.168.10.10:5000&#x2F;centos:7
+$ docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+192.168.10.10:5000&#x2F;centos   7                   7e6257c9f8d8        6 weeks ago         203MB
+centos                      7                   7e6257c9f8d8        6 weeks ago         203MB</code></pre>
+
+<blockquote>
+<p>镜像名称为<code>[IP地址]:[端口号]/名称:[tag]</code>。</p>
+</blockquote>
+<p>编辑Docker配置文件。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ vim &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;docker.service
+ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd --insecure-registry 192.168.10.10:5000
+$ systemctl daemon-reload
+$ systemctl restart docker</code></pre>
+
+<blockquote>
+<p>因为Docker默认是从DockeHub上下载镜像的，需要在本地指定一下私有仓库的IP加端口， 这是因为 Docker 默认不允许非 HTTPS 方式推送镜像。 如果没做这一步，会报HTTPS的错误。</p>
+<p>既然是私有仓库，就要考虑多台DockerHost共用的情况，如果想使用私有仓库，只需要修改Docker的配置文件，指定私有仓库的IP地址和端口即可。</p>
+</blockquote>
+<p>上传镜像到私有仓库</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker push 192.168.10.10:5000&#x2F;centos:7</code></pre>
+
+<p>查看私有仓库的镜像</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ curl -XGET http:&#x2F;&#x2F;192.168.10.10:5000&#x2F;v2&#x2F;_catalog
+&#123;&quot;repositories&quot;:[&quot;centos&quot;]&#125;
+$ curl http:&#x2F;&#x2F;192.168.10.10:5000&#x2F;v2&#x2F;centos&#x2F;tags&#x2F;list
+&#123;&quot;name&quot;:&quot;centos&quot;,&quot;tags&quot;:[&quot;7&quot;]&#125;
+PS:centos为上一条命令查看到的结果</code></pre>
+
+<blockquote>
+<p>X/–request 指定什么命令</p>
+<p>-G/–get 以get的方式来发送数据</p>
+<p>-E/–cert cert[:passwd] 客户端证书文件和密码 (SSL)</p>
+<p>-T/–upload-file 上传文件</p>
+</blockquote>
+<h1 id="Harbor私有仓库"><a href="#Harbor私有仓库" class="headerlink" title="Harbor私有仓库"></a>Harbor私有仓库</h1><h2 id="Harbor介绍"><a href="#Harbor介绍" class="headerlink" title="Harbor介绍"></a>Harbor介绍</h2><p>Docker容器应用的开发和运行离不开可靠的镜像管理，虽然Docker官方也提供了公共的镜像仓库，但是从安全和效率等方面考虑，部署我们私有环境内的Registry也是非常必要的。Harbor是由VMware公司开源的企业级的Docker Registry管理项目，它包括权限管理(RBAC)、LDAP、日志审核、管理界面、自我注册、镜像复制和中文支持等功能。</p>
+<h2 id="Docker-compose"><a href="#Docker-compose" class="headerlink" title="Docker-compose"></a>Docker-compose</h2><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在CentOS系统上安装
+curl -L &quot;https:&#x2F;&#x2F;github.com&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.27.1&#x2F;docker-compose-$(uname -s)-$(uname -m)&quot; -o &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose
+chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</code></pre>
+
+<h2 id="安装Harbor仓库"><a href="#安装Harbor仓库" class="headerlink" title="安装Harbor仓库"></a>安装Harbor仓库</h2><p>软件下载地址：<a class="link"   href="https://github.com/goharbor/harbor/releases" >https://github.com/goharbor/harbor/releases<i class="fas fa-external-link-alt"></i></a></p>
+<p>Harbor安装方法分为在线安装和离线安装。下面使用离线安装方法。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">wget https:&#x2F;&#x2F;github.com&#x2F;goharbor&#x2F;harbor&#x2F;releases&#x2F;download&#x2F;v2.1.0&#x2F;harbor-offline-installer-v2.1.0.tgz</code></pre>
+
+<p>下载完成后，将软件包解压到一个指定目录。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">tar zxf harbor-offline-installer-v2.1.0.tgz -C &#x2F;usr&#x2F;local&#x2F;</code></pre>
+
+<p>修改Harbor配置文件。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sed -i &#39;&#x2F;^hostname&#x2F; c\hostname: 192.168.10.10&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+sed -i &#39;&#x2F;^https&#x2F; c\# https&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+sed -i &#39;&#x2F;port: 443&#x2F; c\  #port: 443&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml</code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ ls &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;
+common.sh  harbor.v2.1.0.tar.gz  harbor.yml  harbor.yml.tmpl  install.sh  LICENSE  prepare
+$ cp &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml.tmpl &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+sed -i &#39;&#x2F;^hostname&#x2F; c\hostname: 192.168.10.10&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+sed -i &#39;&#x2F;^https&#x2F; c\# https&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+sed -i &#39;&#x2F;port: 443&#x2F; c\  #port: 443&#39; &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml</code></pre>
+
+<p>PS：将hostname修改为Harbor私有仓库的IP地址，注释掉https。</p>
+<p>执行安装脚本。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">&#x2F;usr&#x2F;local&#x2F;harbor&#x2F;.&#x2F;install.sh
+···
+[Step 5]: starting Harbor ...
+Creating network &quot;harbor_harbor&quot; with the default driver
+Creating harbor-log ... done
+Creating redis         ... done
+Creating harbor-portal ... done
+Creating registry      ... done
+Creating registryctl   ... done
+Creating harbor-db     ... done
+Creating harbor-core   ... done
+Creating harbor-jobservice ... done
+Creating nginx             ... done
+✔ ----Harbor has been installed and started successfully.----</code></pre>
+
+<p>Harbor依赖的镜像以及启动的服务。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker images
+REPOSITORY                      TAG                 IMAGE ID            CREATED             SIZE
+goharbor&#x2F;chartmuseum-photon     v2.1.0              5bad3dce5fd5        11 days ago         172MB
+goharbor&#x2F;redis-photon           v2.1.0              45fa455a8eeb        11 days ago         68.7MB
+goharbor&#x2F;trivy-adapter-photon   v2.1.0              9b443d147b3d        11 days ago         106MB
+goharbor&#x2F;clair-adapter-photon   v2.1.0              cee42542dfb2        11 days ago         57.9MB
+goharbor&#x2F;clair-photon           v2.1.0              9741a40b433c        11 days ago         167MB
+goharbor&#x2F;notary-server-photon   v2.1.0              e20ff73edec7        11 days ago         139MB
+goharbor&#x2F;notary-signer-photon   v2.1.0              2b783b793805        11 days ago         136MB
+goharbor&#x2F;harbor-registryctl     v2.1.0              98f466a61ebb        11 days ago         132MB
+goharbor&#x2F;registry-photon        v2.1.0              09c818fabdd3        11 days ago         80.1MB
+goharbor&#x2F;nginx-photon           v2.1.0              470ffa4a837e        11 days ago         40.1MB
+goharbor&#x2F;harbor-log             v2.1.0              402802990707        11 days ago         82.1MB
+goharbor&#x2F;harbor-jobservice      v2.1.0              ff65bef832b4        11 days ago         165MB
+goharbor&#x2F;harbor-core            v2.1.0              26047bcb9ff5        11 days ago         147MB
+goharbor&#x2F;harbor-portal          v2.1.0              5e97d5e230b9        11 days ago         49.5MB
+goharbor&#x2F;harbor-db              v2.1.0              44c0be92f223        11 days ago         164MB
+goharbor&#x2F;prepare                v2.1.0              58d0e7cee8cf        11 days ago         160MB
+$ docker ps
+CONTAINER ID        IMAGE                                COMMAND                  CREATED             STATUS                    PORTS                       NAMES
+170c17e720a4        goharbor&#x2F;nginx-photon:v2.1.0         &quot;nginx -g &#39;daemon of…&quot;   15 minutes ago      Up 15 minutes (healthy)   0.0.0.0:80-&gt;8080&#x2F;tcp        nginx
+8831967ac956        goharbor&#x2F;harbor-jobservice:v2.1.0    &quot;&#x2F;harbor&#x2F;entrypoint.…&quot;   15 minutes ago      Up 15 minutes (healthy)                               harbor-jobservice
+7b0e3725a58c        goharbor&#x2F;harbor-core:v2.1.0          &quot;&#x2F;harbor&#x2F;entrypoint.…&quot;   15 minutes ago      Up 15 minutes (healthy)                               harbor-core
+566137c52384        goharbor&#x2F;harbor-db:v2.1.0            &quot;&#x2F;docker-entrypoint.…&quot;   16 minutes ago      Up 15 minutes (healthy)                               harbor-db
+b9bb6128d1f7        goharbor&#x2F;harbor-portal:v2.1.0        &quot;nginx -g &#39;daemon of…&quot;   16 minutes ago      Up 15 minutes (healthy)                               harbor-portal
+92a1c1107985        goharbor&#x2F;harbor-registryctl:v2.1.0   &quot;&#x2F;home&#x2F;harbor&#x2F;start.…&quot;   16 minutes ago      Up 15 minutes (healthy)                               registryctl
+f6dd31e19b58        goharbor&#x2F;registry-photon:v2.1.0      &quot;&#x2F;home&#x2F;harbor&#x2F;entryp…&quot;   16 minutes ago      Up 16 minutes (healthy)                               registry
+0976b1e0a01c        goharbor&#x2F;redis-photon:v2.1.0         &quot;redis-server &#x2F;etc&#x2F;r…&quot;   16 minutes ago      Up 16 minutes (healthy)                               redis
+bd1b6a56e95b        goharbor&#x2F;harbor-log:v2.1.0           &quot;&#x2F;bin&#x2F;sh -c &#x2F;usr&#x2F;loc…&quot;   16 minutes ago      Up 16 minutes (healthy)   127.0.0.1:1514-&gt;10514&#x2F;tcp   harbor-log</code></pre>
+
+<p>访问Harbor仓库地址。</p>
+<p>用户名：admin        密码：Harbor12345</p>
+<p>默认密码为Harbor12345，如需修改密码，修改主配置文件。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ vim &#x2F;usr&#x2F;local&#x2F;harbor&#x2F;harbor.yml
+harbor_admin_password: Harbor12345</code></pre>
+
+<p>修改Docker服务配置文件。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">sed -i &quot;s#^ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd.*#ExecStart&#x3D;&#x2F;usr&#x2F;bin&#x2F;dockerd -H fd:&#x2F;&#x2F; --containerd&#x3D;&#x2F;run&#x2F;containerd&#x2F;containerd.sock --insecure-registry 192.168.10.10#g&quot; &#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;system&#x2F;docker.service
+systemctl daemon-reload &amp;&amp; systemctl restart docker</code></pre>
+
+<p>上传和下载镜像。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">docker tag centos:7 192.168.10.10&#x2F;library&#x2F;centos:7
+docker login -u admin -p Harbor12345 192.168.10.10
+docker push 192.168.10.10&#x2F;library&#x2F;centos:7
+docker pull 192.168.10.10&#x2F;library&#x2F;centos:7</code></pre>
+
+<h1 id="Docker的网络"><a href="#Docker的网络" class="headerlink" title="Docker的网络"></a>Docker的网络</h1><p> 查看 Docker 的原生网络</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network ls
+NETWORK ID          NAME                DRIVER              SCOPE
+c2472fabc854        bridge              bridge              local
+d69487ce8caa        host                host                local
+0b549a5cbf16        none                null                local</code></pre>
+
+<ul>
+<li>bridge：</li>
+<li>host：</li>
+<li>none：</li>
+</ul>
+<p>None 网络</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">没有任何网络
+$ docker run -itd --name [容器名称] --network none [镜像名称]</code></pre>
+
+<p>Host 网络</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">与宿主机共用一个网卡
+$ docker run -itd --name [容器名称] --network host [镜像名称]</code></pre>
+
+<p>Bridge网络</p>
+<pre class="line-numbers language-none"><code class="language-none">桥接网络，默认创建容器时使用.</code></pre>
+
+<p>创建一个Bridge网络</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network create -d bridge [网络名称]</code></pre>
+
+<p>创建网络时指定网关和网段</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network create -d bridge --subnet 172.16.10.0&#x2F;24 --gateway 172.16.10.1 [网络名称]</code></pre>
+
+<p>容器运行指定IP</p>
+<pre class="line-numbers language-none"><code class="language-none"></code></pre>
+
+<p>不同网段容器通信</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker network connect 网卡名称 容器名称
+在容器中添加网卡，实现通信。</code></pre>
+
+<p>Join容器：container(共享网络协议栈)</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker run -itd --name 容器A 镜像名称
+$ docker run -itd --name 容器B --network container:容器A 镜像名称
+容器A和容器B共用一个网络IP</code></pre>
+
+<h1 id="Docker数据存储"><a href="#Docker数据存储" class="headerlink" title="Docker数据存储"></a>Docker数据存储</h1><p>Docker提供的存储方式<br>volumes - 在宿主的文件系统上的docker工作路径下创建一个文件夹（/var/lib/docker/volumes）来存储数据，其他非docker进程是不能修改该路径下的文件，完全由docker来管理<br>bind mounts - 可以存储在宿主机器任何一个地方，但是会依赖宿主机器的目录结构，不能通过docker CLI 去直接管理，并且非docker进程和docker进程都可以修改该路径下的文件<br>tmpfs - 无论是在Docker主机上还是在容器内，tmpfs挂载都不会持久保存在磁盘上，它会将信息存储在宿主机器内存里。 容器在其生存期内可以使用它来存储非持久状态或敏感信息。 例如，在内部，swarm services 使用tmpfs挂载将机密挂载到服务的容器中 或者 我们一些不需要持久化数据的开发测试环境，可以使用tmpfs</p>
+<p>Volumes 是Docker推荐的挂载方式，与把数据存储在容器的可写层相比，使用Volume可以避免增加容器的容量大小，还可以使存储的数据与容器的生命周期独立。</p>
+<p>与bind mounts相比，volumes更易于备份或迁移。<br>您可以使用Docker CLI命令或Docker API管理Volumes。<br>volumes在Linux和Windows容器上均可工作。<br>可以在多个容器之间更安全地共享volumes。<br>volumes驱动程序使您可以将volumes存储在远程主机或云提供程序上，以加密volumes内容或添加其他功能。</p>
+<h1 id="项目：搭建LAMP环境"><a href="#项目：搭建LAMP环境" class="headerlink" title="项目：搭建LAMP环境"></a>项目：搭建LAMP环境</h1><h1 id="Docker-Compose"><a href="#Docker-Compose" class="headerlink" title="Docker-Compose"></a>Docker-Compose</h1><p>Compose 是用于定义和运行多容器 Docker 应用程序的工具。通过 Compose，可以使用 YML 文件来配置应用程序需要的所有服务。然后，使用一个命令，就可以从 YML 文件配置中创建并启动所有服务。</p>
+<p>Compose 使用的三个步骤：</p>
+<ul>
+<li>使用 Dockerfile 定义应用程序的环境。</li>
+<li>使用 docker-compose.yml 定义构成应用程序的服务，这样它们可以在隔离环境中一起运行。</li>
+<li>最后，执行 docker-compose up 命令来启动并运行整个应用程序。</li>
+</ul>
+<p><strong>安装Docker Compose</strong></p>
+<p>官方文档：<a class="link"   href="https://docs.docker.com/compose" >https://docs.docker.com/compose<i class="fas fa-external-link-alt"></i></a></p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">在CentOS系统上安装
+$ curl -L &quot;https:&#x2F;&#x2F;github.com&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.27.1&#x2F;docker-compose-$(uname -s)-$(uname -m)&quot; -o &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose
+$ chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</code></pre>
+
+<blockquote>
+<p>要安装其他版本的Compose，请替换<code>1.27.1</code> 为要使用的Compose版本。</p>
+</blockquote>
+<p>测试安装</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ docker-compose --version
+docker-compose version 1.27.1, build 1110ad01</code></pre>
+
+<p>Compose has commands for managing the whole lifecycle of your application:</p>
+<ul>
+<li>Start, stop and rebuild services</li>
+<li>View the status of running services</li>
+<li>Stream the log output of running services</li>
+<li>Run a one-off command on a service</li>
+</ul>
+<h1 id="Docker-的监控"><a href="#Docker-的监控" class="headerlink" title="Docker 的监控"></a>Docker 的监控</h1><h2 id="Prometheus-普罗米修斯"><a href="#Prometheus-普罗米修斯" class="headerlink" title="Prometheus(普罗米修斯)"></a>Prometheus(普罗米修斯)</h2><h1 id="Docker服务发现"><a href="#Docker服务发现" class="headerlink" title="Docker服务发现"></a>Docker服务发现</h1><h1 id="Docker-Swarm"><a href="#Docker-Swarm" class="headerlink" title="Docker Swarm"></a>Docker Swarm</h1>]]></content>
+      <categories>
+        <category>Docker</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
       </tags>
   </entry>
   <entry>
